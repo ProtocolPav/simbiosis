@@ -11,6 +11,11 @@ from pygame import Rect
 time_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 logfile = open(f"./logs/log-{time_now}.txt", "w")
 
+logfile.write(f"Start Simbiosis Simulation v0.2 Alpha\n"
+              f"Start Time: {time_now}\n\n\n"
+              f"Project Logs:\n"
+              f"{'-'*60}\n")
+
 pygame.init()
 
 pygame.display.set_caption("SIMbiosis")
