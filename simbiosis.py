@@ -2,6 +2,7 @@
 import math
 import copy
 import random
+import yaml
 
 from datetime import datetime
 
@@ -596,7 +597,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=8, start_species=10, start_creatures=20, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=10, start_creatures=20, start_cluster=100)
 
 while run:
     deltatime = clock.tick(25)
