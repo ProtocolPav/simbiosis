@@ -180,6 +180,8 @@ class CreatureBody(pygame.Rect):
         # log(f"Created Body with ID{CreatureBody.id}")
         self.id = CreatureBody.id
         self.creature_id = creature_id
+        self.actual_x = self.x
+        self.actual_y = self.y
 
         CreatureBody.id += 1
 
@@ -310,16 +312,19 @@ class Creature:
         if world.internal_rect.width - 1 <= self.body[0].x:
             # On the rightmost border, so the creature must not face right
             self.facing = random.choice(['down', 'up', 'left'])
-            last_body_part.x = self.body[0].x - 1
-            last_body_part.y = self.body[0].y
+            last_body_part.actual_x = self.body[0].actual_x - 1
+            last_body_part.actual_y = self.body[0].actual_y
         elif self.body[0].x <= 0:
             # On the leftmost border, so creature must not face left
             self.facing = random.choice(['down', 'up', 'right'])
-            last_body_part.x = self.body[0].x + 1
-            last_body_part.y = self.body[0].y
+            last_body_part.actual_x = self.body[0].actual_x + 1
+            last_body_part.actual_y = self.body[0].actual_y
         else:
-            last_body_part.x = self.body[0].x - direction
-            last_body_part.y = self.body[0].y
+            last_body_part.actual_x = self.body[0].actual_x - direction
+            last_body_part.actual_y = self.body[0].actual_y
+
+        last_body_part.x = round(last_body_part.actual_x)
+        last_body_part.y = round(last_body_part.actual_y)
 
         self.body.insert(0, last_body_part)
 
@@ -329,16 +334,19 @@ class Creature:
         if world.internal_rect.height - 1 <= self.body[0].y:
             # On Bottom border, so creature must not face down
             self.facing = random.choice(['up', 'right', 'left'])
-            last_body_part.x = self.body[0].x
-            last_body_part.y = self.body[0].y - 1
+            last_body_part.actual_x = self.body[0].actual_x
+            last_body_part.actual_y = self.body[0].actual_y - 1
         elif self.body[0].y <= 0:
             # On top border, so creature must not face up
             self.facing = random.choice(['down', 'right', 'left'])
-            last_body_part.x = self.body[0].x
-            last_body_part.y = self.body[0].y + 1
+            last_body_part.actual_x = self.body[0].actual_x
+            last_body_part.actual_y = self.body[0].actual_y + 1
         else:
-            last_body_part.x = self.body[0].x
-            last_body_part.y = self.body[0].y - direction
+            last_body_part.actual_x = self.body[0].actual_x
+            last_body_part.actual_y = self.body[0].actual_y - direction
+
+        last_body_part.x = round(last_body_part.actual_x)
+        last_body_part.y = round(last_body_part.actual_y)
 
         self.body.insert(0, last_body_part)
 
