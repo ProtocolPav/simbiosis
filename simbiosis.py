@@ -60,16 +60,14 @@ class World:
         for i in range(start_species):
             species_creature = Creature(random.randint(0, world_size - 1), random.randint(0, world_size - 1))
             for j in range(start_creatures):
-                self.creatures.append(Creature(random.randint(0, world_size - 1), random.randint(0, world_size - 1),
-                                               genes=copy.deepcopy(species_creature.genes)))
+                x = species_creature.x_pos() + random.randint(-5, 5)
+                y = species_creature.y_pos() + random.randint(-5, 5)
+                self.creatures.append(Creature(x, y, genes=copy.deepcopy(species_creature.genes)))
 
         for i in range(start_cluster):
             cluster = FoodCluster(random.randint(1, self.internal_rect.w - 1),
                                   random.randint(1, self.internal_rect.h - 1))
             self.food_clusters.append(cluster)
-
-            # for j in range(1000):
-            #     cluster.spawn_food(self.internal_rect)
 
     def tick_game(self):
         if not self.game_paused:
@@ -472,6 +470,12 @@ class Creature:
             world.creatures.remove(self)
             self.dead = True
 
+    def x_pos(self):
+        return self.body[0].x
+
+    def y_pos(self):
+        return self.body[0].y
+
     def move(self):
         self.energy -= self.genes.energy_per_square.value
 
@@ -597,7 +601,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=10, start_creatures=20, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=10, start_creatures=10, start_cluster=100)
 
 while run:
     deltatime = clock.tick(25)
