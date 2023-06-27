@@ -1,6 +1,8 @@
 import pygame, random
+from datetime import datetime
 
-logfile = open("./log.txt", "w")
+time_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+logfile = open(f"./logs/log-{time_now}.txt", "w")
 
 pygame.init()
 
@@ -17,15 +19,18 @@ pygame.display.set_caption("SIMbiosis")
 
 clock = pygame.time.Clock()
 
+
 def draw_background():
-    pygame.draw.rect(surface=screen, color=[0,10,27], rect=[[0, 0], [screen.get_width(), screen.get_height()]])
+    pygame.draw.rect(surface=screen, color=[0, 10, 27], rect=[[0, 0], [screen.get_width(), screen.get_height()]])
+
 
 def draw_grid():
     draw_background()
-    for x in range(screen.get_width()//PIXEL):
-        for y in range(screen.get_height()//PIXEL):
-            rect = pygame.Rect(x*PIXEL, y*PIXEL, PIXEL, PIXEL)
-            pygame.draw.rect(screen, [50,50,50], rect, 1)
+    for x in range(screen.get_width() // PIXEL):
+        for y in range(screen.get_height() // PIXEL):
+            rect = pygame.Rect(x * PIXEL, y * PIXEL, PIXEL, PIXEL)
+            pygame.draw.rect(screen, [50, 50, 50], rect, 1)
+
 
 class BodyPart(pygame.Rect):
     body_part_id = 0
@@ -54,7 +59,7 @@ class BodyPart(pygame.Rect):
 class Creature:
     creature_id = 0
 
-    def __init__(self, x: int, y: int, length: int, r:int, g: int, b: int):
+    def __init__(self, x: int, y: int, length: int, r: int, g: int, b: int):
         Creature.creature_id += 1
         self.killed = False
         self.id = Creature.creature_id
@@ -70,10 +75,10 @@ class Creature:
         self.moving_camera = False
         self.facing = random.choice(['right', 'left', 'up', 'down'])
         random_nums = [random.random(), random.random(), 1, random.random()]
-        normalization_number = 1/sum(random_nums)
+        normalization_number = 1 / sum(random_nums)
         for i in random_nums:
             index = random_nums.index(i)
-            random_nums[index] = i*normalization_number
+            random_nums[index] = i * normalization_number
 
         self.rtl = random_nums[0]
         self.rtr = random_nums[1]
@@ -82,7 +87,7 @@ class Creature:
         self.head_colour_multiplier = random.random()
 
         for i in range(length):
-            x_coord = x - PIXEL*i
+            x_coord = x - PIXEL * i
             y_coord = y
             bodypart = BodyPart(x_coord, y_coord, PIXEL, PIXEL, self.id)
             self.body.append(bodypart)
@@ -93,7 +98,7 @@ class Creature:
     def draw(self):
         for body_part in self.body:
             if self.body.index(body_part) == 0:
-                colour_to_draw = [colour*self.head_colour_multiplier for colour in self.colour]
+                colour_to_draw = [colour * self.head_colour_multiplier for colour in self.colour]
             else:
                 colour_to_draw = self.colour
             pygame.draw.rect(surface=screen, rect=body_part, color=colour_to_draw)
@@ -181,7 +186,7 @@ class Creature:
             if self.body[0].x == self.body[1].x:
                 if self.body[1].y - self.body[0].y == PIXEL:
                     # Facing Upwards
-                    vision_rect = pygame.Rect(self.body[0].x, self.body[0].y - PIXEL*self.vis, PIXEL, PIXEL*self.vis)
+                    vision_rect = pygame.Rect(self.body[0].x, self.body[0].y - PIXEL * self.vis, PIXEL, PIXEL * self.vis)
                     choice_list = ['right', 'left', 'up', 'down']
                 elif self.body[1].y - self.body[0].y == -PIXEL:
                     # Facing Downwards
@@ -190,11 +195,11 @@ class Creature:
             elif self.body[0].y == self.body[1].y:
                 if self.body[1].x - self.body[0].x == PIXEL:
                     # Facing Left
-                    vision_rect = pygame.Rect(self.body[0].x - PIXEL*self.vis, self.body[0].y, PIXEL*self.vis, PIXEL)
+                    vision_rect = pygame.Rect(self.body[0].x - PIXEL * self.vis, self.body[0].y, PIXEL * self.vis, PIXEL)
                     choice_list = ['up', 'down', 'left', 'right']
                 elif self.body[1].x - self.body[0].x == -PIXEL:
                     # Facing Right
-                    vision_rect = pygame.Rect(self.body[0].x + PIXEL, self.body[0].y, PIXEL*self.vis, PIXEL)
+                    vision_rect = pygame.Rect(self.body[0].x + PIXEL, self.body[0].y, PIXEL * self.vis, PIXEL)
                     choice_list = ['down', 'up', 'right', 'left']
 
             self.vision_rect = vision_rect
@@ -219,9 +224,9 @@ class Creature:
                 if not own_body_part:
                     self.collided = True
                     random_num = random.randint(1, 10)
-                    if random_num in [1,2,3,4,5,6,7,8]:
+                    if random_num in [1, 2, 3, 4, 5, 6, 7, 8]:
                         self.birth()
-                    if random_num in [2,4,6,8,10]:
+                    if random_num in [2, 4, 6, 8, 10]:
                         self.kill_creature()
 
             elif collided_part is None and self.collided:
@@ -267,7 +272,7 @@ class Creature:
 
     def extend_creature(self):
         if not self.killed:
-            bodypart = BodyPart(self.body[-1].x+PIXEL, self.body[-1].y, PIXEL, PIXEL, self.id)
+            bodypart = BodyPart(self.body[-1].x + PIXEL, self.body[-1].y, PIXEL, PIXEL, self.id)
             self.body.append(bodypart)
 
     def adjust_for_zoom(self, scale_factor: float):
@@ -282,12 +287,12 @@ class Border:
     def __init__(self):
         self.BORDER_SIZE = BORDER_SIZE
         self.OUTLINE_SIZE = BORDER_SIZE + 1
-        self.border_rect = pygame.Rect(0, 0, self.BORDER_SIZE*PIXEL, self.BORDER_SIZE*PIXEL)
-        self.border_outline_rect = pygame.Rect(-5, -5, self.OUTLINE_SIZE*PIXEL, self.OUTLINE_SIZE*PIXEL)
+        self.border_rect = pygame.Rect(0, 0, self.BORDER_SIZE * PIXEL, self.BORDER_SIZE * PIXEL)
+        self.border_outline_rect = pygame.Rect(-5, -5, self.OUTLINE_SIZE * PIXEL, self.OUTLINE_SIZE * PIXEL)
 
     def draw_border(self):
         pygame.draw.rect(screen, [0, 20, 27], self.border_outline_rect, PIXEL)
-        pygame.draw.rect(screen, [0,10*0.7,27*0.7], self.border_rect)
+        pygame.draw.rect(screen, [0, 10 * 0.7, 27 * 0.7], self.border_rect)
 
     def border_camera(self, x: int = 0, y: int = 0):
         self.border_rect.x += x
@@ -297,8 +302,8 @@ class Border:
         self.border_outline_rect.y += y
 
     def adjust_for_zoom(self, scale_factor: float):
-        self.border_rect.width, self.border_outline_rect.width = self.BORDER_SIZE*PIXEL, self.OUTLINE_SIZE*PIXEL
-        self.border_rect.height, self.border_outline_rect.height = self.BORDER_SIZE*PIXEL, self.OUTLINE_SIZE*PIXEL
+        self.border_rect.width, self.border_outline_rect.width = self.BORDER_SIZE * PIXEL, self.OUTLINE_SIZE * PIXEL
+        self.border_rect.height, self.border_outline_rect.height = self.BORDER_SIZE * PIXEL, self.OUTLINE_SIZE * PIXEL
 
         self.border_rect.x = round(self.border_rect.x / scale_factor)
         self.border_rect.y = round(self.border_rect.y / scale_factor)
@@ -356,19 +361,19 @@ collisions = Collisions()
 creatures = []
 for i in range(500):
     colour = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
-    creatures.append(Creature(PIXEL*random.randint(2, BORDER_SIZE-10),
-                              PIXEL*random.randint(2, BORDER_SIZE-10),
+    creatures.append(Creature(PIXEL * random.randint(2, BORDER_SIZE - 10),
+                              PIXEL * random.randint(2, BORDER_SIZE - 10),
                               random.randint(3, 16),
-                              r = colour[0],
-                              g = colour[1],
-                              b = colour[2]
+                              r=colour[0],
+                              g=colour[1],
+                              b=colour[2]
                               ))
 border = Border()
 ticks = 0
 game_paused = False
 while run:
     ticks += 1
-    if not game_paused and ticks%30 == 0:
+    if not game_paused and ticks % 30 == 0:
         print(len(collisions.collisions), len(creatures))
         logfile.write(f"{collisions.collisions}\n")
 
@@ -381,11 +386,11 @@ while run:
                 game_paused = not game_paused
 
         elif event.type == pygame.MOUSEWHEEL:
-            if 2 <= PIXEL + 2*event.y <= 30:
+            if 2 <= PIXEL + 2 * event.y <= 30:
                 old_pixel_size = PIXEL
                 PIXEL += 2 * event.y
 
-                scale = old_pixel_size/PIXEL
+                scale = old_pixel_size / PIXEL
 
                 border.adjust_for_zoom(scale)
 
@@ -398,7 +403,6 @@ while run:
     # draw_grid()
     border.draw_border()
 
-
     for creature in creatures:
         if not game_paused:
             creature.move()
@@ -406,28 +410,27 @@ while run:
         creature.draw()
 
         if key[pygame.K_d]:
-            creature.creature_camera(x=-PIXEL*CAMERA_SPEED)
+            creature.creature_camera(x=-PIXEL * CAMERA_SPEED)
         elif key[pygame.K_s]:
-            creature.creature_camera(y=-PIXEL*CAMERA_SPEED)
+            creature.creature_camera(y=-PIXEL * CAMERA_SPEED)
         elif key[pygame.K_w]:
-            creature.creature_camera(y=PIXEL*CAMERA_SPEED)
+            creature.creature_camera(y=PIXEL * CAMERA_SPEED)
         elif key[pygame.K_a]:
-            creature.creature_camera(x=PIXEL*CAMERA_SPEED)
+            creature.creature_camera(x=PIXEL * CAMERA_SPEED)
         elif key[pygame.K_q]:
             creature.draw_vision()
 
-
     if key[pygame.K_d]:
-        border.border_camera(x=-PIXEL*CAMERA_SPEED)
+        border.border_camera(x=-PIXEL * CAMERA_SPEED)
     elif key[pygame.K_s]:
-        border.border_camera(y=-PIXEL*CAMERA_SPEED)
+        border.border_camera(y=-PIXEL * CAMERA_SPEED)
     elif key[pygame.K_w]:
-        border.border_camera(y=PIXEL*CAMERA_SPEED)
+        border.border_camera(y=PIXEL * CAMERA_SPEED)
     elif key[pygame.K_a]:
-        border.border_camera(x=PIXEL*CAMERA_SPEED)
+        border.border_camera(x=PIXEL * CAMERA_SPEED)
     elif key[pygame.K_q]:
         for rectid, rect in collisions.collisions.items():
-            pygame.draw.rect(surface=screen, rect=rect, color=[255,255,255])
+            pygame.draw.rect(surface=screen, rect=rect, color=[255, 255, 255])
 
     collisions.update_dict()
 
