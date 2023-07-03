@@ -14,7 +14,7 @@ logfile = open(f"./logs/log-{time_now}.txt", "w")
 
 logfile.write(f"Start Simbiosis Simulation v0.2 Alpha\n"
               f"Start Time: {time_now}\n\n\n"
-              f"Project Logs:\n"
+              f"Runtime Logs:\n"
               f"{'-'*60}\n")
 
 pygame.init()
@@ -609,7 +609,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=10, start_creatures=10, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=10, start_cluster=100)
 
 while run:
     deltatime = clock.tick(25)
