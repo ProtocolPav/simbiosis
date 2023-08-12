@@ -328,11 +328,9 @@ class Creature:
         last_body_part.y = round(last_body_part.actual_y)
 
         self.body.insert(0, last_body_part)
-        prev_part = last_body_part
+        change_in_x = self.body[0].x - self.body[1].x
         for i in self.body[1:]:
-            # i.x = prev_part.x - 1
-            i.x -= 1
-            prev_part = i
+            i.x -= change_in_x
 
     def __move_y(self, direction: int):
         last_body_part = self.body.pop()
@@ -355,11 +353,9 @@ class Creature:
         last_body_part.y = round(last_body_part.actual_y)
 
         self.body.insert(0, last_body_part)
-        prev_part = last_body_part
+        change_in_y = self.body[0].y - self.body[1].y
         for i in self.body[1:]:
-            # i.y = prev_part.y - 1
-            i.y -= 1
-            prev_part = i
+            i.y -= change_in_y
 
     def __vision(self):
         choice_list = ['left', 'right', 'down', 'up']
