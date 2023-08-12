@@ -251,7 +251,7 @@ class CreatureGenes:
 
         # Genes affecting Creature movement
         # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=0.03)
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=0.1)
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -620,7 +620,7 @@ camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
 
 while run:
-    deltatime = clock.tick(120)
+    deltatime = clock.tick(70)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
