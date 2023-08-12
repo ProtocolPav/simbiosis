@@ -250,7 +250,8 @@ class CreatureGenes:
         self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 10))
 
         # Genes affecting Creature movement
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
+        # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=0.03)
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -312,21 +313,26 @@ class Creature:
         if world.internal_rect.width - 1 <= self.body[0].x:
             # On the rightmost border, so the creature must not face right
             self.facing = random.choice(['down', 'up', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x - 1
+            last_body_part.actual_x = self.body[0].actual_x - 1 * deltatime * self.genes.idle_speed.value
             last_body_part.actual_y = self.body[0].actual_y
         elif self.body[0].x <= 0:
             # On the leftmost border, so creature must not face left
             self.facing = random.choice(['down', 'up', 'right'])
-            last_body_part.actual_x = self.body[0].actual_x + 1
+            last_body_part.actual_x = self.body[0].actual_x + 1 * deltatime * self.genes.idle_speed.value
             last_body_part.actual_y = self.body[0].actual_y
         else:
-            last_body_part.actual_x = self.body[0].actual_x - direction
+            last_body_part.actual_x = self.body[0].actual_x - direction * deltatime * self.genes.idle_speed.value
             last_body_part.actual_y = self.body[0].actual_y
 
         last_body_part.x = round(last_body_part.actual_x)
         last_body_part.y = round(last_body_part.actual_y)
 
         self.body.insert(0, last_body_part)
+        prev_part = last_body_part
+        for i in self.body[1:]:
+            # i.x = prev_part.x - 1
+            i.x -= 1
+            prev_part = i
 
     def __move_y(self, direction: int):
         last_body_part = self.body.pop()
@@ -335,20 +341,25 @@ class Creature:
             # On Bottom border, so creature must not face down
             self.facing = random.choice(['up', 'right', 'left'])
             last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - 1
+            last_body_part.actual_y = self.body[0].actual_y - 1 * deltatime * self.genes.idle_speed.value
         elif self.body[0].y <= 0:
             # On top border, so creature must not face up
             self.facing = random.choice(['down', 'right', 'left'])
             last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y + 1
+            last_body_part.actual_y = self.body[0].actual_y + 1 * deltatime * self.genes.idle_speed.value
         else:
             last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - direction
+            last_body_part.actual_y = self.body[0].actual_y - direction * deltatime * self.genes.idle_speed.value
 
         last_body_part.x = round(last_body_part.actual_x)
         last_body_part.y = round(last_body_part.actual_y)
 
         self.body.insert(0, last_body_part)
+        prev_part = last_body_part
+        for i in self.body[1:]:
+            # i.y = prev_part.y - 1
+            i.y -= 1
+            prev_part = i
 
     def __vision(self):
         choice_list = ['left', 'right', 'down', 'up']
@@ -487,25 +498,24 @@ class Creature:
     def move(self):
         self.energy -= self.genes.energy_per_square.value
 
-        for i in range(0, math.ceil(self.genes.idle_speed.value)):
-            if not self.dead:
-                self.__vision()
+        if not self.dead:
+            self.__vision()
 
-                self.energy -= self.genes.energy_per_square.value * len(self.body)
+            self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-                if self.facing == "up":
-                    self.__move_y(-1)
-                elif self.facing == "down":
-                    self.__move_y(1)
-                elif self.facing == "left":
-                    self.__move_x(-1)
-                elif self.facing == "right":
-                    self.__move_x(1)
+            if self.facing == "up":
+                self.__move_y(-1)
+            elif self.facing == "down":
+                self.__move_y(1)
+            elif self.facing == "left":
+                self.__move_x(-1)
+            elif self.facing == "right":
+                self.__move_x(1)
 
-                # self.__collide()
+            # self.__collide()
 
-                for body in self.body:
-                    body.add_to_collisions()
+            for body in self.body:
+                body.add_to_collisions()
 
         if self.energy <= 0:
             self.__die()
@@ -609,7 +619,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=10, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
 
 while run:
     deltatime = clock.tick(25)
