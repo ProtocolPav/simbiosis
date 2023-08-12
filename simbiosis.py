@@ -292,6 +292,11 @@ class Creature:
 
         self.body: list[CreatureBody] = [CreatureBody(self.id, position_x, position_y),
                                          CreatureBody(self.id, position_x - 1, position_y)]
+        self.length = 2
+        self.tracking = {'head': {'before': [position_x, position_y],
+                                  'after': []},
+                         'tail': [position_x - 1, position_y],
+                         'turns': []}
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
