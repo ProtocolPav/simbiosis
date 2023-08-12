@@ -620,7 +620,7 @@ camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
 
 while run:
-    deltatime = clock.tick(25)
+    deltatime = clock.tick(120)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
