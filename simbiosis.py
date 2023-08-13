@@ -224,7 +224,7 @@ class CreatureBody:
 
         self.creature_id = creature_id
         self.head = CreatureBodyPart(creature_id, pos_x=pos_x, pos_y=pos_y)
-        self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length, pos_y=pos_y)
+        self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length + 1, pos_y=pos_y)
         self.turning_points: list[CreatureBodyPart] = []  # FIFO. Elements to the end of the list are closer to the head
         self.facing = 'right'
         self.length = length
@@ -353,7 +353,7 @@ class CreatureGenes:
 
         # Genes affecting Creature movement
         # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=50)
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=23.5)
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -591,7 +591,7 @@ class Creature:
         self.energy -= self.genes.energy_per_square.value
 
         if not self.dead:
-            self.__vision()
+            # self.__vision()
 
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
@@ -600,9 +600,9 @@ class Creature:
             elif self.facing == "down":
                 self.body2.move_y(1, self.genes.idle_speed.value)
             elif self.facing == "left":
-                self.body2.move_x(-1, self.genes.idle_speed.value)
-            elif self.facing == "right":
                 self.body2.move_x(1, self.genes.idle_speed.value)
+            elif self.facing == "right":
+                self.body2.move_x(-1, self.genes.idle_speed.value)
 
             for body in self.body:
                 body.add_to_collisions()
