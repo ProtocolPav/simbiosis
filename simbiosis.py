@@ -353,7 +353,7 @@ class CreatureGenes:
 
         # Genes affecting Creature movement
         # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=23.5)
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=20)
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -591,17 +591,17 @@ class Creature:
         self.energy -= self.genes.energy_per_square.value
 
         if not self.dead:
-            # self.__vision()
+            self.__vision()
 
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-            if self.facing == "up":
+            if self.body2.facing == "up":
                 self.body2.move_y(-1, self.genes.idle_speed.value)
-            elif self.facing == "down":
+            elif self.body2.facing == "down":
                 self.body2.move_y(1, self.genes.idle_speed.value)
-            elif self.facing == "left":
+            elif self.body2.facing == "left":
                 self.body2.move_x(1, self.genes.idle_speed.value)
-            elif self.facing == "right":
+            elif self.body2.facing == "right":
                 self.body2.move_x(-1, self.genes.idle_speed.value)
 
             for body in self.body:
