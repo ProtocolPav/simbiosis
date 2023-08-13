@@ -175,7 +175,7 @@ class FoodCluster:
 class CreatureBodyPart(pygame.Rect):
     id = 1
 
-    def __init__(self, creature_id: int, pos_x: int, pos_y: int, facing: str):
+    def __init__(self, creature_id: int, pos_x: int, pos_y: int):
         super().__init__(pos_x, pos_y, 1, 1)
 
         # log(f"Created Body with ID{CreatureBodyPart.id}")
@@ -183,12 +183,14 @@ class CreatureBodyPart(pygame.Rect):
         self.creature_id = creature_id
         self.actual_x = self.x
         self.actual_y = self.y
-        self.facing = facing
 
         CreatureBodyPart.id += 1
 
     def __repr__(self):
         return f"Body({self.id, self.x, self.y, self.width, self.height})"
+
+    def __deepcopy__(self, memodict):
+        return CreatureBodyPart(self.creature_id, self.x, self.y)
 
     def check_quadrant(self) -> WorldQuadrant:
         coordinates = (self.x, self.y)
@@ -223,30 +225,29 @@ class CreatureBody:
         self.creature_id = creature_id
         self.head = CreatureBodyPart(creature_id, pos_x=pos_x, pos_y=pos_y)
         self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length, pos_y=pos_y)
-        self.turning_points: list[CreatureBodyPart] = []
+        self.turning_points: list[CreatureBodyPart] = []  # FIFO. Elements to the end of the list are closer to the head
+        self.facing = 'right'
         self.length = length
-        self.__before = deepcopy(self)
+        self.before = None
 
     def save_position(self):
         """
-        Deletes the .__before attribute to prevent recursion, since deepcopy creates a copy of all attributes.
+        Deletes the .before attribute to prevent recursion, since deepcopy creates a copy of all attributes.
         I do not want the entire history of the creature saved, only the previous tick
         :return:
         """
-        self.__delattr__('__before')
-        self.__before = deepcopy(self)
+        self.__delattr__('before')
+        self.before = deepcopy(self)
 
     def check_for_turning_point(self) -> bool:
         """
         Checks for turning points and returns a boolean.
         A point is a turning point when the direction changes.
-        Saves the head position before the turn, but saves the new direction to tell the body where to place the next body part
-        after this turn.
+        Saves the head position before the turn.
         :return:
         """
-        if self.head.facing != self.__before.head.facing:
-            turning_point = deepcopy(self.__before.head)
-            turning_point.facing = self.head.facing
+        if self.facing != self.before.facing:
+            turning_point = deepcopy(self.before.head)
             self.turning_points.append(turning_point)
             return True
 
@@ -256,28 +257,63 @@ class CreatureBody:
         self.turning_points.pop(0)
 
     def calculate_direction(self):
-        vector_change = [self.head.actual_x - self.__before.head.actual_x,
-                         self.head.actual_y - self.__before.head.actual_y]
+        vector_change = [self.head.actual_x - self.before.head.actual_x,
+                         self.head.actual_y - self.before.head.actual_y]
 
         if vector_change[0] > 0:
             # Head moved to the right
-            self.head.facing = 'right'
+            self.facing = 'right'
         elif vector_change[0] < 0:
             # Head moved to the left
-            self.head.facing = 'left'
+            self.facing = 'left'
         elif vector_change[1] > 0:
             # Head moved down
-            self.head.facing = 'down'
+            self.facing = 'down'
         elif vector_change[1] < 0:
             # Head moved up
-            self.head.facing = 'up'
+            self.facing = 'up'
 
-    def move_x(self, direction: int, speed: int):
+    def move_x(self, direction: int, speed: float):
         self.save_position()
 
         self.head.actual_x = self.head.actual_x - direction * deltatime * speed
         self.calculate_direction()
-        turning_point = self.check_for_turning_point()
+        self.check_for_turning_point()
+
+        if len(self.turning_points) != 0:
+            difference_x = self.tail.actual_x - self.turning_points[0].actual_x
+
+            if difference_x > 0:
+                self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
+            elif difference_x < 0:
+                self.tail.actual_x = self.tail.actual_x + direction * deltatime * speed
+
+        elif len(self.turning_points) == 0:
+            self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
+
+    def move_y(self, direction: int, speed: float):
+        self.save_position()
+
+        self.head.actual_y = self.head.actual_y - direction * deltatime * speed
+        self.calculate_direction()
+        self.check_for_turning_point()
+
+        if len(self.turning_points) > 0:
+            difference_y = self.tail.actual_y - self.turning_points[0].actual_y
+
+            if difference_y > 0:
+                self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
+            elif difference_y < 0:
+                self.tail.actual_y = self.tail.actual_y + direction * deltatime * speed
+
+        elif len(self.turning_points) == 0:
+            self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
+
+    def get_full_body(self) -> list[Rect]:
+        body_list = [pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, 1),
+                     pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
+
+        return body_list
 
 
 class Gene:
@@ -356,12 +392,9 @@ class Creature:
         log(f"Created Creature with ID{Creature.id}")
         self.id = Creature.id
 
-        self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y, 'right'),
-                                             CreatureBodyPart(self.id, position_x - 1, position_y, 'right')]
-        self.length = 2
-        self.tracking = {'head': {'current': CreatureBodyPart(self.id, position_x, position_y, 'right')},
-                         'tail': {'current': CreatureBodyPart(self.id, position_x - 1, position_y, 'right')},
-                         'turns': []}
+        self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
+                                             CreatureBodyPart(self.id, position_x - 1, position_y)]
+        self.body2 = CreatureBody(self.id, position_x, position_y, 3)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
@@ -563,15 +596,13 @@ class Creature:
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
             if self.facing == "up":
-                self.__move_y(-1)
+                self.body2.move_y(-1, self.genes.idle_speed.value)
             elif self.facing == "down":
-                self.__move_y(1)
+                self.body2.move_y(1, self.genes.idle_speed.value)
             elif self.facing == "left":
-                self.__move_x(-1)
+                self.body2.move_x(-1, self.genes.idle_speed.value)
             elif self.facing == "right":
-                self.__move_x(1)
-
-            # self.__collide()
+                self.body2.move_x(1, self.genes.idle_speed.value)
 
             for body in self.body:
                 body.add_to_collisions()
@@ -622,20 +653,21 @@ class Camera:
 
         # Draw Creatures
         for creature in world.creatures:
-            for body_part in creature.body:
-                colour_to_draw = [int(creature.genes.colour_red.value),
-                                  int(creature.genes.colour_green.value),
-                                  int(creature.genes.colour_blue.value)]
+            colour_to_draw = [int(creature.genes.colour_red.value),
+                              int(creature.genes.colour_green.value),
+                              int(creature.genes.colour_blue.value)]
 
-                if creature.body.index(body_part) == 0:
-                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+            full_body = creature.body2.get_full_body()
 
-                # Move the Body Part Rect to the correct position
-                drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
+            for i in range(len(full_body)):
+                drawing_rect = full_body.pop(0)
                 drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
                 drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
+
+                if len(full_body) == 0:
+                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
 
                 pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
 
