@@ -292,15 +292,19 @@ class CreatureBody:
         if vector_change[0] > 0:
             # Tail must move to the right
             self.tail.actual_x = self.tail.actual_x - 1 * deltatime * speed
+            self.tail.actual_y = self.turning_points[0][1]
         elif vector_change[0] < 0:
             # Tail must move to the left
             self.tail.actual_x = self.tail.actual_x + 1 * deltatime * speed
+            self.tail.actual_y = self.turning_points[0][1]
         elif vector_change[1] > 0:
             # Tail must move up
             self.tail.actual_y = self.tail.actual_y - 1 * deltatime * speed
+            self.tail.actual_x = self.turning_points[0][0]
         elif vector_change[1] < 0:
             # Tail must move down
             self.tail.actual_y = self.tail.actual_y + 1 * deltatime * speed
+            self.tail.actual_x = self.turning_points[0][0]
 
         self.remove_turning_point()
 
@@ -419,7 +423,7 @@ class Creature:
 
         self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
                                              CreatureBodyPart(self.id, position_x - 1, position_y)]
-        self.body2 = CreatureBody(self.id, position_x, position_y, 10)
+        self.body2 = CreatureBody(self.id, position_x, position_y, 40)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
