@@ -225,10 +225,11 @@ class CreatureBody:
         self.creature_id = creature_id
         self.head = CreatureBodyPart(creature_id, pos_x=pos_x, pos_y=pos_y)
         self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length + 1, pos_y=pos_y)
-        self.turning_points: list[CreatureBodyPart] = []  # FIFO. Elements to the end of the list are closer to the head
+        self.turning_points: list[list] = []  # FIFO. Elements to the end of the list are closer to the head
         self.facing = 'right'
         self.length = length
-        self.before = None
+        self.before = {'head_pos': [],
+                       'facing': ''}
 
     def save_position(self):
         """
@@ -236,8 +237,8 @@ class CreatureBody:
         I do not want the entire history of the creature saved, only the previous tick
         :return:
         """
-        self.__delattr__('before')
-        self.before = deepcopy(self)
+        self.before['head_pos'] = [round(self.head.actual_x), round(self.head.actual_y)]
+        self.before['facing'] = self.facing
 
     def check_for_turning_point(self) -> bool:
         """
@@ -246,19 +247,25 @@ class CreatureBody:
         Saves the head position before the turn.
         :return:
         """
-        if self.facing != self.before.facing:
-            turning_point = deepcopy(self.before.head)
+        if self.facing != self.before['facing'] and self.before['head_pos'] not in self.turning_points:
+            log(f"Turning point found: {self.before['head_pos']}")
+            turning_point = deepcopy(self.before['head_pos'])
             self.turning_points.append(turning_point)
             return True
 
         return False
 
     def remove_turning_point(self):
-        self.turning_points.pop(0)
+        vector_change = [self.tail.actual_x - self.turning_points[0][0],
+                         self.tail.actual_y - self.turning_points[0][1]]
+
+        if vector_change >= [0.0, 0.0]:
+            log(f'Turning point passed: {self.turning_points[0]}')
+            self.turning_points.pop(0)
 
     def calculate_direction(self):
-        vector_change = [self.head.actual_x - self.before.head.actual_x,
-                         self.head.actual_y - self.before.head.actual_y]
+        vector_change = [self.head.actual_x - self.before['head_pos'][0],
+                         self.head.actual_y - self.before['head_pos'][1]]
 
         if vector_change[0] > 0:
             # Head moved to the right
@@ -281,12 +288,14 @@ class CreatureBody:
         self.check_for_turning_point()
 
         if len(self.turning_points) != 0:
-            difference_x = self.tail.actual_x - self.turning_points[0].actual_x
+            difference_x = self.tail.actual_x - self.turning_points[0][0]
 
-            if difference_x > 0:
+            if difference_x < 0:
                 self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
-            elif difference_x < 0:
+            elif difference_x > 0:
                 self.tail.actual_x = self.tail.actual_x + direction * deltatime * speed
+
+            self.remove_turning_point()
 
         elif len(self.turning_points) == 0:
             self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
@@ -299,12 +308,14 @@ class CreatureBody:
         self.check_for_turning_point()
 
         if len(self.turning_points) > 0:
-            difference_y = self.tail.actual_y - self.turning_points[0].actual_y
+            difference_y = self.tail.actual_y - self.turning_points[0][1]
 
-            if difference_y > 0:
+            if difference_y < 0:
                 self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
-            elif difference_y < 0:
+            elif difference_y > 0:
                 self.tail.actual_y = self.tail.actual_y + direction * deltatime * speed
+
+            self.remove_turning_point()
 
         elif len(self.turning_points) == 0:
             self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
@@ -353,7 +364,7 @@ class CreatureGenes:
 
         # Genes affecting Creature movement
         # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=20)
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=10)
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -595,14 +606,23 @@ class Creature:
 
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-            if self.body2.facing == "up":
+            # if self.facing == "up":
+            #     self.body2.move_y(-1, self.genes.idle_speed.value)
+            # elif self.facing == "down":
+            #     self.body2.move_y(1, self.genes.idle_speed.value)
+            # elif self.facing == "left":
+            #     self.body2.move_x(1, self.genes.idle_speed.value)
+            # elif self.facing == "right":
+            #     self.body2.move_x(-1, self.genes.idle_speed.value)
+
+            global counter
+            counter += random.randint(0, 7)
+
+            if counter % 6 == 0:
                 self.body2.move_y(-1, self.genes.idle_speed.value)
-            elif self.body2.facing == "down":
-                self.body2.move_y(1, self.genes.idle_speed.value)
-            elif self.body2.facing == "left":
-                self.body2.move_x(1, self.genes.idle_speed.value)
-            elif self.body2.facing == "right":
+            else:
                 self.body2.move_x(-1, self.genes.idle_speed.value)
+
 
             for body in self.body:
                 body.add_to_collisions()
@@ -659,6 +679,15 @@ class Camera:
 
             full_body = creature.body2.get_full_body()
 
+            for point in creature.body2.turning_points:
+                drawing_rect = pygame.Rect(point[0], point[1], 1, 1)
+                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
+                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
+                drawing_rect.width *= self.zoom_level
+                drawing_rect.height *= self.zoom_level
+
+                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[255, 255, 255])
+
             for i in range(len(full_body)):
                 drawing_rect = full_body.pop(0)
                 drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
@@ -711,6 +740,7 @@ run = True
 debug = False
 camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
+counter = 0
 
 while run:
     milliseconds = clock.tick(120)
