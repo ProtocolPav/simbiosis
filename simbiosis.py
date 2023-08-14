@@ -289,6 +289,7 @@ class CreatureBody:
 
         log(f"Vector Change: {vector_change}")
 
+
         if vector_change[0] > 0:
             # Tail must move to the right
             self.tail.actual_x = self.tail.actual_x - 1 * deltatime * speed
