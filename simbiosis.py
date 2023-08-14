@@ -237,7 +237,7 @@ class CreatureBody:
         I do not want the entire history of the creature saved, only the previous tick
         :return:
         """
-        self.before['head_pos'] = [round(self.head.actual_x), round(self.head.actual_y)]
+        self.before['head_pos'] = [self.head.actual_x, self.head.actual_y]
         self.before['facing'] = self.facing
 
     def check_for_turning_point(self) -> bool:
@@ -247,7 +247,7 @@ class CreatureBody:
         Saves the head position before the turn.
         :return:
         """
-        if self.facing != self.before['facing'] and self.before['head_pos'] not in self.turning_points:
+        if self.facing != self.before['facing']:
             log(f"Turning point found: {self.before['head_pos']}")
             turning_point = deepcopy(self.before['head_pos'])
             self.turning_points.append(turning_point)
@@ -259,9 +259,11 @@ class CreatureBody:
         vector_change = [self.tail.actual_x - self.turning_points[0][0],
                          self.tail.actual_y - self.turning_points[0][1]]
 
-        if vector_change >= [0.0, 0.0]:
-            log(f'Turning point passed: {self.turning_points[0]}')
+        if vector_change[0] >= 0.0 and vector_change[1] >= 0.0:
+            log(f'Turning point passed: {self.turning_points[0]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}')
             self.turning_points.pop(0)
+        else:
+            log(f"Waiting to pass turning point: {self.turning_points[0]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}")
 
     def calculate_direction(self):
         vector_change = [self.head.actual_x - self.before['head_pos'][0],
@@ -291,9 +293,11 @@ class CreatureBody:
             difference_x = self.tail.actual_x - self.turning_points[0][0]
 
             if difference_x < 0:
-                self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
+                direction = -1
             elif difference_x > 0:
-                self.tail.actual_x = self.tail.actual_x + direction * deltatime * speed
+                direction = 1
+
+            self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
 
             self.remove_turning_point()
 
@@ -310,10 +314,12 @@ class CreatureBody:
         if len(self.turning_points) > 0:
             difference_y = self.tail.actual_y - self.turning_points[0][1]
 
-            if difference_y < 0:
-                self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
-            elif difference_y > 0:
-                self.tail.actual_y = self.tail.actual_y + direction * deltatime * speed
+            if difference_y > 0:
+                direction = 1
+            elif difference_y < 0:
+                direction = -1
+
+            self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
 
             self.remove_turning_point()
 
@@ -607,22 +613,18 @@ class Creature:
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
             # if self.facing == "up":
-            #     self.body2.move_y(-1, self.genes.idle_speed.value)
-            # elif self.facing == "down":
             #     self.body2.move_y(1, self.genes.idle_speed.value)
+            # elif self.facing == "down":
+            #     self.body2.move_y(-1, self.genes.idle_speed.value)
             # elif self.facing == "left":
             #     self.body2.move_x(1, self.genes.idle_speed.value)
             # elif self.facing == "right":
             #     self.body2.move_x(-1, self.genes.idle_speed.value)
 
-            global counter
-            counter += random.randint(0, 7)
-
-            if counter % 6 == 0:
-                self.body2.move_y(-1, self.genes.idle_speed.value)
-            else:
+            if right:
                 self.body2.move_x(-1, self.genes.idle_speed.value)
-
+            else:
+                self.body2.move_y(1, self.genes.idle_speed.value)
 
             for body in self.body:
                 body.add_to_collisions()
@@ -740,6 +742,7 @@ run = True
 debug = False
 camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
+right = True
 counter = 0
 
 while run:
@@ -756,6 +759,10 @@ while run:
                 world.game_paused = not world.game_paused
             elif event.key == pygame.K_q:
                 debug = not debug
+
+    counter += 1
+    if counter % 100 == 0:
+        right = not right
 
     world.tick_game()
 
