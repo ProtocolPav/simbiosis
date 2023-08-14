@@ -225,7 +225,7 @@ class CreatureBody:
         self.creature_id = creature_id
         self.head = CreatureBodyPart(creature_id, pos_x=pos_x, pos_y=pos_y)
         self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length + 1, pos_y=pos_y)
-        self.turning_points: list[list] = []  # FIFO. Elements to the end of the list are closer to the head
+        self.turning_points: list[dict] = []  # Elements closer to the beginning are closest to the head
         self.facing = 'right'
         self.length = length
         self.before = {'head_pos': [],
@@ -249,21 +249,21 @@ class CreatureBody:
         """
         if self.facing != self.before['facing']:
             log(f"Turning point found: {self.before['head_pos']}")
-            turning_point = deepcopy(self.before['head_pos'])
-            self.turning_points.append(turning_point)
+            turning_point = deepcopy(self.before)
+            self.turning_points.insert(0, turning_point)
             return True
 
         return False
 
     def remove_turning_point(self):
-        vector_change = [round(self.tail.actual_x - self.turning_points[0][0]),
-                         round(self.tail.actual_y - self.turning_points[0][1])]
+        vector_change = [round(self.tail.actual_x - self.turning_points[0]['head_pos'][0]),
+                         round(self.tail.actual_y - self.turning_points[0]['head_pos'][1])]
 
         if vector_change[0] == 0 and vector_change[1] == 0:
-            log(f'Turning point passed: {self.turning_points[0]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}')
-            self.turning_points.pop(0)
+            log(f'Turning point passed: {self.turning_points[-1]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}')
+            self.turning_points.pop()
         else:
-            log(f"Waiting to pass turning point: {self.turning_points[0]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}")
+            log(f"Waiting to pass turning point: {self.turning_points[-1]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}")
 
     def calculate_direction(self):
         vector_change = [self.head.actual_x - self.before['head_pos'][0],
@@ -284,28 +284,27 @@ class CreatureBody:
 
     def move_tail_towards_turning_point(self, speed: float):
         log('moving tail towards head')
-        vector_change = [round(self.tail.actual_x - self.turning_points[0][0]),
-                         round(self.tail.actual_y - self.turning_points[0][1])]
+        vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
+                         round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
 
         log(f"Vector Change: {vector_change}")
-
 
         if vector_change[0] > 0:
             # Tail must move to the right
             self.tail.actual_x = self.tail.actual_x - 1 * deltatime * speed
-            self.tail.actual_y = self.turning_points[0][1]
+            self.tail.actual_y = self.turning_points[-1]['head_pos'][1]
         elif vector_change[0] < 0:
             # Tail must move to the left
             self.tail.actual_x = self.tail.actual_x + 1 * deltatime * speed
-            self.tail.actual_y = self.turning_points[0][1]
+            self.tail.actual_y = self.turning_points[-1]['head_pos'][1]
         elif vector_change[1] > 0:
             # Tail must move up
             self.tail.actual_y = self.tail.actual_y - 1 * deltatime * speed
-            self.tail.actual_x = self.turning_points[0][0]
+            self.tail.actual_x = self.turning_points[-1]['head_pos'][0]
         elif vector_change[1] < 0:
             # Tail must move down
             self.tail.actual_y = self.tail.actual_y + 1 * deltatime * speed
-            self.tail.actual_x = self.turning_points[0][0]
+            self.tail.actual_x = self.turning_points[-1]['head_pos'][0]
 
         self.remove_turning_point()
 
@@ -319,7 +318,7 @@ class CreatureBody:
         if len(self.turning_points) != 0:
             self.move_tail_towards_turning_point(speed)
 
-        if len(self.turning_points) == 0:
+        elif len(self.turning_points) == 0:
             log('moving tail towards head')
             self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
             self.tail.actual_y = self.head.actual_y
@@ -334,14 +333,40 @@ class CreatureBody:
         if len(self.turning_points) > 0:
             self.move_tail_towards_turning_point(speed)
 
-        if len(self.turning_points) == 0:
+        elif len(self.turning_points) == 0:
             log('moving tail towards head')
             self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
             self.tail.actual_x = self.head.actual_x
 
     def get_full_body(self) -> list[Rect]:
-        body_list = [pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, 1),
-                     pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
+        # body_list = [pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, 1),
+        #              pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
+        body_list = [pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
+        remaining_length = self.length
+
+        for turning_point in self.turning_points:
+            point_index = self.turning_points.index(turning_point)
+            if point_index == 0:
+                length = [self.head.actual_x - turning_point['head_pos'][0],
+                          self.head.actual_y - turning_point['head_pos'][1]]
+                start_point = turning_point['head_pos']
+            else:
+                length = [self.turning_points[point_index - 1]['head_pos'][0] - turning_point['head_pos'][0],
+                          self.turning_points[point_index - 1]['head_pos'][1] - turning_point['head_pos'][1]]
+                start_point = turning_point['head_pos']
+
+            largest_value = max(length)
+            if length.index(largest_value) == 0:
+                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), round(largest_value), 1))
+            else:
+                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, round(largest_value)))
+
+            remaining_length -= round(largest_value)
+
+        # I need to calculate the direction from the very last body part, and use the remaining length in that direction.
+        # if direction == 'right':
+        #     # Tail must be left
+        #     body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, remaining_length))
 
         return body_list
 
@@ -424,7 +449,7 @@ class Creature:
 
         self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
                                              CreatureBodyPart(self.id, position_x - 1, position_y)]
-        self.body2 = CreatureBody(self.id, position_x, position_y, 40)
+        self.body2 = CreatureBody(self.id, position_x, position_y, 50)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
@@ -695,7 +720,7 @@ class Camera:
             full_body = creature.body2.get_full_body()
 
             for point in creature.body2.turning_points:
-                drawing_rect = pygame.Rect(point[0], point[1], 1, 1)
+                drawing_rect = pygame.Rect(point['head_pos'][0], point['head_pos'][1], 1, 1)
                 drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
                 drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
                 drawing_rect.width *= self.zoom_level
