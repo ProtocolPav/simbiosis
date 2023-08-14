@@ -317,6 +317,7 @@ class CreatureBody:
         if len(self.turning_points) == 0:
             log('moving tail towards head')
             self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
+            self.tail.actual_y = self.head.actual_y
 
     def move_y(self, direction: int, speed: float):
         self.save_position()
@@ -331,6 +332,7 @@ class CreatureBody:
         if len(self.turning_points) == 0:
             log('moving tail towards head')
             self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
+            self.tail.actual_x = self.head.actual_x
 
     def get_full_body(self) -> list[Rect]:
         body_list = [pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, 1),
@@ -376,7 +378,7 @@ class CreatureGenes:
 
         # Genes affecting Creature movement
         # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=1)
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=20)
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -754,7 +756,6 @@ debug = False
 camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
 right = True
-counter = 0
 
 while run:
     milliseconds = clock.tick(120)
@@ -771,8 +772,7 @@ while run:
             elif event.key == pygame.K_q:
                 debug = not debug
 
-    counter += 1
-    if counter % 1000 == 0:
+    if random.randint(0,100) == random.randint(0,100):
         right = not right
 
     world.tick_game()
