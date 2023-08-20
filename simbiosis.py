@@ -4,6 +4,7 @@ import copy
 import random
 import yaml
 from copy import deepcopy
+from debug import debug as print_debug
 
 from datetime import datetime
 
@@ -256,14 +257,11 @@ class CreatureBody:
         return False
 
     def remove_turning_point(self):
-        vector_change = [round(self.tail.actual_x - self.turning_points[0]['head_pos'][0]),
-                         round(self.tail.actual_y - self.turning_points[0]['head_pos'][1])]
+        vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
+                         round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
 
         if vector_change[0] == 0 and vector_change[1] == 0:
-            log(f'Turning point passed: {self.turning_points[-1]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}')
             self.turning_points.pop()
-        else:
-            log(f"Waiting to pass turning point: {self.turning_points[-1]}. Current pos: {self.tail.actual_x, self.tail.actual_y}. Vector Change: {vector_change}")
 
     def calculate_direction(self):
         vector_change = [self.head.actual_x - self.before['head_pos'][0],
@@ -810,6 +808,15 @@ while run:
     camera.move()
     camera.draw(world)
     camera.debug_draw(world) if debug else ...
+
+    if len(world.creatures[0].body2.turning_points) > 0:
+        print_debug(f'Tail Pos: {world.creatures[0].body2.tail.actual_x, world.creatures[0].body2.tail.actual_y}')
+        print_debug(f"Turning Pos: {world.creatures[0].body2.turning_points[-1]['head_pos'][0], world.creatures[0].body2.turning_points[-1]['head_pos'][1]}", 1)
+
+        vector_change = [round(world.creatures[0].body2.tail.actual_x - world.creatures[0].body2.turning_points[-1]['head_pos'][0]),
+                         round(world.creatures[0].body2.tail.actual_y - world.creatures[0].body2.turning_points[-1]['head_pos'][1])]
+
+        print_debug(f"Vector: {vector_change}", 2)
 
     if not world.game_paused:
         for quadrant in world.quadrants:
