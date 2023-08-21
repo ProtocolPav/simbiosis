@@ -337,8 +337,6 @@ class CreatureBody:
             self.tail.actual_x = self.head.actual_x
 
     def get_full_body(self) -> list[Rect]:
-        # body_list = [pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, 1),
-        #              pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
         body_list = [pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
         remaining_length = self.length
 
@@ -361,10 +359,14 @@ class CreatureBody:
 
             remaining_length -= round(largest_value)
 
-        # I need to calculate the direction from the very last body part, and use the remaining length in that direction.
-        # if direction == 'right':
-        #     # Tail must be left
-        #     body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, remaining_length))
+        length = [body_list[-1][0] - self.tail.actual_x,
+                  body_list[-1][1] - self.tail.actual_y]
+
+        largest_value = max(length)
+        if length.index(largest_value) == 0:
+            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), remaining_length, 1))
+        else:
+            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, remaining_length))
 
         return body_list
 
