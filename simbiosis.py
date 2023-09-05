@@ -351,22 +351,38 @@ class CreatureBody:
                           self.turning_points[point_index - 1]['head_pos'][1] - turning_point['head_pos'][1]]
                 start_point = turning_point['head_pos']
 
-            if length[0] != 0.0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), length[0], 1))
-                remaining_length -= round(length[0])
-            elif length[1] != 0.0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, length[1]))
-                remaining_length -= round(length[1])
+            if length[0] > 0.0:
+                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), abs(length[0]), 1))
+                remaining_length -= abs(round(length[0]))
+            elif length[0] < 0.0:
+                body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), abs(length[0]), 1))
+                remaining_length -= abs(round(length[0]))
+
+            elif length[1] > 0.0:
+                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, abs(length[1])))
+                remaining_length -= abs(round(length[1]))
+            elif length[1] < 0.0:
+                body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, abs(length[1])))
+                remaining_length -= abs(round(length[1]))
 
         length = [body_list[0][0] - self.tail.actual_x,
                   body_list[0][1] - self.tail.actual_y]
 
+        for i in length:
+            if -1 < i < 1:
+                length[length.index(i)] = 0.0
+
         log(f'debug {length}')
 
-        if length[0] != 0.0:
+        if length[0] > 0.0:
             body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), remaining_length, 1))
-        elif length[1] != 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, remaining_length))
+        elif length[0] < 0.0:
+            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(self.tail.actual_y), remaining_length, 1))
+
+        elif length[1] > 0.0:
+            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(body_list[0][1]), 1, remaining_length))
+        elif length[1] < 0.0:
+            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, remaining_length))
 
         return body_list
 
