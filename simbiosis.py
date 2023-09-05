@@ -440,77 +440,36 @@ class Creature:
     def __repr__(self):
         return f"Creature(ID{self.id}, Body({self.body}))"
 
-    def __move_x(self, direction: int):
-        self.tracking['head']['before'] = self.tracking['head']['current']
-        self.tracking['tail']['before'] = self.tracking['tail']['current']
-        head = self.tracking['head']['current']
-        tail = self.tracking['tail']['current']
-
-        if world.internal_rect.width - 1 <= head.x:
-            # On the rightmost border, so the creature must not face right
-            self.facing = random.choice(['down', 'up', 'left'])
-            head.actual_x = head.actual_x - 1 * deltatime * self.genes.idle_speed.value
-        elif head.x <= 0:
-            # On the leftmost border, so creature must not face left
-            self.facing = random.choice(['down', 'up', 'right'])
-            head.actual_x = head.actual_x + 1 * deltatime * self.genes.idle_speed.value
-        else:
-            head.actual_x = head.actual_x - direction * deltatime * self.genes.idle_speed.value
-
-        head.x = round(head.actual_x)
-        self.tracking['head']['current'] = head
-        self.tracking['tail']['current'] = tail
-
-    def __move_y(self, direction: int):
-        self.tracking['head']['before'] = self.tracking['head']['current']
-        self.tracking['tail']['before'] = self.tracking['tail']['current']
-        head = self.tracking['head']['current']
-        tail = self.tracking['tail']['current']
-
-        if world.internal_rect.height - 1 <= self.body[0].y:
-            # On Bottom border, so creature must not face down
-            self.facing = random.choice(['up', 'right', 'left'])
-            head.actual_y = head.actual_y - 1 * deltatime * self.genes.idle_speed.value
-        elif self.body[0].y <= 0:
-            # On top border, so creature must not face up
-            self.facing = random.choice(['down', 'right', 'left'])
-            head.actual_y = head.actual_y + 1 * deltatime * self.genes.idle_speed.value
-        else:
-            head.actual_y = head.actual_y - direction * deltatime * self.genes.idle_speed.value
-
-        head.y = round(head.actual_y)
-        self.tracking['head']['current'] = head
-        self.tracking['tail']['current'] = tail
-
     def __vision(self):
         choice_list = ['left', 'right', 'down', 'up']
         vision_distance = self.genes.vision.value
-        quadrant_check = self.body[0].check_quadrant()
-        difference = pygame.Vector2(self.body[0].x - self.body[1].x, self.body[0].y - self.body[1].y)
+        quadrant_check = self.body2.head.check_quadrant()
 
         # Facing Upwards
-        if difference == pygame.Vector2(0, -1):
-            self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y - vision_distance, 1, 1 + vision_distance)
+        if self.body2.facing == 'up':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x, self.body2.head.actual_y - vision_distance, 1, 1 + vision_distance)
             choice_list = ['right', 'left', 'up', 'down']
 
         # Facing Downwards
-        elif difference == pygame.Vector2(0, 1):
-            self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y + 1, 1, vision_distance)
+        elif self.body2.facing == 'down':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x, self.body2.head.actual_y + 1, 1, vision_distance)
             choice_list = ['left', 'right', 'down', 'up']
 
         # Facing Left
-        elif difference == pygame.Vector2(-1, 0):
-            self.vision_rect = pygame.Rect(self.body[0].x - vision_distance, self.body[0].y, 1 + vision_distance, 1)
+        elif self.body2.facing == 'left':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x - vision_distance, self.body2.head.actual_y, 1 + vision_distance, 1)
             choice_list = ['up', 'down', 'left', 'right']
 
         # Facing Right
-        elif difference == pygame.Vector2(1, 0):
-            self.vision_rect = pygame.Rect(self.body[0].x + 1, self.body[0].y, vision_distance, 1)
+        elif self.body2.facing == 'right':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x + 1, self.body2.head.actual_y, vision_distance, 1)
             choice_list = ['down', 'up', 'right', 'left']
 
         collision = self.vision_rect.collidedict(quadrant_check.collisions_dict, True)
         food_collision = self.vision_rect.collidedict(quadrant_check.food_collisions_dict, True)
         border_collision = self.vision_rect.collidelist(world.borders)
+
+        log(f"{food_collision}")
 
         if collision and not self.seeing and self.id != collision[1].creature_id:
             # log(f"Creature {self.id} is seeing something and reacting")
@@ -624,19 +583,14 @@ class Creature:
 
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-            # if self.facing == "up":
-            #     self.body2.move_y(1, self.genes.idle_speed.value)
-            # elif self.facing == "down":
-            #     self.body2.move_y(-1, self.genes.idle_speed.value)
-            # elif self.facing == "left":
-            #     self.body2.move_x(1, self.genes.idle_speed.value)
-            # elif self.facing == "right":
-            #     self.body2.move_x(-1, self.genes.idle_speed.value)
-
-            if right:
-                self.body2.move_x(-1, self.genes.idle_speed.value)
-            else:
+            if self.facing == "up":
                 self.body2.move_y(1, self.genes.idle_speed.value)
+            elif self.facing == "down":
+                self.body2.move_y(-1, self.genes.idle_speed.value)
+            elif self.facing == "left":
+                self.body2.move_x(1, self.genes.idle_speed.value)
+            elif self.facing == "right":
+                self.body2.move_x(-1, self.genes.idle_speed.value)
 
             for body in self.body:
                 body.add_to_collisions()
@@ -743,7 +697,6 @@ run = True
 debug = False
 camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=2, start_cluster=100)
-right = True
 
 while run:
     milliseconds = clock.tick(120)
@@ -759,9 +712,6 @@ while run:
                 world.game_paused = not world.game_paused
             elif event.key == pygame.K_q:
                 debug = not debug
-
-    if random.randint(0,100) == random.randint(0,100):
-        right = not right
 
     world.tick_game()
 
