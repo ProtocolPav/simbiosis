@@ -281,7 +281,7 @@ class CreatureBody:
             self.facing = 'up'
 
     def move_tail_towards_turning_point(self, speed: float):
-        log('moving tail towards head')
+        log('moving tail towards tp')
         vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
                          round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
 
@@ -351,21 +351,21 @@ class CreatureBody:
                           self.turning_points[point_index - 1]['head_pos'][1] - turning_point['head_pos'][1]]
                 start_point = turning_point['head_pos']
 
-            largest_value = max(length)
-            if length.index(largest_value) == 0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), round(largest_value), 1))
-            else:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, round(largest_value)))
+            if length[0] != 0.0:
+                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), length[0], 1))
+                remaining_length -= round(length[0])
+            elif length[1] != 0.0:
+                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, length[1]))
+                remaining_length -= round(length[1])
 
-            remaining_length -= round(largest_value)
+        length = [body_list[0][0] - self.tail.actual_x,
+                  body_list[0][1] - self.tail.actual_y]
 
-        length = [body_list[-1][0] - self.tail.actual_x,
-                  body_list[-1][1] - self.tail.actual_y]
+        log(f'debug {length}')
 
-        largest_value = max(length)
-        if length.index(largest_value) == 0:
+        if length[0] != 0.0:
             body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), remaining_length, 1))
-        else:
+        elif length[1] != 0.0:
             body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), 1, remaining_length))
 
         return body_list
