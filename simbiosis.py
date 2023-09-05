@@ -375,14 +375,14 @@ class CreatureBody:
         log(f'debug {length}')
 
         if length[0] > 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), remaining_length, 1))
+            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), abs(length[0]), 1))
         elif length[0] < 0.0:
-            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(self.tail.actual_y), remaining_length, 1))
+            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(self.tail.actual_y), abs(length[0]), 1))
 
         elif length[1] > 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(body_list[0][1]), 1, remaining_length))
+            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(body_list[0][1]), 1, abs(length[1])))
         elif length[1] < 0.0:
-            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, remaining_length))
+            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, abs(length[1])))
 
         return body_list
 
