@@ -690,17 +690,9 @@ class Camera:
             colour_to_draw = [int(creature.genes.colour_red.value),
                               int(creature.genes.colour_green.value),
                               int(creature.genes.colour_blue.value)]
+            head_colour = [x * creature.genes.head.value for x in colour_to_draw]
 
             full_body = creature.body2.get_full_body()
-
-            for point in creature.body2.turning_points:
-                drawing_rect = pygame.Rect(point['head_pos'][0], point['head_pos'][1], 1, 1)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
-                drawing_rect.width *= self.zoom_level
-                drawing_rect.height *= self.zoom_level
-
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[255, 255, 255])
 
             for i in full_body:
                 index_of_point = full_body.index(i)
@@ -708,18 +700,7 @@ class Camera:
                                              world_rect.y + round(i[1] / scale)]
 
             pygame.draw.lines(surface=self.screen, points=full_body, color=colour_to_draw, closed=False, width=self.zoom_level)
-
-            # for i in range(len(full_body)):
-            #     drawing_rect = full_body.pop(0)
-            #     drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-            #     drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
-            #     drawing_rect.width *= self.zoom_level
-            #     drawing_rect.height *= self.zoom_level
-            #
-            #     if len(full_body) == 0:
-            #         colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
-            #
-            #     pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+            # I need to also draw the head rect at the front
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -736,11 +717,7 @@ class Camera:
         for creature in world.creatures:
             full_body = creature.body2.get_full_body()
 
-            for point in creature.body2.turning_points:
-                pygame.draw.rect(surface=self.screen, rect=pygame.Rect(point[0], point[1], 1, 1), color=[245, 245, 245])
-
-            for i in range(len(full_body)):
-                pygame.draw.rect(surface=self.screen, rect=full_body.pop(0), color=[245, 245, 245])
+            pygame.draw.lines(surface=self.screen, points=full_body, color=[255, 255, 255], closed=False)
 
             if creature.vision_rect is not None:
                 pygame.draw.rect(camera.screen, [255, 0, 0], creature.vision_rect)
@@ -765,7 +742,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=2, start_cluster=100)
 right = True
 
 while run:
