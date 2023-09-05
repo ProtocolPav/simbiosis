@@ -194,7 +194,7 @@ class CreatureBodyPart(pygame.Rect):
         return CreatureBodyPart(self.creature_id, self.x, self.y)
 
     def check_quadrant(self) -> WorldQuadrant:
-        coordinates = (self.x, self.y)
+        coordinates = (self.actual_x, self.actual_y)
 
         for quad in world.quadrants:
             y_check = quad.internal_rect.topleft[1] < coordinates[1] < quad.internal_rect.bottomright[1]
@@ -281,11 +281,8 @@ class CreatureBody:
             self.facing = 'up'
 
     def move_tail_towards_turning_point(self, speed: float):
-        log('moving tail towards tp')
         vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
                          round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
-
-        log(f"Vector Change: {vector_change}")
 
         if vector_change[0] > 0:
             # Tail must move to the right
@@ -317,7 +314,6 @@ class CreatureBody:
             self.move_tail_towards_turning_point(speed)
 
         elif len(self.turning_points) == 0:
-            log('moving tail towards head')
             self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
             self.tail.actual_y = self.head.actual_y
 
@@ -332,7 +328,6 @@ class CreatureBody:
             self.move_tail_towards_turning_point(speed)
 
         elif len(self.turning_points) == 0:
-            log('moving tail towards head')
             self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
             self.tail.actual_x = self.head.actual_x
 
@@ -381,9 +376,8 @@ class CreatureGenes:
         self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 10))
 
         # Genes affecting Creature movement
-        # self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=20)
-        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(10, 20))
+        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 40))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
         # Genes affecting the Creature's Energy Consumption
@@ -423,7 +417,7 @@ class Creature:
 
         self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
                                              CreatureBodyPart(self.id, position_x - 1, position_y)]
-        self.body2 = CreatureBody(self.id, position_x, position_y, 50)
+        self.body2 = CreatureBody(self.id, position_x, position_y, 4)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
@@ -469,10 +463,8 @@ class Creature:
         food_collision = self.vision_rect.collidedict(quadrant_check.food_collisions_dict, True)
         border_collision = self.vision_rect.collidelist(world.borders)
 
-        log(f"{food_collision}")
-
         if collision and not self.seeing and self.id != collision[1].creature_id:
-            # log(f"Creature {self.id} is seeing something and reacting")
+            log(f"Creature {self.id} has seen a creature")
             self.seeing = True
             self.facing = random.choices(choice_list,
                                          [self.genes.react_right.value,
@@ -481,6 +473,7 @@ class Creature:
                                           self.genes.react_back.value])[0]
 
         elif food_collision and not self.seeing:
+            log(f"Creature {self.id} has seen food")
             self.seeing = True
             self.facing = random.choices(choice_list,
                                          [self.genes.react_right_food.value,
@@ -489,6 +482,7 @@ class Creature:
                                           self.genes.react_back_food.value])[0]
 
         elif border_collision != -1:
+            log(f"Creature {self.id} has seen the border")
             self.facing = random.choices(choice_list,
                                          [self.genes.react_right.value,
                                           self.genes.react_left.value,
@@ -719,14 +713,14 @@ while run:
     camera.draw(world)
     camera.debug_draw(world) if debug else ...
 
-    if len(world.creatures[0].body2.turning_points) > 0:
-        print_debug(f'Tail Pos: {world.creatures[0].body2.tail.actual_x, world.creatures[0].body2.tail.actual_y}')
-        print_debug(f"Turning Pos: {world.creatures[0].body2.turning_points[-1]['head_pos'][0], world.creatures[0].body2.turning_points[-1]['head_pos'][1]}", 1)
-
-        vector_change = [round(world.creatures[0].body2.tail.actual_x - world.creatures[0].body2.turning_points[-1]['head_pos'][0]),
-                         round(world.creatures[0].body2.tail.actual_y - world.creatures[0].body2.turning_points[-1]['head_pos'][1])]
-
-        print_debug(f"Vector: {vector_change}", 2)
+    # if len(world.creatures[0].body2.turning_points) > 0:
+    #     print_debug(f'Tail Pos: {world.creatures[0].body2.tail.actual_x, world.creatures[0].body2.tail.actual_y}')
+    #     print_debug(f"Turning Pos: {world.creatures[0].body2.turning_points[-1]['head_pos'][0], world.creatures[0].body2.turning_points[-1]['head_pos'][1]}", 1)
+    #
+    #     vector_change = [round(world.creatures[0].body2.tail.actual_x - world.creatures[0].body2.turning_points[-1]['head_pos'][0]),
+    #                      round(world.creatures[0].body2.tail.actual_y - world.creatures[0].body2.turning_points[-1]['head_pos'][1])]
+    #
+    #     print_debug(f"Vector: {vector_change}", 2)
 
     if not world.game_paused:
         for quadrant in world.quadrants:
