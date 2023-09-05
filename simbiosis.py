@@ -336,55 +336,13 @@ class CreatureBody:
             self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
             self.tail.actual_x = self.head.actual_x
 
-    def get_full_body(self) -> list[Rect]:
-        body_list = [pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
-        remaining_length = self.length
+    def get_full_body(self) -> list:
+        body_position_list = [[self.head.actual_x, self.head.actual_y]]
+        for i in self.turning_points:
+            body_position_list.append(i['head_pos'])
+        body_position_list.append([self.tail.actual_x, self.tail.actual_y])
 
-        for turning_point in self.turning_points:
-            point_index = self.turning_points.index(turning_point)
-            if point_index == 0:
-                length = [self.head.actual_x - turning_point['head_pos'][0],
-                          self.head.actual_y - turning_point['head_pos'][1]]
-                start_point = turning_point['head_pos']
-            else:
-                length = [self.turning_points[point_index - 1]['head_pos'][0] - turning_point['head_pos'][0],
-                          self.turning_points[point_index - 1]['head_pos'][1] - turning_point['head_pos'][1]]
-                start_point = turning_point['head_pos']
-
-            if length[0] > 0.0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), abs(length[0]), 1))
-                remaining_length -= abs(round(length[0]))
-            elif length[0] < 0.0:
-                body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), abs(length[0]), 1))
-                remaining_length -= abs(round(length[0]))
-
-            elif length[1] > 0.0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, abs(length[1])))
-                remaining_length -= abs(round(length[1]))
-            elif length[1] < 0.0:
-                body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, abs(length[1])))
-                remaining_length -= abs(round(length[1]))
-
-        length = [body_list[0][0] - self.tail.actual_x,
-                  body_list[0][1] - self.tail.actual_y]
-
-        for i in length:
-            if -1 < i < 1:
-                length[length.index(i)] = 0.0
-
-        log(f'debug {length}')
-
-        if length[0] > 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), abs(length[0]), 1))
-        elif length[0] < 0.0:
-            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(self.tail.actual_y), abs(length[0]), 1))
-
-        elif length[1] > 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(body_list[0][1]), 1, abs(length[1])))
-        elif length[1] < 0.0:
-            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, abs(length[1])))
-
-        return body_list
+        return body_position_list
 
 
 class Gene:
@@ -676,9 +634,9 @@ class Creature:
             #     self.body2.move_x(-1, self.genes.idle_speed.value)
 
             if right:
-                self.body2.move_x(1, self.genes.idle_speed.value)
+                self.body2.move_x(-1, self.genes.idle_speed.value)
             else:
-                self.body2.move_y(-1, self.genes.idle_speed.value)
+                self.body2.move_y(1, self.genes.idle_speed.value)
 
             for body in self.body:
                 body.add_to_collisions()
@@ -744,17 +702,24 @@ class Camera:
 
                 pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[255, 255, 255])
 
-            for i in range(len(full_body)):
-                drawing_rect = full_body.pop(0)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
-                drawing_rect.width *= self.zoom_level
-                drawing_rect.height *= self.zoom_level
+            for i in full_body:
+                index_of_point = full_body.index(i)
+                full_body[index_of_point] = [world_rect.x + round(i[0] / scale),
+                                             world_rect.y + round(i[1] / scale)]
 
-                if len(full_body) == 0:
-                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+            pygame.draw.lines(surface=self.screen, points=full_body, color=colour_to_draw, closed=False, width=self.zoom_level)
 
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+            # for i in range(len(full_body)):
+            #     drawing_rect = full_body.pop(0)
+            #     drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
+            #     drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
+            #     drawing_rect.width *= self.zoom_level
+            #     drawing_rect.height *= self.zoom_level
+            #
+            #     if len(full_body) == 0:
+            #         colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+            #
+            #     pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
