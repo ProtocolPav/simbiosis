@@ -676,9 +676,9 @@ class Creature:
             #     self.body2.move_x(-1, self.genes.idle_speed.value)
 
             if right:
-                self.body2.move_x(-1, self.genes.idle_speed.value)
+                self.body2.move_x(1, self.genes.idle_speed.value)
             else:
-                self.body2.move_y(1, self.genes.idle_speed.value)
+                self.body2.move_y(-1, self.genes.idle_speed.value)
 
             for body in self.body:
                 body.add_to_collisions()
