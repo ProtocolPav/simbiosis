@@ -402,8 +402,8 @@ class CreatureGenes:
         self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 10))
 
         # Genes affecting Creature movement
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(10, 20))
-        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 40))
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(10, 40))
+        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 80))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
         # Genes affecting the Creature's Energy Consumption
@@ -448,8 +448,7 @@ class Creature:
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
 
-        # self.facing = random.choice(['right', 'left', 'up', 'down'])
-        self.facing = 'right'
+        self.facing = random.choice(['right', 'left', 'up', 'down'])
         self.vision_rect = None
         self.dead = False
         self.colliding = False
@@ -723,7 +722,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=30, start_cluster=10)
 
 while run:
     milliseconds = clock.tick(120)
