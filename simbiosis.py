@@ -3,6 +3,8 @@ import math
 import copy
 import random
 import yaml
+from copy import deepcopy
+from debug import debug as print_debug
 
 from datetime import datetime
 
@@ -33,7 +35,7 @@ class WorldQuadrant:
     def __init__(self, pos_x: int, pos_y: int, quadrant_size: int):
         self.internal_rect = pygame.Rect(pos_x, pos_y, quadrant_size, quadrant_size)
 
-        self.collisions_dict: dict[int, CreatureBody] = {}
+        self.collisions_dict: dict[int, CreatureBodyPart] = {}
         self.food_collisions_dict: dict[int, Food] = {}
 
 
@@ -171,25 +173,28 @@ class FoodCluster:
             self.remove_food(food)
 
 
-class CreatureBody(pygame.Rect):
+class CreatureBodyPart(pygame.Rect):
     id = 1
 
     def __init__(self, creature_id: int, pos_x: int, pos_y: int):
         super().__init__(pos_x, pos_y, 1, 1)
 
-        # log(f"Created Body with ID{CreatureBody.id}")
-        self.id = CreatureBody.id
+        # log(f"Created Body with ID{CreatureBodyPart.id}")
+        self.id = CreatureBodyPart.id
         self.creature_id = creature_id
         self.actual_x = self.x
         self.actual_y = self.y
 
-        CreatureBody.id += 1
+        CreatureBodyPart.id += 1
 
     def __repr__(self):
         return f"Body({self.id, self.x, self.y, self.width, self.height})"
 
+    def __deepcopy__(self, memodict):
+        return CreatureBodyPart(self.creature_id, self.x, self.y)
+
     def check_quadrant(self) -> WorldQuadrant:
-        coordinates = (self.x, self.y)
+        coordinates = (self.actual_x, self.actual_y)
 
         for quad in world.quadrants:
             y_check = quad.internal_rect.topleft[1] < coordinates[1] < quad.internal_rect.bottomright[1]
@@ -212,6 +217,153 @@ class CreatureBody(pygame.Rect):
             return collision[1]
         else:
             return None
+
+
+class CreatureBody:
+    def __init__(self, creature_id: int, pos_x: int, pos_y: int, length: int):
+        log(f"Created Body of creature with ID{Creature.id}")
+
+        self.creature_id = creature_id
+        self.head = CreatureBodyPart(creature_id, pos_x=pos_x, pos_y=pos_y)
+        self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length + 1, pos_y=pos_y)
+        self.turning_points: list[dict] = []  # Elements closer to the beginning are closest to the head
+        self.facing = 'right'
+        self.length = length
+        self.before = {'head_pos': [],
+                       'facing': ''}
+
+    def save_position(self):
+        """
+        Deletes the .before attribute to prevent recursion, since deepcopy creates a copy of all attributes.
+        I do not want the entire history of the creature saved, only the previous tick
+        :return:
+        """
+        self.before['head_pos'] = [self.head.actual_x, self.head.actual_y]
+        self.before['facing'] = self.facing
+
+    def check_for_turning_point(self) -> bool:
+        """
+        Checks for turning points and returns a boolean.
+        A point is a turning point when the direction changes.
+        Saves the head position before the turn.
+        :return:
+        """
+        if self.facing != self.before['facing']:
+            turning_point = deepcopy(self.before)
+            self.turning_points.insert(0, turning_point)
+            return True
+
+        return False
+
+    def remove_turning_point(self):
+        vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
+                         round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
+
+        if vector_change[0] == 0 and vector_change[1] == 0:
+            self.turning_points.pop()
+
+    def calculate_direction(self):
+        vector_change = [self.head.actual_x - self.before['head_pos'][0],
+                         self.head.actual_y - self.before['head_pos'][1]]
+
+        if vector_change[0] > 0:
+            # Head moved to the right
+            self.facing = 'right'
+        elif vector_change[0] < 0:
+            # Head moved to the left
+            self.facing = 'left'
+        elif vector_change[1] > 0:
+            # Head moved down
+            self.facing = 'down'
+        elif vector_change[1] < 0:
+            # Head moved up
+            self.facing = 'up'
+
+    def move_tail_towards_turning_point(self, speed: float):
+        vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
+                         round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
+
+        if vector_change[0] > 0:
+            # Tail must move to the right
+            self.tail.actual_x = self.tail.actual_x - 1 * deltatime * speed
+            self.tail.actual_y = self.turning_points[-1]['head_pos'][1]
+        elif vector_change[0] < 0:
+            # Tail must move to the left
+            self.tail.actual_x = self.tail.actual_x + 1 * deltatime * speed
+            self.tail.actual_y = self.turning_points[-1]['head_pos'][1]
+        elif vector_change[1] > 0:
+            # Tail must move up
+            self.tail.actual_y = self.tail.actual_y - 1 * deltatime * speed
+            self.tail.actual_x = self.turning_points[-1]['head_pos'][0]
+        elif vector_change[1] < 0:
+            # Tail must move down
+            self.tail.actual_y = self.tail.actual_y + 1 * deltatime * speed
+            self.tail.actual_x = self.turning_points[-1]['head_pos'][0]
+
+        self.remove_turning_point()
+
+    def move_x(self, direction: int, speed: float):
+        self.save_position()
+
+        self.head.actual_x = self.head.actual_x - direction * deltatime * speed
+        self.calculate_direction()
+        self.check_for_turning_point()
+
+        if len(self.turning_points) != 0:
+            self.move_tail_towards_turning_point(speed)
+
+        elif len(self.turning_points) == 0:
+            self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
+            self.tail.actual_y = self.head.actual_y
+
+    def move_y(self, direction: int, speed: float):
+        self.save_position()
+
+        self.head.actual_y = self.head.actual_y - direction * deltatime * speed
+        self.calculate_direction()
+        self.check_for_turning_point()
+
+        if len(self.turning_points) > 0:
+            self.move_tail_towards_turning_point(speed)
+
+        elif len(self.turning_points) == 0:
+            self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
+            self.tail.actual_x = self.head.actual_x
+
+    def get_full_body(self) -> list:
+        remaining_length = self.length
+        body_position_list = [[self.head.actual_x, self.head.actual_y]]
+        last_turning_point = {'head_pos': [self.head.actual_x, self.head.actual_y],
+                              'facing': self.facing}
+        for i in self.turning_points:
+            body_position_list.append(i['head_pos'])
+            last_turning_point = i
+
+        for i in body_position_list[0:len(body_position_list)-1]:
+            body_index = body_position_list.index(i)
+            x_difference = i[0]-body_position_list[body_index+1][0]
+            y_difference = i[1]-body_position_list[body_index+1][1]
+
+            if x_difference != 0.0:
+                remaining_length -= abs(x_difference)
+            elif y_difference != 0.0:
+                remaining_length -= abs(y_difference)
+
+        if last_turning_point['facing'] == 'up':
+            # Tail must go down
+            body_position_list.append([last_turning_point['head_pos'][0],
+                                       last_turning_point['head_pos'][1] + remaining_length])
+        elif last_turning_point['facing'] == 'down':
+            body_position_list.append([last_turning_point['head_pos'][0],
+                                       last_turning_point['head_pos'][1] - remaining_length])
+        elif last_turning_point['facing'] == 'left':
+            body_position_list.append([last_turning_point['head_pos'][0] + remaining_length,
+                                       last_turning_point['head_pos'][1]])
+        elif last_turning_point['facing'] == 'right':
+            body_position_list.append([last_turning_point['head_pos'][0] - remaining_length,
+                                       last_turning_point['head_pos'][1]])
+
+        return body_position_list
 
 
 class Gene:
@@ -250,8 +402,8 @@ class CreatureGenes:
         self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 10))
 
         # Genes affecting Creature movement
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(10, 40))
+        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 80))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
         # Genes affecting the Creature's Energy Consumption
@@ -289,8 +441,9 @@ class Creature:
         log(f"Created Creature with ID{Creature.id}")
         self.id = Creature.id
 
-        self.body: list[CreatureBody] = [CreatureBody(self.id, position_x, position_y),
-                                         CreatureBody(self.id, position_x - 1, position_y)]
+        self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
+                                             CreatureBodyPart(self.id, position_x - 1, position_y)]
+        self.body2 = CreatureBody(self.id, position_x, position_y, 6)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
@@ -306,74 +459,29 @@ class Creature:
     def __repr__(self):
         return f"Creature(ID{self.id}, Body({self.body}))"
 
-    def __move_x(self, direction: int):
-        last_body_part = self.body.pop()
-
-        if world.internal_rect.width - 1 <= self.body[0].x:
-            # On the rightmost border, so the creature must not face right
-            self.facing = random.choice(['down', 'up', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x - 1
-            last_body_part.actual_y = self.body[0].actual_y
-        elif self.body[0].x <= 0:
-            # On the leftmost border, so creature must not face left
-            self.facing = random.choice(['down', 'up', 'right'])
-            last_body_part.actual_x = self.body[0].actual_x + 1
-            last_body_part.actual_y = self.body[0].actual_y
-        else:
-            last_body_part.actual_x = self.body[0].actual_x - direction
-            last_body_part.actual_y = self.body[0].actual_y
-
-        last_body_part.x = round(last_body_part.actual_x)
-        last_body_part.y = round(last_body_part.actual_y)
-
-        self.body.insert(0, last_body_part)
-
-    def __move_y(self, direction: int):
-        last_body_part = self.body.pop()
-
-        if world.internal_rect.height - 1 <= self.body[0].y:
-            # On Bottom border, so creature must not face down
-            self.facing = random.choice(['up', 'right', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - 1
-        elif self.body[0].y <= 0:
-            # On top border, so creature must not face up
-            self.facing = random.choice(['down', 'right', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y + 1
-        else:
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - direction
-
-        last_body_part.x = round(last_body_part.actual_x)
-        last_body_part.y = round(last_body_part.actual_y)
-
-        self.body.insert(0, last_body_part)
-
     def __vision(self):
         choice_list = ['left', 'right', 'down', 'up']
         vision_distance = self.genes.vision.value
-        quadrant_check = self.body[0].check_quadrant()
-        difference = pygame.Vector2(self.body[0].x - self.body[1].x, self.body[0].y - self.body[1].y)
+        quadrant_check = self.body2.head.check_quadrant()
 
         # Facing Upwards
-        if difference == pygame.Vector2(0, -1):
-            self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y - vision_distance, 1, 1 + vision_distance)
+        if self.body2.facing == 'up':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x, self.body2.head.actual_y - vision_distance, 1, 1 + vision_distance)
             choice_list = ['right', 'left', 'up', 'down']
 
         # Facing Downwards
-        elif difference == pygame.Vector2(0, 1):
-            self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y + 1, 1, vision_distance)
+        elif self.body2.facing == 'down':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x, self.body2.head.actual_y + 1, 1, vision_distance)
             choice_list = ['left', 'right', 'down', 'up']
 
         # Facing Left
-        elif difference == pygame.Vector2(-1, 0):
-            self.vision_rect = pygame.Rect(self.body[0].x - vision_distance, self.body[0].y, 1 + vision_distance, 1)
+        elif self.body2.facing == 'left':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x - vision_distance, self.body2.head.actual_y, 1 + vision_distance, 1)
             choice_list = ['up', 'down', 'left', 'right']
 
         # Facing Right
-        elif difference == pygame.Vector2(1, 0):
-            self.vision_rect = pygame.Rect(self.body[0].x + 1, self.body[0].y, vision_distance, 1)
+        elif self.body2.facing == 'right':
+            self.vision_rect = pygame.Rect(self.body2.head.actual_x + 1, self.body2.head.actual_y, vision_distance, 1)
             choice_list = ['down', 'up', 'right', 'left']
 
         collision = self.vision_rect.collidedict(quadrant_check.collisions_dict, True)
@@ -381,7 +489,7 @@ class Creature:
         border_collision = self.vision_rect.collidelist(world.borders)
 
         if collision and not self.seeing and self.id != collision[1].creature_id:
-            # log(f"Creature {self.id} is seeing something and reacting")
+            log(f"Creature {self.id} has seen a creature")
             self.seeing = True
             self.facing = random.choices(choice_list,
                                          [self.genes.react_right.value,
@@ -390,6 +498,7 @@ class Creature:
                                           self.genes.react_back.value])[0]
 
         elif food_collision and not self.seeing:
+            log(f"Creature {self.id} has seen food")
             self.seeing = True
             self.facing = random.choices(choice_list,
                                          [self.genes.react_right_food.value,
@@ -398,6 +507,7 @@ class Creature:
                                           self.genes.react_back_food.value])[0]
 
         elif border_collision != -1:
+            log(f"Creature {self.id} has seen the border")
             self.facing = random.choices(choice_list,
                                          [self.genes.react_right.value,
                                           self.genes.react_left.value,
@@ -457,7 +567,7 @@ class Creature:
         if self.energy - self.genes.energy_to_extend.value > self.genes.critical_hunger.value \
                 and len(self.body) + 1 < self.genes.maximum_length.value:
             self.energy -= self.genes.energy_to_extend.value
-            self.body.append(CreatureBody(self.id, self.body[-1].x, self.body[-1].y))
+            self.body.append(CreatureBodyPart(self.id, self.body[-1].x, self.body[-1].y))
 
     def __birth(self):
         if len(self.body) >= 4:
@@ -485,27 +595,22 @@ class Creature:
         return self.body[0].y
 
     def move(self):
-        self.energy -= self.genes.energy_per_square.value
+        if not self.dead:
+            self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-        for i in range(0, math.ceil(self.genes.idle_speed.value)):
-            if not self.dead:
-                self.__vision()
+            self.__vision()
 
-                self.energy -= self.genes.energy_per_square.value * len(self.body)
+            if self.facing == "up":
+                self.body2.move_y(1, self.genes.idle_speed.value)
+            elif self.facing == "down":
+                self.body2.move_y(-1, self.genes.idle_speed.value)
+            elif self.facing == "left":
+                self.body2.move_x(1, self.genes.idle_speed.value)
+            elif self.facing == "right":
+                self.body2.move_x(-1, self.genes.idle_speed.value)
 
-                if self.facing == "up":
-                    self.__move_y(-1)
-                elif self.facing == "down":
-                    self.__move_y(1)
-                elif self.facing == "left":
-                    self.__move_x(-1)
-                elif self.facing == "right":
-                    self.__move_x(1)
-
-                # self.__collide()
-
-                for body in self.body:
-                    body.add_to_collisions()
+            for body in self.body:
+                body.add_to_collisions()
 
         if self.energy <= 0:
             self.__die()
@@ -553,22 +658,29 @@ class Camera:
 
         # Draw Creatures
         for creature in world.creatures:
-            for body_part in creature.body:
-                colour_to_draw = [int(creature.genes.colour_red.value),
-                                  int(creature.genes.colour_green.value),
-                                  int(creature.genes.colour_blue.value)]
+            colour_to_draw = [int(creature.genes.colour_red.value),
+                              int(creature.genes.colour_green.value),
+                              int(creature.genes.colour_blue.value)]
+            head_colour = [x * creature.genes.head.value for x in colour_to_draw]
 
-                if creature.body.index(body_part) == 0:
-                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+            full_body = creature.body2.get_full_body()
 
-                # Move the Body Part Rect to the correct position
-                drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
+            for i in full_body:
+                index_of_point = full_body.index(i)
+                full_body[index_of_point] = [world_rect.x + round(i[0] / scale),
+                                             world_rect.y + round(i[1] / scale)]
+
+            pygame.draw.lines(surface=self.screen, points=full_body, color=colour_to_draw, closed=False, width=self.zoom_level)
+            # I need to also draw the head rect at the front
+
+            for point in creature.body2.turning_points:
+                drawing_rect = pygame.Rect(point['head_pos'][0], point['head_pos'][1], 1, 1)
                 drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
                 drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
 
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[255, 255, 255])
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -583,8 +695,9 @@ class Camera:
                 pygame.draw.rect(surface=self.screen, rect=food, color=[0, 255, 0])
 
         for creature in world.creatures:
-            for body_part in creature.body:
-                pygame.draw.rect(surface=self.screen, rect=body_part, color=[245, 245, 245])
+            full_body = creature.body2.get_full_body()
+
+            pygame.draw.lines(surface=self.screen, points=full_body, color=[255, 255, 255], closed=False)
 
             if creature.vision_rect is not None:
                 pygame.draw.rect(camera.screen, [255, 0, 0], creature.vision_rect)
@@ -609,10 +722,11 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=10, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=30, start_cluster=10)
 
 while run:
-    deltatime = clock.tick(25)
+    milliseconds = clock.tick(120)
+    deltatime = milliseconds / 1000
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -630,6 +744,15 @@ while run:
     camera.move()
     camera.draw(world)
     camera.debug_draw(world) if debug else ...
+
+    # if len(world.creatures[0].body2.turning_points) > 0:
+    #     print_debug(f'Tail Pos: {world.creatures[0].body2.tail.actual_x, world.creatures[0].body2.tail.actual_y}')
+    #     print_debug(f"Turning Pos: {world.creatures[0].body2.turning_points[-1]['head_pos'][0], world.creatures[0].body2.turning_points[-1]['head_pos'][1]}", 1)
+    #
+    #     vector_change = [round(world.creatures[0].body2.tail.actual_x - world.creatures[0].body2.turning_points[-1]['head_pos'][0]),
+    #                      round(world.creatures[0].body2.tail.actual_y - world.creatures[0].body2.turning_points[-1]['head_pos'][1])]
+    #
+    #     print_debug(f"Vector: {vector_change}", 2)
 
     if not world.game_paused:
         for quadrant in world.quadrants:
