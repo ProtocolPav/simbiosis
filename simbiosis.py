@@ -1,4 +1,4 @@
-# Alpha v0.2
+# Alpha v0.3b
 import math
 import copy
 import random
