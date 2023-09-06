@@ -337,7 +337,7 @@ class CreatureBody:
             self.tail.actual_x = self.head.actual_x
 
     def get_full_body(self) -> list[Rect]:
-        body_list = [pygame.Rect(round(self.head.actual_x), round(self.head.actual_y), 1, 1)]
+        body_list = [pygame.Rect(self.head.actual_x, self.head.actual_y, 1, 1)]
         remaining_length = self.length
 
         for turning_point in self.turning_points:
@@ -352,17 +352,17 @@ class CreatureBody:
                 start_point = turning_point['head_pos']
 
             if length[0] > 0.0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), abs(length[0]), 1))
+                body_list.insert(0, pygame.Rect(start_point[0], start_point[1], abs(length[0]), 1))
                 remaining_length -= abs(round(length[0]))
             elif length[0] < 0.0:
-                body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), abs(length[0]), 1))
+                body_list.insert(0, pygame.Rect(body_list[0][0], body_list[0][1], abs(length[0]), 1))
                 remaining_length -= abs(round(length[0]))
 
             elif length[1] > 0.0:
-                body_list.insert(0, pygame.Rect(round(start_point[0]), round(start_point[1]), 1, abs(length[1])))
+                body_list.insert(0, pygame.Rect(start_point[0], start_point[1], 1, abs(length[1])))
                 remaining_length -= abs(round(length[1]))
             elif length[1] < 0.0:
-                body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, abs(length[1])))
+                body_list.insert(0, pygame.Rect(body_list[0][0], body_list[0][1], 1, abs(length[1])))
                 remaining_length -= abs(round(length[1]))
 
         length = [body_list[0][0] - self.tail.actual_x,
@@ -375,14 +375,14 @@ class CreatureBody:
         log(f'debug {length}')
 
         if length[0] > 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(self.tail.actual_y), abs(length[0]), 1))
+            body_list.insert(0, pygame.Rect(self.tail.actual_x, self.tail.actual_y, abs(length[0]), 1))
         elif length[0] < 0.0:
-            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(self.tail.actual_y), abs(length[0]), 1))
+            body_list.insert(0, pygame.Rect(body_list[0][0], self.tail.actual_y, abs(length[0]), 1))
 
         elif length[1] > 0.0:
-            body_list.insert(0, pygame.Rect(round(self.tail.actual_x), round(body_list[0][1]), 1, abs(length[1])))
+            body_list.insert(0, pygame.Rect(self.tail.actual_x, body_list[0][1], 1, abs(length[1])))
         elif length[1] < 0.0:
-            body_list.insert(0, pygame.Rect(round(body_list[0][0]), round(body_list[0][1]), 1, abs(length[1])))
+            body_list.insert(0, pygame.Rect(body_list[0][0], body_list[0][1], 1, abs(length[1])))
 
         return body_list
 
@@ -737,8 +737,8 @@ class Camera:
 
             for point in creature.body2.turning_points:
                 drawing_rect = pygame.Rect(point['head_pos'][0], point['head_pos'][1], 1, 1)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
+                drawing_rect.x = world_rect.x + drawing_rect.x / scale
+                drawing_rect.y = world_rect.y + drawing_rect.y / scale
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
 
@@ -746,8 +746,8 @@ class Camera:
 
             for i in range(len(full_body)):
                 drawing_rect = full_body.pop(0)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
+                drawing_rect.x = world_rect.x + drawing_rect.x / scale
+                drawing_rect.y = world_rect.y + drawing_rect.y / scale
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
 
