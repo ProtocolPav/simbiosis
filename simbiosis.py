@@ -249,7 +249,6 @@ class CreatureBody:
         :return:
         """
         if self.facing != self.before['facing']:
-            log(f"Turning point found: {self.before['head_pos']}")
             turning_point = deepcopy(self.before)
             self.turning_points.insert(0, turning_point)
             return True
@@ -332,10 +331,37 @@ class CreatureBody:
             self.tail.actual_x = self.head.actual_x
 
     def get_full_body(self) -> list:
+        remaining_length = self.length
         body_position_list = [[self.head.actual_x, self.head.actual_y]]
+        last_turning_point = {'head_pos': [self.head.actual_x, self.head.actual_y],
+                              'facing': self.facing}
         for i in self.turning_points:
             body_position_list.append(i['head_pos'])
-        body_position_list.append([self.tail.actual_x, self.tail.actual_y])
+            last_turning_point = i
+
+        for i in body_position_list[0:len(body_position_list)-1]:
+            body_index = body_position_list.index(i)
+            x_difference = i[0]-body_position_list[body_index+1][0]
+            y_difference = i[1]-body_position_list[body_index+1][1]
+
+            if x_difference != 0.0:
+                remaining_length -= abs(x_difference)
+            elif y_difference != 0.0:
+                remaining_length -= abs(y_difference)
+
+        if last_turning_point['facing'] == 'up':
+            # Tail must go down
+            body_position_list.append([last_turning_point['head_pos'][0],
+                                       last_turning_point['head_pos'][1] + remaining_length])
+        elif last_turning_point['facing'] == 'down':
+            body_position_list.append([last_turning_point['head_pos'][0],
+                                       last_turning_point['head_pos'][1] - remaining_length])
+        elif last_turning_point['facing'] == 'left':
+            body_position_list.append([last_turning_point['head_pos'][0] + remaining_length,
+                                       last_turning_point['head_pos'][1]])
+        elif last_turning_point['facing'] == 'right':
+            body_position_list.append([last_turning_point['head_pos'][0] - remaining_length,
+                                       last_turning_point['head_pos'][1]])
 
         return body_position_list
 
@@ -417,7 +443,7 @@ class Creature:
 
         self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
                                              CreatureBodyPart(self.id, position_x - 1, position_y)]
-        self.body2 = CreatureBody(self.id, position_x, position_y, 4)
+        self.body2 = CreatureBody(self.id, position_x, position_y, 6)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
@@ -570,12 +596,10 @@ class Creature:
         return self.body[0].y
 
     def move(self):
-        self.energy -= self.genes.energy_per_square.value
-
         if not self.dead:
-            self.__vision()
-
             self.energy -= self.genes.energy_per_square.value * len(self.body)
+
+            self.__vision()
 
             if self.facing == "up":
                 self.body2.move_y(1, self.genes.idle_speed.value)
@@ -650,6 +674,15 @@ class Camera:
             pygame.draw.lines(surface=self.screen, points=full_body, color=colour_to_draw, closed=False, width=self.zoom_level)
             # I need to also draw the head rect at the front
 
+            for point in creature.body2.turning_points:
+                drawing_rect = pygame.Rect(point['head_pos'][0], point['head_pos'][1], 1, 1)
+                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
+                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
+                drawing_rect.width *= self.zoom_level
+                drawing_rect.height *= self.zoom_level
+
+                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[255, 255, 255])
+
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
         colour_change = 210 / len(world.quadrants)
@@ -690,7 +723,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=2, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
 
 while run:
     milliseconds = clock.tick(120)
