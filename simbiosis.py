@@ -179,16 +179,17 @@ class CreatureBodyPart(pygame.Rect):
     def __init__(self, creature_id: int, pos_x: int, pos_y: int):
         super().__init__(pos_x, pos_y, 1, 1)
 
-        # log(f"Created Body with ID{CreatureBodyPart.id}")
+        log(f"Created BodyPart with ID{CreatureBodyPart.id}")
         self.id = CreatureBodyPart.id
         self.creature_id = creature_id
         self.actual_x = self.x
         self.actual_y = self.y
+        self.facing = 'right'
 
         CreatureBodyPart.id += 1
 
     def __repr__(self):
-        return f"Body({self.id, self.x, self.y, self.width, self.height})"
+        return f"BodyPart({self.id, self.x, self.y, self.width, self.height})"
 
     def __deepcopy__(self, memodict):
         return CreatureBodyPart(self.creature_id, self.x, self.y)
@@ -225,12 +226,10 @@ class CreatureBody:
 
         self.creature_id = creature_id
         self.head = CreatureBodyPart(creature_id, pos_x=pos_x, pos_y=pos_y)
-        self.tail = CreatureBodyPart(creature_id, pos_x=pos_x - length + 1, pos_y=pos_y)
-        self.turning_points: list[dict] = []  # Elements closer to the beginning are closest to the head
-        self.facing = 'right'
+        self.turning_points: list[CreatureBodyPart] = []  # Elements closer to the beginning are closest to the head
+        self.body = []
         self.length = length
-        self.before = {'head_pos': [],
-                       'facing': ''}
+        self.before: CreatureBodyPart = deepcopy(self.head)
 
     def save_position(self):
         """
@@ -238,19 +237,18 @@ class CreatureBody:
         I do not want the entire history of the creature saved, only the previous tick
         :return:
         """
-        self.before['head_pos'] = [self.head.actual_x, self.head.actual_y]
-        self.before['facing'] = self.facing
+        self.before = deepcopy(self.head)
 
     def check_for_turning_point(self) -> bool:
         """
         Checks for turning points and returns a boolean.
         A point is a turning point when the direction changes.
-        Saves the head position before the turn.
+        Saves the current head instance into a list.
         :return:
         """
-        if self.facing != self.before['facing']:
-            log(f"Turning point found: {self.before['head_pos']}")
-            turning_point = deepcopy(self.before)
+        if self.head.facing != self.before.facing:
+            log(f"Turning point found: {self.head}")
+            turning_point = deepcopy(self.head)
             self.turning_points.insert(0, turning_point)
             return True
 
@@ -264,47 +262,21 @@ class CreatureBody:
             self.turning_points.pop()
 
     def calculate_direction(self):
-        vector_change = [self.head.actual_x - self.before['head_pos'][0],
-                         self.head.actual_y - self.before['head_pos'][1]]
+        difference = pygame.Vector2(self.head.actual_x - self.before.actual_x,
+                                    self.head.actual_y - self.before.actual_y)
 
-        if vector_change[0] > 0:
+        if difference.x > 0:
             # Head moved to the right
-            self.facing = 'right'
-        elif vector_change[0] < 0:
+            self.head.facing = 'right'
+        elif difference.x < 0:
             # Head moved to the left
-            self.facing = 'left'
-        elif vector_change[1] > 0:
+            self.head.facing = 'left'
+        elif difference.y > 0:
             # Head moved down
-            self.facing = 'down'
-        elif vector_change[1] < 0:
+            self.head.facing = 'down'
+        elif difference.y < 0:
             # Head moved up
-            self.facing = 'up'
-
-    def move_tail_towards_turning_point(self, speed: float):
-        log('moving tail towards tp')
-        vector_change = [round(self.tail.actual_x - self.turning_points[-1]['head_pos'][0]),
-                         round(self.tail.actual_y - self.turning_points[-1]['head_pos'][1])]
-
-        log(f"Vector Change: {vector_change}")
-
-        if vector_change[0] > 0:
-            # Tail must move to the right
-            self.tail.actual_x = self.tail.actual_x - 1 * deltatime * speed
-            self.tail.actual_y = self.turning_points[-1]['head_pos'][1]
-        elif vector_change[0] < 0:
-            # Tail must move to the left
-            self.tail.actual_x = self.tail.actual_x + 1 * deltatime * speed
-            self.tail.actual_y = self.turning_points[-1]['head_pos'][1]
-        elif vector_change[1] > 0:
-            # Tail must move up
-            self.tail.actual_y = self.tail.actual_y - 1 * deltatime * speed
-            self.tail.actual_x = self.turning_points[-1]['head_pos'][0]
-        elif vector_change[1] < 0:
-            # Tail must move down
-            self.tail.actual_y = self.tail.actual_y + 1 * deltatime * speed
-            self.tail.actual_x = self.turning_points[-1]['head_pos'][0]
-
-        self.remove_turning_point()
+            self.head.facing = 'up'
 
     def move_x(self, direction: int, speed: float):
         self.save_position()
@@ -313,14 +285,6 @@ class CreatureBody:
         self.calculate_direction()
         self.check_for_turning_point()
 
-        if len(self.turning_points) != 0:
-            self.move_tail_towards_turning_point(speed)
-
-        elif len(self.turning_points) == 0:
-            log('moving tail towards head')
-            self.tail.actual_x = self.tail.actual_x - direction * deltatime * speed
-            self.tail.actual_y = self.head.actual_y
-
     def move_y(self, direction: int, speed: float):
         self.save_position()
 
@@ -328,13 +292,35 @@ class CreatureBody:
         self.calculate_direction()
         self.check_for_turning_point()
 
-        if len(self.turning_points) > 0:
-            self.move_tail_towards_turning_point(speed)
+    def save_body(self):
+        self.body = [self.head]
+        remaining_length = self.length
 
-        elif len(self.turning_points) == 0:
-            log('moving tail towards head')
-            self.tail.actual_y = self.tail.actual_y - direction * deltatime * speed
-            self.tail.actual_x = self.head.actual_x
+        for point in self.turning_points:
+            difference = pygame.Vector2(self.body[-1].actual_x - point.actual_x,
+                                        self.body[-1].actual_y - point.actual_y)
+
+            if difference.x != 0.0:
+                remaining_length -= abs(difference.x)
+                start = 0 if difference.x > 0.0 else round(difference.x)
+                stop = 0 if difference.x < 0.0 else round(difference.x)
+
+                for i in range(start, stop):
+                    self.body.append(CreatureBodyPart(self.creature_id,
+                                                      self.body[-1].actual_x + 1 * i,
+                                                      self.body[-1].actual_y))
+            elif difference.y != 0.0:
+                remaining_length -= abs(difference.y)
+                start = 0 if difference.y > 0.0 else round(difference.y)
+                stop = 0 if difference.y < 0.0 else round(difference.y)
+
+                for i in range(start, stop):
+                    self.body.append(CreatureBodyPart(self.creature_id,
+                                                      self.body[-1].actual_x,
+                                                      self.body[-1].actual_y + 1 * i))
+
+
+
 
     def get_full_body(self) -> list[Rect]:
         body_list = [pygame.Rect(self.head.actual_x, self.head.actual_y, 1, 1)]
@@ -465,7 +451,7 @@ class Creature:
 
         self.body: list[CreatureBodyPart] = [CreatureBodyPart(self.id, position_x, position_y),
                                              CreatureBodyPart(self.id, position_x - 1, position_y)]
-        self.body2 = CreatureBody(self.id, position_x, position_y, 6)
+        self.body2 = CreatureBody(self.id, position_x, position_y, 60)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
@@ -487,22 +473,22 @@ class Creature:
         quadrant_check = self.body2.head.check_quadrant()
 
         # Facing Upwards
-        if self.body2.facing == 'up':
+        if self.body2.head.facing == 'up':
             self.vision_rect = pygame.Rect(self.body2.head.actual_x, self.body2.head.actual_y - vision_distance, 1, 1 + vision_distance)
             choice_list = ['right', 'left', 'up', 'down']
 
         # Facing Downwards
-        elif self.body2.facing == 'down':
+        elif self.body2.head.facing == 'down':
             self.vision_rect = pygame.Rect(self.body2.head.actual_x, self.body2.head.actual_y + 1, 1, vision_distance)
             choice_list = ['left', 'right', 'down', 'up']
 
         # Facing Left
-        elif self.body2.facing == 'left':
+        elif self.body2.head.facing == 'left':
             self.vision_rect = pygame.Rect(self.body2.head.actual_x - vision_distance, self.body2.head.actual_y, 1 + vision_distance, 1)
             choice_list = ['up', 'down', 'left', 'right']
 
         # Facing Right
-        elif self.body2.facing == 'right':
+        elif self.body2.head.facing == 'right':
             self.vision_rect = pygame.Rect(self.body2.head.actual_x + 1, self.body2.head.actual_y, vision_distance, 1)
             choice_list = ['down', 'up', 'right', 'left']
 
