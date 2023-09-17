@@ -100,7 +100,7 @@ class Food(pygame.Rect):
         self.total_ticks = time_to_live
         self.ticks = 0
         self.cluster = parent_cluster
-        self.energy = random.randint(5000, 40000)
+        self.energy = random.randint(5000, 75000)
         self.eaten = False
 
         Food.id += 1
@@ -128,44 +128,49 @@ class FoodCluster:
         self.food: list[Food] = [Food(centre_x, centre_y, 500, self)]
 
     def spawn_food(self, world_rect: Rect):
-        chance_of_spawning = random.choices(population=["no spawn", "spawn"], weights=[90, 10])[0]
-        if chance_of_spawning == "spawn":
-            food = random.choice(self.food)
-            dy = random.randint(-2, 2)
-            dx = random.randint(-2, 2)
+        loop_length = 1 + (len(self.food) // 100)*2
 
-            food_rect: Rect = pygame.Rect(food.x + dx, food.y + dy, 1, 1)
-            collision = food_rect.collidelist(self.food)
+        for i in range(loop_length):
+            chance_of_spawning = random.choices(population=["no spawn", "spawn"], weights=[90, 10])[0]
+            if chance_of_spawning == "spawn":
+                food = random.choice(self.food)
+                dy = random.randint(-2, 2)
+                dx = random.randint(-2, 2)
 
-            # Coordinates
-            world_top_left = (0, 0)
-            world_bottom_right = (world_rect.w, world_rect.h)
-            food_coordinate = (food.x + dx, food.y + dy)
+                food_rect: Rect = pygame.Rect(food.x + dx, food.y + dy, 1, 1)
+                collision = food_rect.collidelist(self.food)
 
-            y_check = world_top_left[1] < food_coordinate[1] < world_bottom_right[1]
-            x_check = world_top_left[0] < food_coordinate[0] < world_bottom_right[0]
+                # Coordinates
+                world_top_left = (0, 0)
+                world_bottom_right = (world_rect.w, world_rect.h)
+                food_coordinate = (food.x + dx, food.y + dy)
 
-            if collision == -1 and y_check and x_check:
-                self.food.append(Food(food_rect.x, food_rect.y, random.randint(50, 500), self))
+                y_check = world_top_left[1] < food_coordinate[1] < world_bottom_right[1]
+                x_check = world_top_left[0] < food_coordinate[0] < world_bottom_right[0]
+
+                if collision == -1 and y_check and x_check:
+                    new_food = Food(food_rect.x, food_rect.y, random.randint(50, 500), self)
+                    self.food.append(new_food)
+                    new_food.check_quadrant().food_collisions_dict[new_food.id] = new_food
 
     def remove_food(self, food: Food):
         if not food.eaten:
             food.eaten = True
             self.food.remove(food)
+            food.check_quadrant().food_collisions_dict.pop(food.id)
 
     def tick_food(self):
-        food_to_remove = []
-
-        for food in self.food:
-            food.ticks += 1
-
-            if food.ticks >= food.total_ticks:
-                food_to_remove.append(food)
-            else:
-                food.check_quadrant().food_collisions_dict[food.id] = food
-
-        for food in food_to_remove:
-            self.remove_food(food)
+        self.food[0].check_quadrant().food_collisions_dict[self.food[0].id] = self.food[0]
+        # food_to_remove = []
+        #
+        # for food in self.food:
+        #     food.ticks += 1
+        #
+        #     if food.ticks >= food.total_ticks:
+        #         food_to_remove.append(food)
+        #
+        # for food in food_to_remove:
+        #     self.remove_food(food)
 
 
 class CreatureBody(pygame.Rect):
@@ -466,7 +471,7 @@ class Creature:
             self.body.append(CreatureBody(self.id, self.body[-1].x, self.body[-1].y))
 
     def __birth(self):
-        if len(self.body) >= 4:
+        if len(self.body) >= 4 and self.energy - self.genes.energy_to_birth.value > 0:
             log(f"[BIRTH] Creature {self.id} is birthing")
             self.energy -= self.genes.energy_to_birth.value
             body_part = self.body.pop()
@@ -613,7 +618,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=50, start_cluster=200)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=30, start_cluster=200)
 
 while run:
     clock.tick(25)
@@ -639,6 +644,6 @@ while run:
         for quadrant in world.quadrants:
             index = world.quadrants.index(quadrant)
             quadrant.collisions_dict = {}
-            quadrant.food_collisions_dict = {}
+            # quadrant.food_collisions_dict = {}
 
     pygame.display.flip()
