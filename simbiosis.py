@@ -100,7 +100,7 @@ class Food(pygame.Rect):
         self.total_ticks = time_to_live
         self.ticks = 0
         self.cluster = parent_cluster
-        self.energy = random.randint(5000, 10000)
+        self.energy = random.randint(5000, 40000)
         self.eaten = False
 
         Food.id += 1
@@ -220,21 +220,28 @@ class Gene:
 
     def mutate(self):
         if self.can_mutate:
-            if random.choices(population=["mutate", "no mutate"], weights=[299, 1])[0] == "mutate":
-                self.value += random.uniform(-0.2, 0.2)
+            old_value = self.value
 
+            if random.choices(population=["mutate", "no mutate"], weights=[50, 250])[0] == "mutate":
                 if self.acronym in ['CLR', 'CLB', 'CLG']:
                     self.value += random.randint(2, 2)
                     if self.value < 0:
                         self.value = 10
                     elif self.value > 255:
                         self.value = 245
+                else:
+                    self.value += random.uniform(-0.2, 0.2)
 
                 if self.acronym in ['CLH', 'RTL', 'RTR', 'RTB', 'RTW', 'RAW', 'RBO', 'RTF', 'RAF', 'RLF', 'RRF', 'RBF']:
                     if self.value < 0:
                         self.value = abs(self.value)
                     elif self.value > 1:
                         self.value -= 1
+
+            if old_value == self.value:
+                log(f"[MUTATION] {self.name} No Change")
+            else:
+                log(f"[MUTATION] {self.name} ({old_value} -> {self.value})")
 
 
 class CreatureGenes:
@@ -255,7 +262,7 @@ class CreatureGenes:
         self.energy_per_square = Gene(name="Energy Consumed Per Square Moved", acronym="EPS", value=random.uniform(5, 100))
         self.energy_during_boost = Gene(name="Energy Consumed During Boost", acronym="EBS",
                                         value=random.uniform(self.energy_per_square.value, 200))
-        self.energy_to_birth = Gene(name="Energy Consumed To Birth", acronym="EBI", value=random.uniform(5, 100))
+        self.energy_to_birth = Gene(name="Energy Consumed To Birth", acronym="EBI", value=random.uniform(100000, 1000000))
         self.energy_to_extend = Gene(name="Energy Consumed To Extend", acronym="EEX", value=random.uniform(5, 100))
         self.critical_hunger = Gene(name="Critical Hunger Level", acronym="HUC",
                                     value=random.uniform(self.energy_per_square.value, 200))
@@ -269,8 +276,8 @@ class CreatureGenes:
         self.react_right = Gene(name="Brain Reaction Right", acronym="RTR", value=random.random())
         self.react_back = Gene(name="Brain Reaction Back", acronym="RTB", value=random.random())
         self.react_boost = Gene(name="Brain Reaction Boost", acronym="RBO", value=random.random())
-        self.react_towards_food = Gene(name="Brain Reaction Towards When Seeing Food", acronym="RTF", value=1)
-        self.react_away_food = Gene(name="Brain Reaction Away When Seeing Food", acronym="RAF", value=0)
+        self.react_towards_food = Gene(name="Brain Reaction Towards When Seeing Food", acronym="RTF", value=random.random())
+        self.react_away_food = Gene(name="Brain Reaction Away When Seeing Food", acronym="RAF", value=random.random())
         self.react_left_food = Gene(name="Brain Reaction Left When Seeing Food", acronym="RLF", value=random.random())
         self.react_right_food = Gene(name="Brain Reaction Right When Seeing Food", acronym="RRF", value=random.random())
         self.react_back_food = Gene(name="Brain Reaction Back When Seeing Food", acronym="RBF", value=random.random())
@@ -284,7 +291,7 @@ class CreatureGenes:
 class Creature:
     id = 1
 
-    def __init__(self, position_x: int, position_y: int, genes: CreatureGenes = None):
+    def __init__(self, position_x: int, position_y: int, genes: CreatureGenes = None, start_energy: float = None):
         log(f"Created Creature with ID{Creature.id}")
         self.id = Creature.id
 
@@ -292,7 +299,10 @@ class Creature:
                                          CreatureBody(self.id, position_x - 1, position_y)]
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
-        self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
+        if start_energy is None:
+            self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
+        else:
+            self.energy = start_energy
 
         self.facing = random.choice(['right', 'left', 'up', 'down'])
         self.vision_rect = None
@@ -462,7 +472,7 @@ class Creature:
             body_part = self.body.pop()
             body_part = self.body.pop()
 
-            baby = Creature(body_part.x, body_part.y, copy.deepcopy(self.genes))
+            baby = Creature(body_part.x, body_part.y, copy.deepcopy(self.genes), self.genes.energy_to_birth.value)
 
             for gene, gene_object in vars(baby.genes).items():
                 gene_object.mutate()
@@ -499,16 +509,13 @@ class Creature:
                 elif self.facing == "right":
                     self.__move_x(1)
 
-                self.collide()
+                self.__collide()
 
                 for body in self.body:
                     body.add_to_collisions()
 
         if self.energy <= 0:
             self.__die()
-
-    def collide(self):
-        self.__collide()
 
 
 class Camera:
@@ -606,7 +613,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=200)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=50, start_cluster=200)
 
 while run:
     clock.tick(25)
