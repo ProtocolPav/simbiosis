@@ -233,7 +233,7 @@ class Gene:
                     elif self.value > 255:
                         self.value = 245
 
-                if self.acronym in ['CLH', 'RTL', 'RTR', 'RTB', 'RTF', 'RBO', 'RLF', 'RRF', 'RBF', 'RFF']:
+                if self.acronym in ['CLH', 'RTL', 'RTR', 'RTB', 'RTW', 'RAW', 'RBO', 'RTF', 'RAF', 'RLF', 'RRF', 'RBF']:
                     if self.value < 0:
                         self.value = abs(self.value)
                     elif self.value > 1:
@@ -266,15 +266,17 @@ class CreatureGenes:
         # Genes affecting Creature Behaviour
         self.vision = Gene(name="Vision", acronym="VIS", value=random.uniform(1, 10))
         self.collision = Gene(name="Collision Behaviour", acronym="COL", value=random.uniform(0, 1))
+        self.react_towards = Gene(name="Brain Reaction Towards", acronym="RTW", value=random.random())
+        self.react_away = Gene(name="Brain Reaction Away", acronym="RAW", value=random.random())
         self.react_left = Gene(name="Brain Reaction Left", acronym="RTL", value=random.random())
         self.react_right = Gene(name="Brain Reaction Right", acronym="RTR", value=random.random())
         self.react_back = Gene(name="Brain Reaction Back", acronym="RTB", value=random.random())
-        self.react_forward = Gene(name="Brain Reaction Forward", acronym="RTF", value=random.random())
         self.react_boost = Gene(name="Brain Reaction Boost", acronym="RBO", value=random.random())
+        self.react_towards_food = Gene(name="Brain Reaction Towards When Seeing Food", acronym="RTF", value=random.random())
+        self.react_away_food = Gene(name="Brain Reaction Away When Seeing Food", acronym="RAF", value=random.random())
         self.react_left_food = Gene(name="Brain Reaction Left When Seeing Food", acronym="RLF", value=random.random())
         self.react_right_food = Gene(name="Brain Reaction Right When Seeing Food", acronym="RRF", value=random.random())
         self.react_back_food = Gene(name="Brain Reaction Back When Seeing Food", acronym="RBF", value=random.random())
-        self.react_forward_food = Gene(name="Brain Reaction Forward When Seeing Food", acronym="RFF", value=random.random())
 
         # Data Genes (No mutation, affects Data)
         self.gender = Gene(name="Gender", acronym="GND", value=random.choice([0, 1]), can_mutate=False)
@@ -295,7 +297,8 @@ class Creature:
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
 
-        self.facing = random.choice(['right', 'left', 'up', 'down'])
+        # self.facing = random.choice(['right', 'left', 'up', 'down'])
+        self.facing = 'right'
         self.vision_rect = None
         self.dead = False
         self.colliding = False
@@ -320,7 +323,7 @@ class Creature:
             last_body_part.actual_x = self.body[0].actual_x + 1
             last_body_part.actual_y = self.body[0].actual_y
         else:
-            last_body_part.actual_x = self.body[0].actual_x - direction
+            last_body_part.actual_x = self.body[0].actual_x + direction
             last_body_part.actual_y = self.body[0].actual_y
 
         last_body_part.x = round(last_body_part.actual_x)
@@ -343,7 +346,7 @@ class Creature:
             last_body_part.actual_y = self.body[0].actual_y + 1
         else:
             last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - direction
+            last_body_part.actual_y = self.body[0].actual_y + direction
 
         last_body_part.x = round(last_body_part.actual_x)
         last_body_part.y = round(last_body_part.actual_y)
@@ -351,7 +354,7 @@ class Creature:
         self.body.insert(0, last_body_part)
 
     def __vision(self):
-        choice_list = ['left', 'right', 'down', 'up']
+        choice_list = ['forward', ['to the right', 'to the left', 'backwards']]
         vision_distance = self.genes.vision.value
         quadrant_check = self.body[0].check_quadrant()
         difference = pygame.Vector2(self.body[0].x - self.body[1].x, self.body[0].y - self.body[1].y)
@@ -359,75 +362,68 @@ class Creature:
         # Facing Upwards
         if difference == pygame.Vector2(0, -1):
             self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y - vision_distance, 1, 1 + vision_distance)
-            choice_list = ['right', 'left', 'up', 'down']
+            choice_list = ['up', ['right', 'left', 'down']]
 
         # Facing Downwards
         elif difference == pygame.Vector2(0, 1):
             self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y + 1, 1, vision_distance)
-            choice_list = ['left', 'right', 'down', 'up']
+            choice_list = ['down', ['left', 'right', 'up']]
 
         # Facing Left
         elif difference == pygame.Vector2(-1, 0):
             self.vision_rect = pygame.Rect(self.body[0].x - vision_distance, self.body[0].y, 1 + vision_distance, 1)
-            choice_list = ['up', 'down', 'left', 'right']
+            choice_list = ['left', ['up', 'down', 'right']]
 
         # Facing Right
         elif difference == pygame.Vector2(1, 0):
             self.vision_rect = pygame.Rect(self.body[0].x + 1, self.body[0].y, vision_distance, 1)
-            choice_list = ['down', 'up', 'right', 'left']
+            choice_list = ['right', ['down', 'up', 'left']]
 
         collision = self.vision_rect.collidedict(quadrant_check.collisions_dict, True)
         food_collision = self.vision_rect.collidedict(quadrant_check.food_collisions_dict, True)
         border_collision = self.vision_rect.collidelist(world.borders)
 
         if collision and not self.seeing and self.id != collision[1].creature_id:
-            # log(f"Creature {self.id} is seeing something and reacting")
+            log(f"Creature {self.id} is seeing something and reacting")
             self.seeing = True
-            self.facing = random.choices(choice_list,
-                                         [self.genes.react_right.value,
-                                          self.genes.react_left.value,
-                                          self.genes.react_forward.value,
-                                          self.genes.react_back.value])[0]
+            new_facing = random.choices(choice_list, [self.genes.react_towards.value, self.genes.react_away.value])[0]
+            if type(new_facing) == list:
+                self.facing = random.choices(new_facing,
+                                             [self.genes.react_right.value,
+                                              self.genes.react_left.value,
+                                              self.genes.react_back.value])[0]
+            else:
+                self.facing = new_facing
 
         elif food_collision and not self.seeing:
+            log(f"Creature {self.id} is seeing food and reacting.")
             self.seeing = True
-            self.facing = random.choices(choice_list,
-                                         [self.genes.react_right_food.value,
-                                          self.genes.react_left_food.value,
-                                          self.genes.react_forward_food.value,
-                                          self.genes.react_back_food.value])[0]
+            new_facing = random.choices(choice_list, [self.genes.react_towards_food.value, self.genes.react_away_food.value])[0]
+            if type(new_facing) == list:
+                self.facing = random.choices(new_facing,
+                                             [self.genes.react_right_food.value,
+                                              self.genes.react_left_food.value,
+                                              self.genes.react_back_food.value])[0]
+            else:
+                self.facing = new_facing
 
         elif border_collision != -1:
-            self.facing = random.choices(choice_list,
-                                         [self.genes.react_right.value,
-                                          self.genes.react_left.value,
-                                          self.genes.react_forward.value,
-                                          self.genes.react_back.value])[0]
+            log(f"Creature {self.id} is seeing the border and reacting")
+            new_facing = random.choices(choice_list, [self.genes.react_towards.value, self.genes.react_away.value])[0]
+            if type(new_facing) == list:
+                self.facing = random.choices(new_facing,
+                                             [self.genes.react_right.value,
+                                              self.genes.react_left.value,
+                                              self.genes.react_back.value])[0]
+            else:
+                self.facing = new_facing
 
         elif collision is None and food_collision is None and self.seeing:
             self.seeing = False
 
     def __collide(self):
-        choice_list = ['left', 'right', 'down', 'up']
         quadrant_check = self.body[0].check_quadrant()
         collision = self.body[0].collision_check(quadrant_check.collisions_dict)
-        difference = pygame.Vector2(self.body[0].x - self.body[1].x, self.body[0].y - self.body[1].y)
-
-        # Facing Upwards
-        if difference == pygame.Vector2(0, -1):
-            choice_list = ['right', 'left', 'up', 'down']
-
-        # Facing Downwards
-        elif difference == pygame.Vector2(0, 1):
-            choice_list = ['left', 'right', 'down', 'up']
-
-        # Facing Left
-        elif difference == pygame.Vector2(-1, 0):
-            choice_list = ['up', 'down', 'left', 'right']
-
-        # Facing Right
-        elif difference == pygame.Vector2(1, 0):
-            choice_list = ['down', 'up', 'right', 'left']
 
         if collision and not self.colliding:
             if self.id != collision.creature_id:
@@ -451,7 +447,8 @@ class Creature:
             self.energy += food_collision.energy
             food_collision.cluster.remove_food(food_collision)
             self.__extend()
-            self.facing = choice_list[0]
+            # Make the creature not see anything, so that it can check for more food
+            self.seeing = False
 
     def __extend(self):
         if self.energy - self.genes.energy_to_extend.value > self.genes.critical_hunger.value \
@@ -609,10 +606,10 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=10, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
 
 while run:
-    deltatime = clock.tick(25)
+    clock.tick(25)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
