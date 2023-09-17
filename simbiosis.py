@@ -12,7 +12,7 @@ from pygame import Rect
 time_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 logfile = open(f"./logs/log-{time_now}.txt", "w")
 
-logfile.write(f"Start Simbiosis Simulation v0.2 Alpha\n"
+logfile.write(f"Start Simbiosis Simulation v0.3\n"
               f"Start Time: {time_now}\n\n\n"
               f"Runtime Logs:\n"
               f"{'-'*60}\n")
@@ -84,9 +84,6 @@ class World:
 
             for creature in self.creatures:
                 creature.move()
-
-            for creature in self.creatures:
-                creature.collide()
 
     def get_creature(self, creature_id):
         for creat in self.creatures:
@@ -247,7 +244,7 @@ class CreatureGenes:
         self.colour_green = Gene(name="Green Colour", acronym="CLG", value=random.randint(0, 255))
         self.colour_blue = Gene(name="Blue Colour", acronym="CLB", value=random.randint(0, 255))
         self.head = Gene(name="Head Colour Multiplier", acronym="CLH", value=random.random())
-        self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 10))
+        self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 15))
 
         # Genes affecting Creature movement
         self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
@@ -272,8 +269,8 @@ class CreatureGenes:
         self.react_right = Gene(name="Brain Reaction Right", acronym="RTR", value=random.random())
         self.react_back = Gene(name="Brain Reaction Back", acronym="RTB", value=random.random())
         self.react_boost = Gene(name="Brain Reaction Boost", acronym="RBO", value=random.random())
-        self.react_towards_food = Gene(name="Brain Reaction Towards When Seeing Food", acronym="RTF", value=random.random())
-        self.react_away_food = Gene(name="Brain Reaction Away When Seeing Food", acronym="RAF", value=random.random())
+        self.react_towards_food = Gene(name="Brain Reaction Towards When Seeing Food", acronym="RTF", value=1)
+        self.react_away_food = Gene(name="Brain Reaction Away When Seeing Food", acronym="RAF", value=0)
         self.react_left_food = Gene(name="Brain Reaction Left When Seeing Food", acronym="RLF", value=random.random())
         self.react_right_food = Gene(name="Brain Reaction Right When Seeing Food", acronym="RRF", value=random.random())
         self.react_back_food = Gene(name="Brain Reaction Back When Seeing Food", acronym="RBF", value=random.random())
@@ -297,8 +294,7 @@ class Creature:
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
 
-        # self.facing = random.choice(['right', 'left', 'up', 'down'])
-        self.facing = 'right'
+        self.facing = random.choice(['right', 'left', 'up', 'down'])
         self.vision_rect = None
         self.dead = False
         self.colliding = False
@@ -384,7 +380,7 @@ class Creature:
         border_collision = self.vision_rect.collidelist(world.borders)
 
         if collision and not self.seeing and self.id != collision[1].creature_id:
-            log(f"Creature {self.id} is seeing something and reacting")
+            log(f"[VISION] Creature {self.id} is seeing something and reacting")
             self.seeing = True
             new_facing = random.choices(choice_list, [self.genes.react_towards.value, self.genes.react_away.value])[0]
             if type(new_facing) == list:
@@ -396,7 +392,7 @@ class Creature:
                 self.facing = new_facing
 
         elif food_collision and not self.seeing:
-            log(f"Creature {self.id} is seeing food and reacting.")
+            log(f"[VISION] Creature {self.id} is seeing food and reacting. {food_collision}")
             self.seeing = True
             new_facing = random.choices(choice_list, [self.genes.react_towards_food.value, self.genes.react_away_food.value])[0]
             if type(new_facing) == list:
@@ -408,7 +404,7 @@ class Creature:
                 self.facing = new_facing
 
         elif border_collision != -1:
-            log(f"Creature {self.id} is seeing the border and reacting")
+            log(f"[VISION] Creature {self.id} is seeing the border and reacting")
             new_facing = random.choices(choice_list, [self.genes.react_towards.value, self.genes.react_away.value])[0]
             if type(new_facing) == list:
                 self.facing = random.choices(new_facing,
@@ -434,6 +430,7 @@ class Creature:
                 # Get other creature and check the creature's collision value.
                 # Collision affects the creature that collided with the other creature, depending on the other's genes
                 if creature:
+                    log(f"[COLLISION] Creature {self.id} is colliding with another creature")
                     if 0 < creature.genes.collision.value < 1:
                         self.__birth()
                     if 0.75 < creature.genes.collision.value:
@@ -443,9 +440,11 @@ class Creature:
             self.colliding = False
 
         food_collision = self.body[0].collision_check(quadrant_check.food_collisions_dict)
+        food_collision = self.body[0].collidedict(quadrant_check.food_collisions_dict, True)
         if food_collision:
-            self.energy += food_collision.energy
-            food_collision.cluster.remove_food(food_collision)
+            log(f"[COLLISION] Creature {self.id} is colliding with food {food_collision}")
+            self.energy += food_collision[1].energy
+            food_collision[1].cluster.remove_food(food_collision[1])
             self.__extend()
             # Make the creature not see anything, so that it can check for more food
             self.seeing = False
@@ -458,6 +457,7 @@ class Creature:
 
     def __birth(self):
         if len(self.body) >= 4:
+            log(f"[BIRTH] Creature {self.id} is birthing")
             self.energy -= self.genes.energy_to_birth.value
             body_part = self.body.pop()
             body_part = self.body.pop()
@@ -471,7 +471,7 @@ class Creature:
 
     def __die(self):
         if not self.dead:
-            log(f"Killing Creature {self.id}")
+            log(f"[DEATH] Creature {self.id}")
             world.creatures.remove(self)
             self.dead = True
 
@@ -499,7 +499,7 @@ class Creature:
                 elif self.facing == "right":
                     self.__move_x(1)
 
-                # self.__collide()
+                self.collide()
 
                 for body in self.body:
                     body.add_to_collisions()
@@ -606,7 +606,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=100)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=1, start_creatures=1, start_cluster=200)
 
 while run:
     clock.tick(25)
