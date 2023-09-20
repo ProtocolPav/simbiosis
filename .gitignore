@@ -161,3 +161,4 @@ cython_debug/
 
 # Simbiosis files
 /logs/
+output.png
