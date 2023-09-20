@@ -526,7 +526,7 @@ class Creature:
 class Camera:
     def __init__(self):
         self.screen = pygame.display.set_mode([1000, 700], pygame.RESIZABLE)
-        self.zoom_level = 2
+        self.zoom_level = 1
         self.camera_speed = 40
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
@@ -610,9 +610,9 @@ class Camera:
             self.centre_y -= self.camera_speed
 
     def zoom(self, change: int):
-        if 2 <= self.zoom_level + 2 * change <= 20:
-            self.zoom_level += 2 * change
-            self.camera_speed -= 2 * change
+        if 1 <= self.zoom_level + 1 * change <= 10:
+            self.zoom_level += 1 * change
+            self.camera_speed -= 1 * change
 
 
 run = True
