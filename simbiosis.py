@@ -58,10 +58,10 @@ class World:
                 self.quadrants.append(WorldQuadrant(x * quadrant_size, y * quadrant_size, quadrant_size))
 
         for i in range(start_species):
-            species_creature = Creature(random.randint(0, world_size - 1), random.randint(0, world_size - 1))
+            species_creature = Creature(random.randint(60, world_size - 60), random.randint(60, world_size - 60))
             for j in range(start_creatures):
-                x = species_creature.x_pos() + random.randint(-5, 5)
-                y = species_creature.y_pos() + random.randint(-5, 5)
+                x = species_creature.x_pos() + random.randint(-50, 50)
+                y = species_creature.y_pos() + random.randint(-50, 50)
                 self.creatures.append(Creature(x, y, genes=copy.deepcopy(species_creature.genes)))
 
         for i in range(start_cluster):
