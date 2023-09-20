@@ -3,6 +3,7 @@ import math
 import copy
 import random
 import yaml
+from matplotlib import pyplot as plt
 
 from datetime import datetime
 
@@ -25,8 +26,26 @@ clock = pygame.time.Clock()
 
 
 def log(message: str):
-    print(f"[{datetime.now()}]", message)
-    logfile.write(f"[{datetime.now()}] {message}\n")
+    if 'DATA LOGGED' in message:
+        print(f"[{datetime.now()}]", message)
+        logfile.write(f"[{datetime.now()}] {message}\n")
+
+
+class Data:
+    def __init__(self, creatures: list, clusters: list, deaths: int, births: int):
+        self.time = datetime.now()
+
+        self.total_creatures = len(creatures)
+        self.total_clusters = len(clusters)
+        self.total_food = 0
+        self.deaths_since_last_save = deaths
+        self.births_since_last_save = births
+
+        for i in clusters:
+            self.total_food += len(i.food)
+
+        log(f'[DATA LOGGED] TCR{self.total_creatures}, B/D{self.births_since_last_save, self.deaths_since_last_save} '
+            f'CL/TF{self.total_clusters, self.total_food}')
 
 
 class WorldQuadrant:
@@ -51,6 +70,10 @@ class World:
         self.ticks = 0
         self.game_paused = False
 
+        self.data = []
+        self.creature_deaths = 0
+        self.creature_births = 0
+
         self.quadrants = []
         for x in range(quadrant_rows):
             for y in range(quadrant_rows):
@@ -71,6 +94,8 @@ class World:
 
     def tick_game(self):
         if not self.game_paused:
+            self.ticks += 1
+
             if random.choices(population=["no", "spawn cluster"], weights=[499, 1])[0] == "spawn cluster":
                 self.food_clusters.append(FoodCluster(random.randint(1, self.internal_rect.w - 1),
                                                       random.randint(1, self.internal_rect.h - 1)))
@@ -85,10 +110,21 @@ class World:
             for creature in self.creatures:
                 creature.move()
 
+            if self.ticks % 200 == 0:
+                self.data.append(Data(self.creatures, self.food_clusters, self.creature_deaths, self.creature_births))
+                self.creature_deaths = 0
+                self.creature_births = 0
+                self.plot_graph()
+
     def get_creature(self, creature_id):
         for creat in self.creatures:
             if creat.id == creature_id:
                 return creat
+
+    def plot_graph(self):
+        time = [x.time for x in self.data]
+        plt.plot(time, [x.total_creatures for x in self.data])
+        plt.plot(time, [x.total_food for x in self.data])
 
 
 class Food(pygame.Rect):
@@ -478,17 +514,20 @@ class Creature:
             body_part = self.body.pop()
 
             baby = Creature(body_part.x, body_part.y, copy.deepcopy(self.genes), self.genes.energy_to_birth.value)
+            baby.genes.generation.value += 1
 
             for gene, gene_object in vars(baby.genes).items():
                 gene_object.mutate()
 
             world.creatures.append(baby)
+            world.creature_births += 1
 
     def __die(self):
         if not self.dead:
             log(f"[DEATH] Creature {self.id}")
             world.creatures.remove(self)
             self.dead = True
+            world.creature_deaths += 1
 
     def x_pos(self):
         return self.body[0].x
@@ -633,6 +672,8 @@ while run:
                 world.game_paused = not world.game_paused
             elif event.key == pygame.K_q:
                 debug = not debug
+            elif event.key == pygame.K_e:
+                plt.savefig('output.png')
 
     world.tick_game()
 
