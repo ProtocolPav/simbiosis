@@ -576,8 +576,10 @@ class Camera:
                 drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
+                draw_image = pygame.transform.scale(body_image, drawing_rect.size)
 
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+                # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+                self.screen.blit(draw_image, drawing_rect)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -610,7 +612,7 @@ class Camera:
             self.centre_y -= self.camera_speed
 
     def zoom(self, change: int):
-        if 1 <= self.zoom_level + 1 * change <= 10:
+        if 1 <= self.zoom_level + 1 * change <= 20:
             self.zoom_level += 1 * change
             self.camera_speed -= 1 * change
 
@@ -619,6 +621,8 @@ run = True
 debug = False
 camera = Camera()
 world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=30, start_cluster=200)
+
+body_image = pygame.image.load('textures/body-1.png')
 
 while run:
     clock.tick(25)
