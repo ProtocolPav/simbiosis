@@ -237,7 +237,7 @@ class Gene:
                 else:
                     self.value += random.uniform(-0.2, 0.2)
 
-                if self.acronym in ['CLH', 'RTL', 'RTR', 'RTB', 'RTW', 'RAW', 'RBO', 'RTF', 'RAF', 'RLF', 'RRF', 'RBF']:
+                if 'CLH' in self.acronym or 'BRAIN' in self.acronym:
                     if self.value < 0:
                         self.value = abs(self.value)
                     elif self.value > 1:
@@ -291,6 +291,48 @@ class CreatureGenes:
         self.gender = Gene(name="Gender", acronym="GND", value=random.choice([0, 1]), can_mutate=False)
         self.species = Gene(name="Species", acronym="SPE", value=species, can_mutate=False)
         self.generation = Gene(name="Generation", acronym="GEN", value=generation, can_mutate=False)
+
+
+class CreatureBrain:
+    def __init__(self):
+        self.SAME_DIRECTION = 0
+        self.TURN_RIGHT = 1
+        self.TURN_BACK = 2
+        self.TURN_LEFT = 3
+
+        self.probability_same_direction = Gene(name="Keep Same Direction", acronym="BRAIN-SAME", value=random.random())
+        self.probability_turn = Gene(name="Turn", acronym="BRAIN-TURN", value=random.random())
+        self.probability_right = Gene(name="Turn Right", acronym="BRAIN-TURN-RIGHT", value=random.random())
+        self.probability_back = Gene(name="Turn Back", acronym="BRAIN-TURN-BACK", value=random.random())
+        self.probability_left = Gene(name="Turn Left", acronym="BRAIN-TURN-LEFT", value=random.random())
+
+        self.directions = ['up', 'right', 'down', 'left']  # Represents N, E, S, W directions
+        self.current_direction = random.choice(['up', 'right', 'down', 'left'])
+        self.vision_rect = None
+        self.object_in_vision = None
+
+    def vision(self, vision_distance: float, head: CreatureBody):
+        head_quadrant = head.check_quadrant()
+
+        if self.current_direction in ['up', 'down']:
+            self.vision_rect = pygame.Rect(head.x, head.y, 1, 1 + vision_distance)
+        elif self.current_direction in ['left', 'right']:
+            self.vision_rect = pygame.Rect(head.x, head.y, 1 + vision_distance, 1)
+
+        creature_collision = self.vision_rect.collidedict(head_quadrant.collisions_dict, True)
+        food_collision = self.vision_rect.collidedict(head_quadrant.food_collisions_dict, True)
+        border_collision = self.vision_rect.collidelist(world.borders)
+
+        # Check that there is a creature collision not with itself
+        if creature_collision and not self.object_in_vision and head.creature_id != creature_collision[1].creature_id:
+            log(f"[BRAIN] Creature {head.creature_id} is seeing a creature")
+            self.object_in_vision = creature_collision[1]
+            turn_choice = random.choices([self.TURN_RIGHT, self.TURN_BACK, self.TURN_LEFT],
+                                         [self.probability_right.value, self.probability_back.value, self.probability_left.value])
+            self.current_direction += random.choices([self.SAME_DIRECTION, turn_choice],
+                                                     [self.probability_same_direction.value, self.probability_turn.value])
+
+
 
 
 class Creature:
