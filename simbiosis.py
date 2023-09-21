@@ -115,6 +115,7 @@ class World:
                 self.creature_deaths = 0
                 self.creature_births = 0
                 self.plot_graph()
+                plt.savefig('output.png')
 
     def get_creature(self, creature_id):
         for creat in self.creatures:
@@ -672,8 +673,6 @@ while run:
                 world.game_paused = not world.game_paused
             elif event.key == pygame.K_q:
                 debug = not debug
-            elif event.key == pygame.K_e:
-                plt.savefig('output.png')
 
     world.tick_game()
 
