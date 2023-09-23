@@ -530,6 +530,8 @@ class Camera:
         self.camera_speed = 40
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
+        self.world_centre_x = self.centre_x
+        self.world_centre_y = self.centre_y
 
     def draw(self, world: World):
         # Draw Background Colour
@@ -541,8 +543,8 @@ class Camera:
         world_rect = pygame.Rect(0, 0, world.internal_rect.width, world.internal_rect.height)
         world_rect.height *= self.zoom_level
         world_rect.width *= self.zoom_level
-        world_rect.centerx = self.centre_x
-        world_rect.centery = self.centre_y
+        world_rect.centerx = self.world_centre_x
+        world_rect.centery = self.world_centre_y
 
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world_rect)
 
@@ -608,18 +610,39 @@ class Camera:
     def move(self):
         key = pygame.key.get_pressed()
         if key[pygame.K_a]:
-            self.centre_x += self.camera_speed
+            self.world_centre_x += self.camera_speed
         elif key[pygame.K_d]:
-            self.centre_x -= self.camera_speed
+            self.world_centre_x -= self.camera_speed
         elif key[pygame.K_w]:
-            self.centre_y += self.camera_speed
+            self.world_centre_y += self.camera_speed
         elif key[pygame.K_s]:
-            self.centre_y -= self.camera_speed
+            self.world_centre_y -= self.camera_speed
 
     def zoom(self, change: int):
-        if 1 <= self.zoom_level + 3 * change <= 30:
+        if 1 <= self.zoom_level + 3 * change <= 4:
+            old_zoom = self.zoom_level
             self.zoom_level += 3 * change
             self.camera_speed -= 3 * change
+
+            zoom_change = abs(self.zoom_level % 3) + 3
+            log(f"{zoom_change, old_zoom, self.zoom_level}")
+
+            # Make the zoom be centered on the screen
+            centre_difference_x = self.centre_x - self.world_centre_x
+            centre_difference_y = self.centre_y - self.world_centre_y
+            log(f"1 {change, self.centre_x, self.centre_y, self.world_centre_x, self.world_centre_y, centre_difference_x, centre_difference_y}")
+
+            if change > 0:
+                centre_difference_x *= zoom_change
+                centre_difference_y *= zoom_change
+            elif change < 0:
+                centre_difference_x //= zoom_change
+                centre_difference_y //= zoom_change
+            log(f"2 {self.centre_x, self.centre_y, self.world_centre_x, self.world_centre_y, centre_difference_x, centre_difference_y}")
+
+            self.world_centre_x = self.centre_x - centre_difference_x
+            self.world_centre_y = self.centre_y - centre_difference_y
+            log(f"3 {self.centre_x, self.centre_y, self.world_centre_x, self.world_centre_y, centre_difference_x, centre_difference_y}")
 
 
 run = True
