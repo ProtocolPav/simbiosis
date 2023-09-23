@@ -619,6 +619,9 @@ class Camera:
             self.world_centre_y -= self.camera_speed
 
     def zoom(self, change: int):
+        self.centre_x = self.screen.get_width() // 2
+        self.centre_y = self.screen.get_height() // 2
+
         if 1 <= self.zoom_level + 3 * change <= 4:
             old_zoom = self.zoom_level
             self.zoom_level += 3 * change
