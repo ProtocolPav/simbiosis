@@ -612,15 +612,15 @@ class Camera:
             self.centre_y -= self.camera_speed
 
     def zoom(self, change: int):
-        if 1 <= self.zoom_level + 1 * change <= 20:
-            self.zoom_level += 1 * change
-            self.camera_speed -= 1 * change
+        if 1 <= self.zoom_level + 3 * change <= 30:
+            self.zoom_level += 3 * change
+            self.camera_speed -= 3 * change
 
 
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=30, start_cluster=200)
+world = World(quadrant_size=200, quadrant_rows=4, start_species=5, start_creatures=30, start_cluster=200)
 
 body_image = pygame.image.load('textures/body-1.png')
 
