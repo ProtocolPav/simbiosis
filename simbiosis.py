@@ -563,12 +563,12 @@ class Camera:
         # Draw Creatures
         for creature in world.creatures:
             for body_part in creature.body:
-                colour_to_draw = [int(creature.genes.colour_red.value),
+                colour_to_draw = (int(creature.genes.colour_red.value),
                                   int(creature.genes.colour_green.value),
-                                  int(creature.genes.colour_blue.value)]
+                                  int(creature.genes.colour_blue.value))
 
                 if creature.body.index(body_part) == 0:
-                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+                    colour_to_draw = tuple(int(colour * creature.genes.head.value) for colour in colour_to_draw)
 
                 # Move the Body Part Rect to the correct position
                 drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
@@ -577,6 +577,11 @@ class Camera:
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
                 draw_image = pygame.transform.scale(body_image, drawing_rect.size)
+
+                # Colour the body part
+                coloured = pygame.PixelArray(draw_image)
+                coloured.replace((255, 255, 255), repcolor=colour_to_draw)
+                del coloured
 
                 # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
                 self.screen.blit(draw_image, drawing_rect)
