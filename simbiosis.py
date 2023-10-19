@@ -300,8 +300,7 @@ class Creature:
         log(f"Created Creature with ID{Creature.id}")
         self.id = Creature.id
 
-        self.body: list[CreatureBody] = [CreatureBody(self.id, position_x, position_y),
-                                         CreatureBody(self.id, position_x - 1, position_y)]
+        self.body = CreatureBody(self.id, position_x, position_y)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         if start_energy is None:
@@ -309,7 +308,7 @@ class Creature:
         else:
             self.energy = start_energy
 
-        self.facing = random.choice(['right', 'left', 'up', 'down'])
+        self.facing = random.randint(0, 360)
         self.vision_rect = None
         self.dead = False
         self.colliding = False
@@ -491,33 +490,31 @@ class Creature:
             self.dead = True
 
     def x_pos(self):
-        return self.body[0].x
+        return self.body.x
 
     def y_pos(self):
-        return self.body[0].y
+        return self.body.y
 
     def move(self):
         self.energy -= self.genes.energy_per_square.value
 
-        for i in range(0, math.ceil(self.genes.idle_speed.value)):
-            if not self.dead:
-                self.__vision()
+        if not self.dead:
+            # self.__vision()
 
-                self.energy -= self.genes.energy_per_square.value * len(self.body)
+            self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-                if self.facing == "up":
-                    self.__move_y(-1)
-                elif self.facing == "down":
-                    self.__move_y(1)
-                elif self.facing == "left":
-                    self.__move_x(-1)
-                elif self.facing == "right":
-                    self.__move_x(1)
+            x_dist = math.cos(self.facing) * 3
+            y_dist = math.sin(self.facing) * 3
 
-                self.__collide()
+            self.body.actual_x += x_dist
+            self.body.actual_y += y_dist
 
-                for body in self.body:
-                    body.add_to_collisions()
+            self.body.x = round(self.body.actual_x)
+            self.body.y = round(self.body.actual_y)
+
+            # self.__collide()
+
+            self.body.add_to_collisions()
 
         if self.energy <= 0:
             self.__die()
@@ -562,22 +559,20 @@ class Camera:
 
         # Draw Creatures
         for creature in world.creatures:
-            for body_part in creature.body:
-                colour_to_draw = [int(creature.genes.colour_red.value),
-                                  int(creature.genes.colour_green.value),
-                                  int(creature.genes.colour_blue.value)]
+            colour_to_draw = [int(creature.genes.colour_red.value),
+                              int(creature.genes.colour_green.value),
+                              int(creature.genes.colour_blue.value)]
+            body_part = creature.body
 
-                if creature.body.index(body_part) == 0:
-                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+            # Move the Body Part Rect to the correct position
+            drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
+            drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
+            drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
+            drawing_rect.width *= self.zoom_level
+            drawing_rect.height *= self.zoom_level
 
-                # Move the Body Part Rect to the correct position
-                drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
-                drawing_rect.width *= self.zoom_level
-                drawing_rect.height *= self.zoom_level
-
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+            # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+            pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w, color=colour_to_draw)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -592,8 +587,8 @@ class Camera:
                 pygame.draw.rect(surface=self.screen, rect=food, color=[0, 255, 0])
 
         for creature in world.creatures:
-            for body_part in creature.body:
-                pygame.draw.rect(surface=self.screen, rect=body_part, color=[245, 245, 245])
+            body_part = creature.body
+            pygame.draw.circle(surface=self.screen, center=creature.body.center, radius=1, color=[245, 245, 245])
 
             if creature.vision_rect is not None:
                 pygame.draw.rect(camera.screen, [255, 0, 0], creature.vision_rect)
