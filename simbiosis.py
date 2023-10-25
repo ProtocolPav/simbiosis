@@ -259,7 +259,7 @@ class CreatureGenes:
         self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 15))
 
         # Genes affecting Creature movement
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
+        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 50))
         self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
         self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
 
@@ -318,50 +318,6 @@ class Creature:
 
     def __repr__(self):
         return f"Creature(ID{self.id}, Body({self.body}))"
-
-    def __move_x(self, direction: int):
-        last_body_part = self.body.pop()
-
-        if world.internal_rect.width - 1 <= self.body[0].x:
-            # On the rightmost border, so the creature must not face right
-            self.facing = random.choice(['down', 'up', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x - 1
-            last_body_part.actual_y = self.body[0].actual_y
-        elif self.body[0].x <= 0:
-            # On the leftmost border, so creature must not face left
-            self.facing = random.choice(['down', 'up', 'right'])
-            last_body_part.actual_x = self.body[0].actual_x + 1
-            last_body_part.actual_y = self.body[0].actual_y
-        else:
-            last_body_part.actual_x = self.body[0].actual_x + direction
-            last_body_part.actual_y = self.body[0].actual_y
-
-        last_body_part.x = round(last_body_part.actual_x)
-        last_body_part.y = round(last_body_part.actual_y)
-
-        self.body.insert(0, last_body_part)
-
-    def __move_y(self, direction: int):
-        last_body_part = self.body.pop()
-
-        if world.internal_rect.height - 1 <= self.body[0].y:
-            # On Bottom border, so creature must not face down
-            self.facing = random.choice(['up', 'right', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - 1
-        elif self.body[0].y <= 0:
-            # On top border, so creature must not face up
-            self.facing = random.choice(['down', 'right', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y + 1
-        else:
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y + direction
-
-        last_body_part.x = round(last_body_part.actual_x)
-        last_body_part.y = round(last_body_part.actual_y)
-
-        self.body.insert(0, last_body_part)
 
     def __vision(self):
         choice_list = ['forward', ['to the right', 'to the left', 'backwards']]
@@ -495,6 +451,22 @@ class Creature:
     def y_pos(self):
         return self.body.y
 
+    def facing_radians(self):
+        return self.facing/(180/math.pi)
+
+    def check_collision_with_border(self, x: float, y: float) -> bool:
+        # This isnt perfect as it checks just the centre point of the circle, so it produces some visual bugs
+        temp_position: tuple[float, float] = (self.body.actual_x+x, self.body.actual_y+y)
+
+        if temp_position[0] >= world.internal_rect.w - 1 or temp_position[1] >= world.internal_rect.h - 1:
+            # Creature is past the border
+            return True
+        elif temp_position[0] <= 0 or temp_position[1] <= 0:
+            # Creature is past the border in the negative directions
+            return True
+
+        return False
+
     def move(self):
         self.energy -= self.genes.energy_per_square.value
 
@@ -503,8 +475,13 @@ class Creature:
 
             self.energy -= self.genes.energy_per_square.value * len(self.body)
 
-            x_dist = math.cos(self.facing) * 3
-            y_dist = math.sin(self.facing) * 3
+            x_dist = math.cos(self.facing_radians()) * self.genes.idle_speed.value * deltatime
+            y_dist = math.sin(self.facing_radians()) * self.genes.idle_speed.value * deltatime
+
+            if self.check_collision_with_border(x_dist, y_dist):
+                self.facing += 100
+                x_dist = math.cos(self.facing_radians()) * self.genes.idle_speed.value * deltatime
+                y_dist = math.sin(self.facing_radians()) * self.genes.idle_speed.value * deltatime
 
             self.body.actual_x += x_dist
             self.body.actual_y += y_dist
@@ -613,10 +590,10 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=30, start_cluster=200)
+world = World(quadrant_size=100, quadrant_rows=4, start_species=100, start_creatures=1, start_cluster=200)
 
 while run:
-    clock.tick(25)
+    deltatime = clock.tick(120) / 1000
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
