@@ -501,7 +501,7 @@ class Camera:
     def __init__(self):
         self.screen = pygame.display.set_mode([1000, 700], pygame.RESIZABLE)
         self.zoom_level = 1
-        self.camera_speed = 40
+        self.camera_speed = 300
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
 
@@ -549,7 +549,7 @@ class Camera:
             drawing_rect.height *= self.zoom_level
 
             # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
-            pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w, color=colour_to_draw)
+            pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w//2, color=colour_to_draw)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -573,24 +573,24 @@ class Camera:
     def move(self):
         key = pygame.key.get_pressed()
         if key[pygame.K_a]:
-            self.centre_x += self.camera_speed
+            self.centre_x += self.camera_speed * deltatime
         elif key[pygame.K_d]:
-            self.centre_x -= self.camera_speed
+            self.centre_x -= self.camera_speed * deltatime
         elif key[pygame.K_w]:
-            self.centre_y += self.camera_speed
+            self.centre_y += self.camera_speed * deltatime
         elif key[pygame.K_s]:
-            self.centre_y -= self.camera_speed
+            self.centre_y -= self.camera_speed * deltatime
 
     def zoom(self, change: int):
         if 1 <= self.zoom_level + 1 * change <= 10:
             self.zoom_level += 1 * change
-            self.camera_speed -= 1 * change
+            self.camera_speed -= 10 * change
 
 
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=100, start_creatures=1, start_cluster=200)
+world = World(quadrant_size=100, quadrant_rows=8, start_species=100, start_creatures=30, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000
