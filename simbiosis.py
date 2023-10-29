@@ -19,7 +19,7 @@ logfile.write(f"Start Simbiosis Simulation v0.3\n"
 
 pygame.init()
 
-creature_image = pygame.image.load('textures/creature1.png')
+creature_image = pygame.image.load('textures/creature2.png')
 
 pygame.display.set_caption("SIMbiosis")
 
@@ -551,15 +551,17 @@ class Camera:
             drawing_rect.height *= self.zoom_level
 
             copy_image = creature_image.copy()
-            copy_image = pygame.transform.scale(copy_image, (10, 10))
-            copy_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
-            coloured = pygame.PixelArray(copy_image)
+            copy_image = pygame.transform.scale(copy_image, (drawing_rect.w*4, drawing_rect.h*4))
+            rotated_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
+            coloured = pygame.PixelArray(rotated_image)
             coloured.replace((167, 169, 172), colour_to_draw)
             del coloured
 
+            # Sets the center of the image to be aligned with the center position
+            creature_rect = rotated_image.get_rect(center=drawing_rect.center)
+            self.screen.blit(rotated_image, creature_rect)
             # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
-            self.screen.blit(copy_image, (drawing_rect.x, drawing_rect.y))
-            pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w, color=colour_to_draw)
+            # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w, color=(255, 255, 244))
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -600,7 +602,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=8, start_species=1, start_creatures=2, start_cluster=200)
+world = World(quadrant_size=100, quadrant_rows=8, start_species=100, start_creatures=2, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000
