@@ -19,6 +19,8 @@ logfile.write(f"Start Simbiosis Simulation v0.3\n"
 
 pygame.init()
 
+creature_image = pygame.image.load('textures/creature1.png')
+
 pygame.display.set_caption("SIMbiosis")
 
 clock = pygame.time.Clock()
@@ -536,9 +538,9 @@ class Camera:
 
         # Draw Creatures
         for creature in world.creatures:
-            colour_to_draw = [int(creature.genes.colour_red.value),
+            colour_to_draw = (int(creature.genes.colour_red.value),
                               int(creature.genes.colour_green.value),
-                              int(creature.genes.colour_blue.value)]
+                              int(creature.genes.colour_blue.value))
             body_part = creature.body
 
             # Move the Body Part Rect to the correct position
@@ -548,8 +550,16 @@ class Camera:
             drawing_rect.width *= self.zoom_level
             drawing_rect.height *= self.zoom_level
 
+            copy_image = creature_image.copy()
+            copy_image = pygame.transform.scale(copy_image, (10, 10))
+            copy_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
+            coloured = pygame.PixelArray(copy_image)
+            coloured.replace((167, 169, 172), colour_to_draw)
+            del coloured
+
             # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
-            pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w//2, color=colour_to_draw)
+            self.screen.blit(copy_image, (drawing_rect.x, drawing_rect.y))
+            pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w, color=colour_to_draw)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -590,7 +600,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=8, start_species=100, start_creatures=30, start_cluster=200)
+world = World(quadrant_size=100, quadrant_rows=8, start_species=1, start_creatures=2, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000
