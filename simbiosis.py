@@ -607,7 +607,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=8, start_species=100, start_creatures=2, start_cluster=200)
+world = World(quadrant_size=50, quadrant_rows=8, start_species=100, start_creatures=2, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000

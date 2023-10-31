@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 
 class Node:
@@ -51,10 +52,12 @@ class KDTree:
 
 
 point_list = []
-for i in range(300):
+for i in range(300000):
     point = (random.randint(0, 100), random.randint(0, 100))
     point_list.append(point)
 
+start = datetime.now()
 tree = KDTree(point_list)
-for i in tree.nodes:
-    print(i)
+print(datetime.now() - start)
+# for i in tree.nodes:
+#     print(i)
