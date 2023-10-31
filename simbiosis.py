@@ -541,6 +541,9 @@ class Camera:
             colour_to_draw = (int(creature.genes.colour_red.value),
                               int(creature.genes.colour_green.value),
                               int(creature.genes.colour_blue.value))
+            pattern = (int(255-creature.genes.colour_red.value),
+                       int(255-creature.genes.colour_green.value),
+                       int(255-creature.genes.colour_blue.value))
             body_part = creature.body
 
             # Move the Body Part Rect to the correct position
@@ -553,6 +556,7 @@ class Camera:
             copy_image = creature_image.copy()
             coloured = pygame.PixelArray(copy_image)
             coloured.replace((104, 104, 104), colour_to_draw)
+            coloured.replace((255,255,255), pattern)
             del coloured
 
             copy_image = pygame.transform.scale(copy_image, (drawing_rect.w*4, drawing_rect.h*4))
