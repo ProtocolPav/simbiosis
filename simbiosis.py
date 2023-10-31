@@ -19,7 +19,7 @@ logfile.write(f"Start Simbiosis Simulation v0.3\n"
 
 pygame.init()
 
-creature_image = pygame.image.load('textures/creature2.png')
+creature_image = pygame.image.load('textures/creature3.png')
 
 pygame.display.set_caption("SIMbiosis")
 
@@ -551,11 +551,12 @@ class Camera:
             drawing_rect.height *= self.zoom_level
 
             copy_image = creature_image.copy()
+            coloured = pygame.PixelArray(copy_image)
+            coloured.replace((104, 104, 104), colour_to_draw)
+            del coloured
+
             copy_image = pygame.transform.scale(copy_image, (drawing_rect.w*4, drawing_rect.h*4))
             rotated_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
-            coloured = pygame.PixelArray(rotated_image)
-            coloured.replace((167, 169, 172), colour_to_draw)
-            del coloured
 
             # Sets the center of the image to be aligned with the center position
             creature_rect = rotated_image.get_rect(center=drawing_rect.center)
