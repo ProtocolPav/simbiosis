@@ -259,7 +259,7 @@ class CreatureGenes:
         self.colour_green = Gene(name="Green Colour", acronym="CLG", value=random.randint(0, 255))
         self.colour_blue = Gene(name="Blue Colour", acronym="CLB", value=random.randint(0, 255))
         self.head = Gene(name="Head Colour Multiplier", acronym="CLH", value=random.random())
-        self.size = Gene(name="Creature Size", acronym="SIZ", value=random.uniform(1, 7))
+        self.radius = Gene(name="Creature Radius Size", acronym="SIZ", value=random.uniform(0.5, 7))
 
         # Genes affecting Creature movement
         self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 50))
@@ -307,7 +307,7 @@ class Creature:
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         if start_energy is None:
-            self.energy = self.genes.energy_per_square.value * 5000 * self.genes.size.value
+            self.energy = self.genes.energy_per_square.value * 5000 * self.genes.radius.value
         else:
             self.energy = start_energy
 
@@ -556,9 +556,9 @@ class Camera:
             # Move the Body Part Rect to the correct position
             # This is important as the position values I give is the top left point of the rectangle,
             # but the point that is stored is the centre point, so I must adjust for that
-            rect_left = body_part.x - creature.genes.size.value//2
-            rect_top = body_part.y - creature.genes.size.value//2
-            drawing_rect = pygame.Rect(rect_left, rect_top, creature.genes.size.value, creature.genes.size.value)
+            rect_left = body_part.x - creature.genes.radius.value
+            rect_top = body_part.y - creature.genes.radius.value
+            drawing_rect = pygame.Rect(rect_left, rect_top, creature.genes.radius.value * 2, creature.genes.radius.value * 2)
             drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
             drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
             drawing_rect.width *= self.zoom_level
@@ -578,6 +578,8 @@ class Camera:
             self.screen.blit(rotated_image, creature_rect)
             # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
             # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
+            pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                               radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
