@@ -20,6 +20,7 @@ logfile.write(f"Start Simbiosis Simulation v0.3\n"
 pygame.init()
 
 creature_image = pygame.image.load('textures/creature3.png')
+food_image = pygame.image.load('textures/food1.png')
 
 pygame.display.set_caption("SIMbiosis")
 
@@ -303,6 +304,7 @@ class Creature:
         self.id = Creature.id
 
         self.body = CreatureBody(self.id, position_x, position_y)
+        self.randomsize = random.randint(1, 7)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         if start_energy is None:
@@ -503,7 +505,7 @@ class Camera:
     def __init__(self):
         self.screen = pygame.display.set_mode([1000, 700], pygame.RESIZABLE)
         self.zoom_level = 1
-        self.camera_speed = 300
+        self.camera_speed = 1500
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
 
@@ -534,7 +536,13 @@ class Camera:
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
 
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
+                copy_image = food_image.copy()
+                copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
+                rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
+                food_rect = rotated_image.get_rect(center=drawing_rect.center)
+                self.screen.blit(rotated_image, food_rect)
+
+                # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
 
         # Draw Creatures
         for creature in world.creatures:
@@ -547,7 +555,7 @@ class Camera:
             body_part = creature.body
 
             # Move the Body Part Rect to the correct position
-            drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
+            drawing_rect = pygame.Rect(body_part.x, body_part.y, creature.randomsize, creature.randomsize)
             drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
             drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
             drawing_rect.width *= self.zoom_level
@@ -559,7 +567,7 @@ class Camera:
             coloured.replace((255,255,255), pattern)
             del coloured
 
-            copy_image = pygame.transform.scale(copy_image, (drawing_rect.w*4, drawing_rect.h*4))
+            copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
             rotated_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
 
             # Sets the center of the image to be aligned with the center position
@@ -599,9 +607,9 @@ class Camera:
             self.centre_y -= self.camera_speed * deltatime
 
     def zoom(self, change: int):
-        if 1 <= self.zoom_level + 1 * change <= 10:
+        if 1 <= self.zoom_level + 1 * change <= 30:
             self.zoom_level += 1 * change
-            self.camera_speed -= 10 * change
+            self.camera_speed += 10 * change
 
 
 run = True
