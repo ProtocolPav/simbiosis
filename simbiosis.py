@@ -259,7 +259,7 @@ class CreatureGenes:
         self.colour_green = Gene(name="Green Colour", acronym="CLG", value=random.randint(0, 255))
         self.colour_blue = Gene(name="Blue Colour", acronym="CLB", value=random.randint(0, 255))
         self.head = Gene(name="Head Colour Multiplier", acronym="CLH", value=random.random())
-        self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 15))
+        self.size = Gene(name="Creature Size", acronym="SIZ", value=random.uniform(1, 7))
 
         # Genes affecting Creature movement
         self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 50))
@@ -304,11 +304,10 @@ class Creature:
         self.id = Creature.id
 
         self.body = CreatureBody(self.id, position_x, position_y)
-        self.randomsize = random.randint(1, 7)
 
         self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
         if start_energy is None:
-            self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
+            self.energy = self.genes.energy_per_square.value * 5000 * self.genes.size.value
         else:
             self.energy = start_energy
 
@@ -462,7 +461,7 @@ class Creature:
         # This isnt perfect as it checks just the centre point of the circle, so it produces some visual bugs
         temp_position: tuple[float, float] = (self.body.actual_x+x, self.body.actual_y+y)
 
-        if temp_position[0] >= world.internal_rect.w - 1 or temp_position[1] >= world.internal_rect.h - 1:
+        if temp_position[0] >= world.internal_rect.w - 2 or temp_position[1] >= world.internal_rect.h - 2:
             # Creature is past the border
             return True
         elif temp_position[0] <= 0 or temp_position[1] <= 0:
@@ -555,7 +554,11 @@ class Camera:
             body_part = creature.body
 
             # Move the Body Part Rect to the correct position
-            drawing_rect = pygame.Rect(body_part.x, body_part.y, creature.randomsize, creature.randomsize)
+            # This is important as the position values I give is the top left point of the rectangle,
+            # but the point that is stored is the centre point, so I must adjust for that
+            rect_left = body_part.x - creature.genes.size.value//2
+            rect_top = body_part.y - creature.genes.size.value//2
+            drawing_rect = pygame.Rect(rect_left, rect_top, creature.genes.size.value, creature.genes.size.value)
             drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
             drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
             drawing_rect.width *= self.zoom_level
@@ -564,7 +567,7 @@ class Camera:
             copy_image = creature_image.copy()
             coloured = pygame.PixelArray(copy_image)
             coloured.replace((104, 104, 104), colour_to_draw)
-            coloured.replace((255,255,255), pattern)
+            coloured.replace((255, 255, 255), pattern)
             del coloured
 
             copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
@@ -574,7 +577,7 @@ class Camera:
             creature_rect = rotated_image.get_rect(center=drawing_rect.center)
             self.screen.blit(rotated_image, creature_rect)
             # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
-            # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=drawing_rect.w, color=(255, 255, 244))
+            # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -589,7 +592,6 @@ class Camera:
                 pygame.draw.rect(surface=self.screen, rect=food, color=[0, 255, 0])
 
         for creature in world.creatures:
-            body_part = creature.body
             pygame.draw.circle(surface=self.screen, center=creature.body.center, radius=1, color=[245, 245, 245])
 
             if creature.vision_rect is not None:
@@ -615,7 +617,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=50, quadrant_rows=8, start_species=100, start_creatures=2, start_cluster=200)
+world = World(quadrant_size=50, quadrant_rows=8, start_species=10, start_creatures=30, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000
