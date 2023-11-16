@@ -538,9 +538,9 @@ class Camera:
 
                 copy_image = food_image.copy()
                 copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
-                rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
-                food_rect = rotated_image.get_rect(center=drawing_rect.center)
-                self.screen.blit(rotated_image, food_rect)
+                # rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
+                food_rect = copy_image.get_rect(center=drawing_rect.center)
+                self.screen.blit(copy_image, food_rect)
 
                 # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
 
