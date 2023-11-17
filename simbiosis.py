@@ -602,11 +602,6 @@ class Camera:
 
     def debug_draw_world(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
-        colour_change = 210 / len(world.quadrants)
-        colour = 30
-        for world_quadrant in world.quadrants:
-            pygame.draw.rect(surface=self.screen, color=[0, colour, colour], rect=world_quadrant.internal_rect)
-            colour += colour_change
 
         for food_cluster in world.food_clusters:
             for food in food_cluster.food:
@@ -616,7 +611,7 @@ class Camera:
             pygame.draw.circle(surface=self.screen, center=creature.body.center, radius=1, color=[245, 245, 245])
 
             if creature.vision_rect is not None:
-                pygame.draw.rect(camera.screen, [255, 0, 0], creature.vision_rect)
+                pygame.draw.rect(self.screen, [255, 0, 0], creature.vision_rect)
 
     def move(self, deltatime):
         key = pygame.key.get_pressed()
@@ -635,6 +630,45 @@ class Camera:
             self.camera_speed += 10 * change
 
 
+class Button:
+    def __init__(self, image: pygame.Surface, x_pos: int, y_pos: int):
+        self.rect = pygame.Rect(x_pos, y_pos, image.get_width(), image.get_height())
+        self.image = image
+
+        # Create the image of the button when it is hovered/pressed
+        self.pressed = self.image.copy()
+        pygame.PixelArray(self.pressed).replace((0, 0, 0), (46, 139, 87))
+
+        self.is_hovered = False
+
+    def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
+        self.rect.x = x_pos
+        self.rect.y = y_pos
+
+        if not self.is_hovered:
+            screen.blit(self.image, self.rect)
+        else:
+            screen.blit(self.pressed, self.rect)
+
+    def check_for_hover(self):
+        mos_x, mos_y = pygame.mouse.get_pos()
+        x_inside = False
+        y_inside = False
+
+        if mos_x > self.rect.x and (mos_x < self.rect.x + self.rect.w):
+            x_inside = True
+        if mos_y > self.rect.y and (mos_y < self.rect.y + self.rect.h):
+            y_inside = True
+        if x_inside and y_inside:
+            self.is_hovered = True
+        else:
+            self.is_hovered = False
+
+    def check_for_press(self):
+        if pygame.mouse.get_pressed()[0] and self.is_hovered:
+            return True
+
+
 class Simulation:
     def __init__(self):
         pygame.init()
@@ -645,7 +679,9 @@ class Simulation:
         self.food_image = pygame.image.load('textures/food1.png')
         self.menu_background = pygame.image.load('screens/menu_background.png')
         self.logo = pygame.image.load('screens/logo.png')
-        self.buttons = {'play': pygame.image.load('screens/buttons/play.png')}
+        self.buttons = {'play': Button(pygame.image.load('screens/buttons/play.png'),
+                                       (self.screen.get_width() - 64) // 2,
+                                       self.screen.get_height() // 2 - 100)}
 
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
@@ -656,10 +692,10 @@ class Simulation:
 
         # Menu Booleans
         self.program_running = True
-        self.start_menu_screen = False
+        self.start_menu_screen = True
         self.help_menu = False
         self.load_menu = False
-        self.game_being_played = True
+        self.game_being_played = False
         self.world_paused = False
         self.debug_screen = False
 
@@ -697,53 +733,14 @@ class Simulation:
         copy_image = pygame.transform.scale_by(self.logo, 0.4)
         self.screen.blit(copy_image, ((self.screen.get_width() - copy_image.get_width()) // 2, 0))
 
-        copy_image = pygame.transform.scale_by(self.buttons['play'], 1)
-        coordinates = ((self.screen.get_width() - copy_image.get_width()) // 2,
-                       self.screen.get_height() // 2 - 100)
-        self.screen.blit(copy_image, coordinates)
-        play_button_rect = copy_image.get_rect()
-        play_button_rect.x = coordinates[0]
-        play_button_rect.y = coordinates[1]
-
-        mos_x, mos_y = pygame.mouse.get_pos()
-        if mos_x > play_button_rect.x and (mos_x < play_button_rect.x + play_button_rect.w):
-            x_inside = True
-        else:
-            x_inside = False
-        if mos_y > play_button_rect.y and (mos_y < play_button_rect.y + play_button_rect.h):
-            y_inside = True
-        else:
-            y_inside = False
-        if x_inside and y_inside:
-            print("INSIDE")
+        play_button = self.buttons['play']
+        play_button.draw(self.screen, (self.screen.get_width() - play_button.rect.w) // 2,
+                         self.screen.get_height() // 2 - 100)
+        play_button.check_for_hover()
+        if play_button.check_for_press():
+            self.game_being_played = True
+            self.start_menu_screen = False
 
 
 simulation = Simulation()
 simulation.main()
-
-# run = True
-# debug = False
-# camera = Camera()
-# world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
-#
-# while run:
-#     deltatime = clock.tick(120) / 1000
-#
-#     for event in pygame.event.get():
-#         if event.type == pygame.QUIT:
-#             run = False
-#         elif event.type == pygame.MOUSEWHEEL:
-#             camera.zoom(event.y)
-#         elif event.type == pygame.KEYDOWN:
-#             if event.key == pygame.K_SPACE:
-#                 world.game_paused = not world.game_paused
-#             elif event.key == pygame.K_q:
-#                 debug = not debug
-#
-#     world.tick_game()
-#
-#     camera.move()
-#     camera.draw_world(world)
-#     camera.debug_draw_world(world) if debug else ...
-#
-#     pygame.display.flip()
