@@ -688,7 +688,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
+        self.world = None
 
         # Menu Booleans
         self.program_running = True
@@ -719,7 +719,8 @@ class Simulation:
             if self.start_menu_screen:
                 self.start_menu()
             elif self.game_being_played:
-                self.world.tick_game(deltatime)
+                if not self.world_paused:
+                    self.world.tick_game(deltatime)
 
                 self.camera.move(deltatime)
                 self.camera.draw_world(self.world)
@@ -738,6 +739,7 @@ class Simulation:
                          self.screen.get_height() // 2 - 100)
         play_button.check_for_hover()
         if play_button.check_for_press():
+            self.world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
             self.game_being_played = True
             self.start_menu_screen = False
 
