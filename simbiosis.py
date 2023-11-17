@@ -32,18 +32,54 @@ def log(message: str):
     logfile.write(f"[{datetime.now()}] {message}\n")
 
 
-class WorldQuadrant:
-    def __init__(self, pos_x: int, pos_y: int, quadrant_size: int):
-        self.internal_rect = pygame.Rect(pos_x, pos_y, quadrant_size, quadrant_size)
+class Node:
+    def __init__(self, data, left_node, right_node):
+        self.data = data
+        self.left_child = left_node
+        self.right_child = right_node
 
-        self.collisions_dict: dict[int, CreatureBody] = {}
-        self.food_collisions_dict: dict[int, Food] = {}
+    def __repr__(self):
+        try:
+            left_data = self.left_child.data
+        except:
+            left_data = None
+
+        try:
+            right_data = self.right_child.data
+        except:
+            right_data = None
+        return f"Left: {left_data}\tData: {self.data}\tRight: {right_data}"
+
+
+class KDTree:
+    def __init__(self, points: list, depth: int = 0):
+        self.nodes = []
+        self.__create_tree(points, depth)
+        log(len(self.nodes))
+
+    def __create_tree(self, points: list, depth: int = 0):
+        # Get the axis to sort the points by initially. The root note will be 0, and thus give me the x-axis (0)
+        axis = depth % 2
+        if len(points) != 0:
+            points.sort(key=lambda x: (x.x_pos() if axis == 0 else x.y_pos()))
+            middle_value = len(points) // 2
+            median_point = points[middle_value]
+
+            left = self.__create_tree(points[0:middle_value], depth+1)
+            right = self.__create_tree(points[middle_value+1:], depth+1)
+
+            node = Node(median_point, left, right)
+            self.nodes.insert(0, node)
+            return node
+
+    def range_search(self, point: tuple[float, float], radius: float):
+        ...
 
 
 class World:
-    def __init__(self, quadrant_size: int, quadrant_rows: int = 2, start_species: int = 4, start_creatures: int = 10,
+    def __init__(self, size: int, start_species: int = 4, start_creatures: int = 10,
                  start_cluster: int = 10):
-        world_size = quadrant_size * quadrant_rows
+        world_size = size
         self.internal_rect = pygame.Rect(0, 0, world_size, world_size)
         self.borders = [pygame.Rect(0, -1, world_size, 1),
                         pygame.Rect(-1, 0, 1, world_size),
@@ -53,12 +89,7 @@ class World:
         self.food_clusters: list[FoodCluster] = []
         self.ticks = 0
         self.game_paused = False
-
-        self.quadrants = []
-        for x in range(quadrant_rows):
-            for y in range(quadrant_rows):
-                log(f"Appending {x * quadrant_size, y * quadrant_size, quadrant_size}")
-                self.quadrants.append(WorldQuadrant(x * quadrant_size, y * quadrant_size, quadrant_size))
+        self.tree = None
 
         for i in range(start_species):
             species_creature = Creature(random.randint(60, world_size - 60), random.randint(60, world_size - 60))
@@ -74,6 +105,8 @@ class World:
 
     def tick_game(self):
         if not self.game_paused:
+            tree_list = []
+
             if random.choices(population=["no", "spawn cluster"], weights=[499, 1])[0] == "spawn cluster":
                 self.food_clusters.append(FoodCluster(random.randint(1, self.internal_rect.w - 1),
                                                       random.randint(1, self.internal_rect.h - 1)))
@@ -83,10 +116,13 @@ class World:
                     self.food_clusters.remove(cluster)
                 else:
                     cluster.spawn_food(self.internal_rect)
-                    cluster.tick_food()
+                    cluster.tick_food(tree_list)
 
             for creature in self.creatures:
                 creature.move()
+                tree_list.append(creature)
+
+            self.tree = KDTree(tree_list)
 
     def get_creature(self, creature_id):
         for creat in self.creatures:
@@ -111,17 +147,11 @@ class Food(pygame.Rect):
     def __repr__(self):
         return f"Food({self.id}, {self.x}, {self.y})"
 
-    def check_quadrant(self) -> WorldQuadrant:
-        coordinates = (self.x, self.y)
+    def x_pos(self):
+        return self.x
 
-        for quad in world.quadrants:
-            y_check = quad.internal_rect.topleft[1] < coordinates[1] < quad.internal_rect.bottomright[1]
-            x_check = quad.internal_rect.topleft[0] < coordinates[0] < quad.internal_rect.bottomright[0]
-
-            if x_check and y_check:
-                return quad
-
-        return world.quadrants[0]
+    def y_pos(self):
+        return self.y
 
 
 class FoodCluster:
@@ -154,26 +184,25 @@ class FoodCluster:
                 if collision == -1 and y_check and x_check:
                     new_food = Food(food_rect.x, food_rect.y, random.randint(50, 500), self)
                     self.food.append(new_food)
-                    new_food.check_quadrant().food_collisions_dict[new_food.id] = new_food
 
     def remove_food(self, food: Food):
         if not food.eaten:
             food.eaten = True
             self.food.remove(food)
-            food.check_quadrant().food_collisions_dict.pop(food.id)
 
-    def tick_food(self):
-        self.food[0].check_quadrant().food_collisions_dict[self.food[0].id] = self.food[0]
-        # food_to_remove = []
-        #
-        # for food in self.food:
-        #     food.ticks += 1
-        #
-        #     if food.ticks >= food.total_ticks:
-        #         food_to_remove.append(food)
-        #
-        # for food in food_to_remove:
-        #     self.remove_food(food)
+    def tick_food(self, tree_list: list):
+        food_to_remove = []
+
+        for food in self.food:
+            food.ticks += 1
+
+            if food.ticks >= food.total_ticks:
+                food_to_remove.append(food)
+            else:
+                tree_list.append(food)
+
+        for food in food_to_remove:
+            self.remove_food(food)
 
 
 class CreatureBody(pygame.Rect):
@@ -192,23 +221,6 @@ class CreatureBody(pygame.Rect):
 
     def __repr__(self):
         return f"Body({self.id, self.x, self.y, self.width, self.height})"
-
-    def check_quadrant(self) -> WorldQuadrant:
-        coordinates = (self.x, self.y)
-
-        for quad in world.quadrants:
-            y_check = quad.internal_rect.topleft[1] < coordinates[1] < quad.internal_rect.bottomright[1]
-            x_check = quad.internal_rect.topleft[0] < coordinates[0] < quad.internal_rect.bottomright[0]
-
-            if y_check and x_check:
-                return quad
-
-        return world.quadrants[0]
-
-    def add_to_collisions(self):
-        quadrant = self.check_quadrant()
-
-        quadrant.collisions_dict[self.id] = self
 
     def collision_check(self, collision_dict: dict):
         collision = self.collidedict(collision_dict, True)
@@ -449,10 +461,10 @@ class Creature:
             self.dead = True
 
     def x_pos(self):
-        return self.body.x
+        return self.body.actual_x
 
     def y_pos(self):
-        return self.body.y
+        return self.body.actual_y
 
     def facing_radians(self):
         return self.facing/(180/math.pi)
@@ -493,8 +505,6 @@ class Creature:
             self.body.y = round(self.body.actual_y)
 
             # self.__collide()
-
-            self.body.add_to_collisions()
 
         if self.energy <= 0:
             self.__die()
@@ -619,7 +629,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(quadrant_size=50, quadrant_rows=8, start_species=10, start_creatures=30, start_cluster=200)
+world = World(size=1000, start_species=10, start_creatures=30, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000
@@ -640,11 +650,5 @@ while run:
     camera.move()
     camera.draw(world)
     camera.debug_draw(world) if debug else ...
-
-    if not world.game_paused:
-        for quadrant in world.quadrants:
-            index = world.quadrants.index(quadrant)
-            quadrant.collisions_dict = {}
-            # quadrant.food_collisions_dict = {}
 
     pygame.display.flip()

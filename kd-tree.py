@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from scipy.spatial import KDTree as scitree
 
 
 class Node:
@@ -41,23 +42,44 @@ class KDTree:
             self.nodes.insert(0, node)
             return node
 
-    def insert(self, point: tuple[float, float]):
+    def range_search(self, point: tuple[float, float], radius: float):
         ...
 
-    def delete(self, point: tuple[float, float]):
-        ...
 
-    def range_search(self, point: tuple[float, float]):
-        ...
+class KdTree2:
+    def __init__(self, P, d=0):
+        n = len(P)
+        m = n // 2
+        P.sort(key = lambda x: x[d])
+        self.point = P[m]
+        self.d = d
+        d = (d + 1) % len(P[0])-1 # -1 because then the last element will not be a dimension (wanted since last ele is info obj)
+        self.left = self.right = None
+        if m > 0 :
+            self.left = KdTree2(P[:m], d)
+        if n - (m+1) > 0:
+            self.right = KdTree2(P[m+1:], d)
 
 
 point_list = []
-for i in range(300000):
+for i in range(30000):
     point = (random.randint(0, 100), random.randint(0, 100))
     point_list.append(point)
 
+print("Starting Scitree")
 start = datetime.now()
-tree = KDTree(point_list)
+tree = scitree(point_list)
 print(datetime.now() - start)
-# for i in tree.nodes:
-#     print(i)
+
+print("Starting My Tree")
+start = datetime.now()
+tree2 = KDTree(point_list)
+print(datetime.now() - start)
+
+print("Starting Other Tree")
+start = datetime.now()
+tree3 = KdTree2(point_list)
+print(datetime.now() - start)
+
+query_point = point_list[random.randint(0, 300)]
+query = tree.query_ball_point(query_point, 10)
