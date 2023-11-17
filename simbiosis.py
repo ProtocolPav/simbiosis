@@ -55,7 +55,7 @@ class KDTree:
     def __init__(self, points: list, depth: int = 0):
         self.nodes = []
         self.__create_tree(points, depth)
-        log(len(self.nodes))
+        log(f"Tree Size {len(self.nodes)}")
 
     def __create_tree(self, points: list, depth: int = 0):
         # Get the axis to sort the points by initially. The root note will be 0, and thus give me the x-axis (0)
@@ -547,9 +547,9 @@ class Camera:
 
                 copy_image = food_image.copy()
                 copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
-                # rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
-                food_rect = copy_image.get_rect(center=drawing_rect.center)
-                self.screen.blit(copy_image, food_rect)
+                rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
+                food_rect = rotated_image.get_rect(center=drawing_rect.center)
+                self.screen.blit(rotated_image, food_rect)
 
                 # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
 
@@ -574,22 +574,26 @@ class Camera:
             drawing_rect.width *= self.zoom_level
             drawing_rect.height *= self.zoom_level
 
-            copy_image = creature_image.copy()
-            coloured = pygame.PixelArray(copy_image)
-            coloured.replace((104, 104, 104), colour_to_draw)
-            coloured.replace((255, 255, 255), pattern)
-            del coloured
+            bound = -(creature.genes.radius.value/scale * 2)
 
-            copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
-            rotated_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
+            # Don't draw if the creature is off the screen. Saves program from processing useless things
+            if bound < drawing_rect.x < self.screen.get_width() and bound < drawing_rect.y < self.screen.get_height():
+                copy_image = creature_image.copy()
+                coloured = pygame.PixelArray(copy_image)
+                coloured.replace((104, 104, 104), colour_to_draw)
+                coloured.replace((255, 255, 255), pattern)
+                del coloured
 
-            # Sets the center of the image to be aligned with the center position
-            creature_rect = rotated_image.get_rect(center=drawing_rect.center)
-            self.screen.blit(rotated_image, creature_rect)
-            # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
-            # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
-            pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                               radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
+                copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
+                rotated_image = pygame.transform.rotate(copy_image, -(creature.facing + 90))
+
+                # Sets the center of the image to be aligned with the center position
+                creature_rect = rotated_image.get_rect(center=drawing_rect.center)
+                self.screen.blit(rotated_image, creature_rect)
+                # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+                # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
+                pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                                   radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 
     def debug_draw(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
@@ -629,7 +633,7 @@ class Camera:
 run = True
 debug = False
 camera = Camera()
-world = World(size=1000, start_species=10, start_creatures=30, start_cluster=200)
+world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
 
 while run:
     deltatime = clock.tick(120) / 1000
