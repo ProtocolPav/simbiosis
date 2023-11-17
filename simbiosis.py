@@ -15,14 +15,14 @@ logfile = open(f"./logs/log-{time_now}.txt", "w")
 logfile.write(f"Start Simbiosis Simulation v0.3\n"
               f"Start Time: {time_now}\n\n\n"
               f"Runtime Logs:\n"
-              f"{'-'*60}\n")
+              f"{'-' * 60}\n")
 
 pygame.init()
 
 creature_image = pygame.image.load('textures/creature3.png')
 food_image = pygame.image.load('textures/food1.png')
 
-pygame.display.set_caption("SIMbiosis")
+pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
 clock = pygame.time.Clock()
 
@@ -65,8 +65,8 @@ class KDTree:
             middle_value = len(points) // 2
             median_point = points[middle_value]
 
-            left = self.__create_tree(points[0:middle_value], depth+1)
-            right = self.__create_tree(points[middle_value+1:], depth+1)
+            left = self.__create_tree(points[0:middle_value], depth + 1)
+            right = self.__create_tree(points[middle_value + 1:], depth + 1)
 
             node = Node(median_point, left, right)
             self.nodes.insert(0, node)
@@ -92,18 +92,18 @@ class World:
         self.tree = None
 
         for i in range(start_species):
-            species_creature = Creature(random.randint(60, world_size - 60), random.randint(60, world_size - 60))
+            species_creature = Creature(self, random.randint(60, world_size - 60), random.randint(60, world_size - 60))
             for j in range(start_creatures):
                 x = species_creature.x_pos() + random.randint(-50, 50)
                 y = species_creature.y_pos() + random.randint(-50, 50)
-                self.creatures.append(Creature(x, y, genes=copy.deepcopy(species_creature.genes)))
+                self.creatures.append(Creature(self, x, y, genes=copy.deepcopy(species_creature.genes)))
 
         for i in range(start_cluster):
             cluster = FoodCluster(random.randint(1, self.internal_rect.w - 1),
                                   random.randint(1, self.internal_rect.h - 1))
             self.food_clusters.append(cluster)
 
-    def tick_game(self):
+    def tick_game(self, deltatime):
         if not self.game_paused:
             tree_list = []
 
@@ -119,7 +119,7 @@ class World:
                     cluster.tick_food(tree_list)
 
             for creature in self.creatures:
-                creature.move()
+                creature.move(deltatime)
                 tree_list.append(creature)
 
             self.tree = KDTree(tree_list)
@@ -128,6 +128,9 @@ class World:
         for creat in self.creatures:
             if creat.id == creature_id:
                 return creat
+
+    def spawn_food(self):
+        ...
 
 
 class Food(pygame.Rect):
@@ -161,7 +164,7 @@ class FoodCluster:
         self.food: list[Food] = [Food(centre_x, centre_y, 500, self)]
 
     def spawn_food(self, world_rect: Rect):
-        loop_length = 1 + (len(self.food) // 100)*2
+        loop_length = 1 + (len(self.food) // 100) * 2
 
         for i in range(loop_length):
             chance_of_spawning = random.choices(population=["no spawn", "spawn"], weights=[90, 10])[0]
@@ -311,9 +314,11 @@ class CreatureGenes:
 class Creature:
     id = 1
 
-    def __init__(self, position_x: int, position_y: int, genes: CreatureGenes = None, start_energy: float = None):
+    def __init__(self, world: World, position_x: int, position_y: int, genes: CreatureGenes = None, start_energy: float = None):
         log(f"Created Creature with ID{Creature.id}")
         self.id = Creature.id
+
+        self.world = world
 
         self.body = CreatureBody(self.id, position_x, position_y)
 
@@ -452,12 +457,12 @@ class Creature:
             for gene, gene_object in vars(baby.genes).items():
                 gene_object.mutate()
 
-            world.creatures.append(baby)
+            self.world.creatures.append(baby)
 
     def __die(self):
         if not self.dead:
             log(f"[DEATH] Creature {self.id}")
-            world.creatures.remove(self)
+            self.world.creatures.remove(self)
             self.dead = True
 
     def x_pos(self):
@@ -467,13 +472,13 @@ class Creature:
         return self.body.actual_y
 
     def facing_radians(self):
-        return self.facing/(180/math.pi)
+        return self.facing / (180 / math.pi)
 
     def check_collision_with_border(self, x: float, y: float) -> bool:
         # This isnt perfect as it checks just the centre point of the circle, so it produces some visual bugs
-        temp_position: tuple[float, float] = (self.body.actual_x+x, self.body.actual_y+y)
+        temp_position: tuple[float, float] = (self.body.actual_x + x, self.body.actual_y + y)
 
-        if temp_position[0] >= world.internal_rect.w - 2 or temp_position[1] >= world.internal_rect.h - 2:
+        if temp_position[0] >= self.world.internal_rect.w - 2 or temp_position[1] >= self.world.internal_rect.h - 2:
             # Creature is past the border
             return True
         elif temp_position[0] <= 0 or temp_position[1] <= 0:
@@ -482,7 +487,7 @@ class Creature:
 
         return False
 
-    def move(self):
+    def move(self, deltatime):
         self.energy -= self.genes.energy_per_square.value
 
         if not self.dead:
@@ -511,14 +516,14 @@ class Creature:
 
 
 class Camera:
-    def __init__(self):
-        self.screen = pygame.display.set_mode([1000, 700], pygame.RESIZABLE)
+    def __init__(self, screen: pygame.Surface):
+        self.screen = screen
         self.zoom_level = 1
         self.camera_speed = 1500
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
 
-    def draw(self, world: World):
+    def draw_world(self, world: World):
         # Draw Background Colour
         pygame.draw.rect(surface=self.screen,
                          color=[0, 10, 27],
@@ -558,9 +563,9 @@ class Camera:
             colour_to_draw = (int(creature.genes.colour_red.value),
                               int(creature.genes.colour_green.value),
                               int(creature.genes.colour_blue.value))
-            pattern = (int(255-creature.genes.colour_red.value),
-                       int(255-creature.genes.colour_green.value),
-                       int(255-creature.genes.colour_blue.value))
+            pattern = (int(255 - creature.genes.colour_red.value),
+                       int(255 - creature.genes.colour_green.value),
+                       int(255 - creature.genes.colour_blue.value))
             body_part = creature.body
 
             # Move the Body Part Rect to the correct position
@@ -574,7 +579,7 @@ class Camera:
             drawing_rect.width *= self.zoom_level
             drawing_rect.height *= self.zoom_level
 
-            bound = -(creature.genes.radius.value/scale * 2)
+            bound = -(creature.genes.radius.value / scale * 2)
 
             # Don't draw if the creature is off the screen. Saves program from processing useless things
             if bound < drawing_rect.x < self.screen.get_width() and bound < drawing_rect.y < self.screen.get_height():
@@ -592,10 +597,10 @@ class Camera:
                 self.screen.blit(rotated_image, creature_rect)
                 # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
                 # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
-                pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                                   radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
+                # pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                #                    radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 
-    def debug_draw(self, world: World):
+    def debug_draw_world(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
         colour_change = 210 / len(world.quadrants)
         colour = 30
@@ -613,7 +618,7 @@ class Camera:
             if creature.vision_rect is not None:
                 pygame.draw.rect(camera.screen, [255, 0, 0], creature.vision_rect)
 
-    def move(self):
+    def move(self, deltatime):
         key = pygame.key.get_pressed()
         if key[pygame.K_a]:
             self.centre_x += self.camera_speed * deltatime
@@ -630,29 +635,115 @@ class Camera:
             self.camera_speed += 10 * change
 
 
-run = True
-debug = False
-camera = Camera()
-world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
+class Simulation:
+    def __init__(self):
+        pygame.init()
 
-while run:
-    deltatime = clock.tick(120) / 1000
+        self.screen = pygame.display.set_mode((1800, 950), pygame.RESIZABLE)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        elif event.type == pygame.MOUSEWHEEL:
-            camera.zoom(event.y)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                world.game_paused = not world.game_paused
-            elif event.key == pygame.K_q:
-                debug = not debug
+        self.creature_image = pygame.image.load('textures/creature3.png')
+        self.food_image = pygame.image.load('textures/food1.png')
+        self.menu_background = pygame.image.load('screens/menu_background.png')
+        self.logo = pygame.image.load('screens/logo.png')
+        self.buttons = {'play': pygame.image.load('screens/buttons/play.png')}
 
-    world.tick_game()
+        pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
-    camera.move()
-    camera.draw(world)
-    camera.debug_draw(world) if debug else ...
+        self.clock = pygame.time.Clock()
 
-    pygame.display.flip()
+        self.camera = Camera(self.screen)
+        self.world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
+
+        # Menu Booleans
+        self.program_running = True
+        self.start_menu_screen = False
+        self.help_menu = False
+        self.load_menu = False
+        self.game_being_played = True
+        self.world_paused = False
+        self.debug_screen = False
+
+    def main(self):
+        while self.program_running:
+            deltatime = clock.tick(120) / 1000
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.program_running = False
+                elif event.type == pygame.MOUSEWHEEL:
+                    self.camera.zoom(event.y)
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.world.game_paused = not self.world.game_paused
+                    elif event.key == pygame.K_q:
+                        self.debug_screen = not self.debug_screen
+                    elif event.key == pygame.K_ESCAPE:
+                        self.program_running = False
+
+            if self.start_menu_screen:
+                self.start_menu()
+            elif self.game_being_played:
+                self.world.tick_game(deltatime)
+
+                self.camera.move(deltatime)
+                self.camera.draw_world(self.world)
+
+            pygame.display.flip()
+
+    def start_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        copy_image = pygame.transform.scale_by(self.logo, 0.4)
+        self.screen.blit(copy_image, ((self.screen.get_width() - copy_image.get_width()) // 2, 0))
+
+        copy_image = pygame.transform.scale_by(self.buttons['play'], 1)
+        coordinates = ((self.screen.get_width() - copy_image.get_width()) // 2,
+                       self.screen.get_height() // 2 - 100)
+        self.screen.blit(copy_image, coordinates)
+        play_button_rect = copy_image.get_rect()
+        play_button_rect.x = coordinates[0]
+        play_button_rect.y = coordinates[1]
+
+        mos_x, mos_y = pygame.mouse.get_pos()
+        if mos_x > play_button_rect.x and (mos_x < play_button_rect.x + play_button_rect.w):
+            x_inside = True
+        else:
+            x_inside = False
+        if mos_y > play_button_rect.y and (mos_y < play_button_rect.y + play_button_rect.h):
+            y_inside = True
+        else:
+            y_inside = False
+        if x_inside and y_inside:
+            print("INSIDE")
+
+
+simulation = Simulation()
+simulation.main()
+
+# run = True
+# debug = False
+# camera = Camera()
+# world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
+#
+# while run:
+#     deltatime = clock.tick(120) / 1000
+#
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             run = False
+#         elif event.type == pygame.MOUSEWHEEL:
+#             camera.zoom(event.y)
+#         elif event.type == pygame.KEYDOWN:
+#             if event.key == pygame.K_SPACE:
+#                 world.game_paused = not world.game_paused
+#             elif event.key == pygame.K_q:
+#                 debug = not debug
+#
+#     world.tick_game()
+#
+#     camera.move()
+#     camera.draw_world(world)
+#     camera.debug_draw_world(world) if debug else ...
+#
+#     pygame.display.flip()
