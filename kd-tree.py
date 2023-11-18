@@ -89,7 +89,7 @@ class KDTree:
 
 
 point_list = []
-for i in range(300):
+for i in range(30):
     point = (random.randint(0, 100), random.randint(0, 100))
     point_list.append(point)
 # point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
@@ -118,7 +118,7 @@ for i in tree2.nodes:
 random_point = random.choice(tree2.nodes)
 # random_point = (49, 32)
 # random_point = (81, 26) # (70, 15)
-box_radius = 0
+box_radius = 12
 topleft = random_point.data[0] - box_radius, random_point.data[1] + box_radius
 bottomright = random_point.data[0] + box_radius, random_point.data[1] - box_radius
 print(point_list)
@@ -131,8 +131,13 @@ print("Final List")
 print(list_returned)
 
 start = datetime.now()
-print(tree.query_ball_point(random_point.data, box_radius))
+query = tree.query_ball_point(random_point.data, box_radius)
 print(datetime.now() - start)
+querylist = []
+for i in query:
+    querylist.append(point_list[i])
+
+print(querylist)
 
 x = []
 y = []
