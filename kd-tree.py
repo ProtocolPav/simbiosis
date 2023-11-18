@@ -78,9 +78,9 @@ class KDTree:
                     points_list.append(current_node.data)
             else:
                 print("appending most probable subtree")
-                if point[axis] > current_node.data[axis] and current_node.left_child is not None:
+                if point[axis] < current_node.data[axis] and current_node.left_child is not None:
                     self.queue.append(current_node.left_child)
-                elif point[axis] < current_node.data[axis] and current_node.right_child is not None:
+                elif point[axis] > current_node.data[axis] and current_node.right_child is not None:
                     self.queue.append(current_node.right_child)
 
             depth += 1
