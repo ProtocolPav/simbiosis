@@ -88,13 +88,13 @@ class KDTree:
         return points_list
 
 
-# point_list = []
-# for i in range(300):
-#     point = (random.randint(0, 100), random.randint(0, 100))
-#     point_list.append(point)
+point_list = []
+for i in range(300):
+    point = (random.randint(0, 100), random.randint(0, 100))
+    point_list.append(point)
 # point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
 # point_list = [(64, 53), (47, 24), (15, 17), (13, 3), (44, 77), (4, 53), (81, 26), (72, 21), (82, 48), (70, 15)]
-point_list = [(0, 36), (4, 84), (6, 48), (7, 65), (9, 66), (9, 75), (11, 25), (14, 16), (29, 32), (33, 44), (39, 52), (43, 96), (43, 76), (48, 0), (50, 51), (55, 47), (61, 88), (64, 73), (66, 66), (68, 0), (68, 94), (73, 8), (74, 0), (76, 22), (91, 90), (99, 85), (100, 95), (100, 57), (100, 8), (100, 97)]
+# point_list = [(0, 36), (4, 84), (6, 48), (7, 65), (9, 66), (9, 75), (11, 25), (14, 16), (29, 32), (33, 44), (39, 52), (43, 96), (43, 76), (48, 0), (50, 51), (55, 47), (61, 88), (64, 73), (66, 66), (68, 0), (68, 94), (73, 8), (74, 0), (76, 22), (91, 90), (99, 85), (100, 95), (100, 57), (100, 8), (100, 97)]
 
 print("Starting Scitree")
 start = datetime.now()
@@ -112,10 +112,10 @@ for i in tree2.nodes:
     #     random_point = i
     # if i.data == (81, 26):
     #     random_point = i
-    if i.data == (7, 65):
-        random_point = i
+    # if i.data == (7, 65):
+    #     random_point = i
 
-# random_point = random.choice(tree2.nodes)
+random_point = random.choice(tree2.nodes)
 # random_point = (49, 32)
 # random_point = (81, 26) # (70, 15)
 box_radius = 12
@@ -123,11 +123,16 @@ topleft = random_point.data[0] - box_radius, random_point.data[1] + box_radius
 bottomright = random_point.data[0] + box_radius, random_point.data[1] - box_radius
 print(point_list)
 print(f"Searching for {random_point}")
+start = datetime.now()
 list_returned = tree2.range_search(random_point, topleft, bottomright)
+print(datetime.now() - start)
+
 print("Final List")
 print(list_returned)
 
-print(tree.query_ball_point((7, 65), box_radius))
+start = datetime.now()
+print(tree.query_ball_point(random_point.data, box_radius))
+print(datetime.now() - start)
 
 x = []
 y = []
