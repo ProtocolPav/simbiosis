@@ -522,6 +522,8 @@ class Camera:
         self.camera_speed = 1500
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
+        self.x_offset = 0
+        self.y_offset = 0
 
     def draw_world(self, world: World):
         # Draw Background Colour
@@ -533,8 +535,8 @@ class Camera:
         world_rect = pygame.Rect(0, 0, world.internal_rect.width, world.internal_rect.height)
         world_rect.height *= self.zoom_level
         world_rect.width *= self.zoom_level
-        world_rect.centerx = self.centre_x
-        world_rect.centery = self.centre_y
+        world_rect.centerx = self.centre_x + self.x_offset
+        world_rect.centery = self.centre_y + self.y_offset
 
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world_rect)
 
@@ -614,15 +616,17 @@ class Camera:
                 pygame.draw.rect(self.screen, [255, 0, 0], creature.vision_rect)
 
     def move(self, deltatime):
+        self.centre_x = self.screen.get_width() // 2
+        self.centre_y = self.screen.get_height() // 2
         key = pygame.key.get_pressed()
         if key[pygame.K_a]:
-            self.centre_x += self.camera_speed * deltatime
+            self.x_offset += self.camera_speed * deltatime
         elif key[pygame.K_d]:
-            self.centre_x -= self.camera_speed * deltatime
+            self.x_offset -= self.camera_speed * deltatime
         elif key[pygame.K_w]:
-            self.centre_y += self.camera_speed * deltatime
+            self.y_offset += self.camera_speed * deltatime
         elif key[pygame.K_s]:
-            self.centre_y -= self.camera_speed * deltatime
+            self.y_offset -= self.camera_speed * deltatime
 
     def zoom(self, change: int):
         if 1 <= self.zoom_level + 1 * change <= 30:
