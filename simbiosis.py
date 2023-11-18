@@ -629,9 +629,13 @@ class Camera:
             self.y_offset -= self.camera_speed * deltatime
 
     def zoom(self, change: int):
-        if 1 <= self.zoom_level + 1 * change <= 30:
-            self.zoom_level += 1 * change
+        if 1 <= self.zoom_level + 2 * change <= 40:
+            old_zoom = self.zoom_level
+            self.zoom_level += 2 * change
             self.camera_speed += 10 * change
+
+            self.x_offset //= old_zoom/self.zoom_level
+            self.y_offset //= old_zoom/self.zoom_level
 
 
 class Button:
