@@ -273,7 +273,6 @@ class CreatureGenes:
         self.colour_red = Gene(name="Red Colour", acronym="CLR", value=random.randint(0, 255))
         self.colour_green = Gene(name="Green Colour", acronym="CLG", value=random.randint(0, 255))
         self.colour_blue = Gene(name="Blue Colour", acronym="CLB", value=random.randint(0, 255))
-        self.head = Gene(name="Head Colour Multiplier", acronym="CLH", value=random.random())
         self.radius = Gene(name="Creature Radius Size", acronym="SIZ", value=random.uniform(0.5, 7))
 
         # Genes affecting Creature movement
@@ -493,13 +492,13 @@ class Creature:
         if not self.dead:
             # self.__vision()
 
-            self.energy -= self.genes.energy_per_square.value * len(self.body)
+            self.energy -= self.genes.energy_per_square.value
 
             x_dist = math.cos(self.facing_radians()) * self.genes.idle_speed.value * deltatime
             y_dist = math.sin(self.facing_radians()) * self.genes.idle_speed.value * deltatime
 
             if self.check_collision_with_border(x_dist, y_dist):
-                self.facing += 100
+                self.facing += random.randint(90, 270)
                 x_dist = math.cos(self.facing_radians()) * self.genes.idle_speed.value * deltatime
                 y_dist = math.sin(self.facing_radians()) * self.genes.idle_speed.value * deltatime
 
