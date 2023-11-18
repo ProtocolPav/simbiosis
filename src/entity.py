@@ -4,7 +4,7 @@ import random
 
 import pygame
 
-from src.logs import log
+from logs import log
 from src.genes import CreatureGenes
 
 
@@ -70,18 +70,22 @@ class Creature(BaseEntity):
         :return:
         """
         if 0 <= self.x <= self.world_bottom_right[0] and 0 <= self.y <= self.world_bottom_right[1]:
-            return False
-        elif 0 <= self.x + self.radius <= self.world_bottom_right[0] or 0 <= self.x - self.radius <= self.world_bottom_right[0]:
-            return False
-        elif 0 <= self.y + self.radius <= self.world_bottom_right[1] or 0 <= self.y - self.radius <= self.world_bottom_right[1]:
+            return True
+        # This needs work and testing
+        elif (not 0 <= self.x + self.radius <= self.world_bottom_right[0] or
+              not 0 <= self.x - self.radius <= self.world_bottom_right[0] or
+              not 0 <= self.y + self.radius <= self.world_bottom_right[1] or
+              not 0 <= self.y - self.radius <= self.world_bottom_right[1]):
             return False
 
-        return True
+        return False
 
     def move(self, deltatime: float):
         if not self.within_border():
             # The values need tweaking as sometimes they bug out and leave the border
-            self.direction += random.randint(90, 180)
+            angle = random.randint(90, 180)
+            self.direction += angle
+            self.energy -= self.genes.turning_energy.value * angle
 
         x_dist = math.cos(self.direction_radians()) * self.genes.speed.value * deltatime
         y_dist = math.sin(self.direction_radians()) * self.genes.speed.value * deltatime
