@@ -1,6 +1,7 @@
 import random
 from datetime import datetime
 from scipy.spatial import KDTree as scitree
+import matplotlib.pyplot as plt
 
 
 class Node:
@@ -88,11 +89,12 @@ class KDTree:
         return points_list
 
 
-# point_list = []
-# for i in range(10):
-#     point = (random.randint(0, 100), random.randint(0, 100))
-#     point_list.append(point)
-point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
+point_list = []
+for i in range(4000):
+    point = (random.randint(0, 1000), random.randint(0, 1000))
+    point_list.append(point)
+# point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
+# point_list = [(64, 53), (47, 24), (15, 17), (13, 3), (44, 77), (4, 53), (81, 26), (72, 21), (82, 48), (70, 15)]
 
 print("Starting Scitree")
 start = datetime.now()
@@ -107,10 +109,23 @@ print(datetime.now() - start)
 for i in tree2.nodes:
     print(i)
 
-random_point = (49, 32)
-topleft = random_point[0] - 12, random_point[1] + 12
-bottomright = random_point[0] + 12, random_point[1] - 12
+random_point = random.choice(point_list)
+# random_point = (49, 32)
+# random_point = (81, 26) # (70, 15)
+box_radius = 12
+topleft = random_point[0] - box_radius, random_point[1] + box_radius
+bottomright = random_point[0] + box_radius, random_point[1] - box_radius
 print(f"Searching for {random_point}")
 list_returned = tree2.range_search(random_point, topleft, bottomright)
 print("Final List")
 print(list_returned)
+
+x = []
+y = []
+for i in point_list:
+    x.append(i[0])
+    y.append(i[1])
+
+plt.scatter(x, y)
+plt.grid()
+plt.show()
