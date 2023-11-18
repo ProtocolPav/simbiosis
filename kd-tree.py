@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 
 
 class Node:
-    def __init__(self, data, left_node, right_node):
+    def __init__(self, data, left_node, right_node, depth):
         self.data = data
         self.left_child = left_node
         self.right_child = right_node
+        self.depth = depth
 
     def __repr__(self):
         try:
@@ -20,7 +21,7 @@ class Node:
             right_data = self.right_child.data
         except:
             right_data = None
-        return f"Left: {left_data}\tData: {self.data}\tRight: {right_data}"
+        return f"Left: {left_data}\tData: {self.data}\tRight: {right_data}\tDepth: {self.depth}"
 
 
 class KDTree:
@@ -40,11 +41,11 @@ class KDTree:
             left = self.__create_tree(points[0:middle_value], depth+1)
             right = self.__create_tree(points[middle_value+1:], depth+1)
 
-            node = Node(median_point, left, right)
+            node = Node(median_point, left, right, depth)
             self.nodes.insert(0, node)
             return node
 
-    def range_search(self, point: tuple[float, float], topleft: tuple[float, float], bottomright: tuple[float, float]):
+    def range_search(self, point_node: Node, topleft: tuple[float, float], bottomright: tuple[float, float]):
         points_list = []
         self.queue.append(self.nodes[0])
         depth = 0
@@ -78,23 +79,25 @@ class KDTree:
                     print(f"POINT FOUND {current_node.data}")
                     points_list.append(current_node.data)
             else:
-                print("appending most probable subtree")
-                if point[axis] < current_node.data[axis] and current_node.left_child is not None:
+                if point_node.data[axis] < current_node.data[axis] and current_node.left_child is not None:
                     self.queue.append(current_node.left_child)
-                elif point[axis] > current_node.data[axis] and current_node.right_child is not None:
+                    print(f"PROBABLE SUBTREE {current_node.left_child}")
+                elif point_node.data[axis] > current_node.data[axis] and current_node.right_child is not None:
                     self.queue.append(current_node.right_child)
+                    print(f"PROBABLE SUBTREE {current_node.right_child}")
 
             depth += 1
 
         return points_list
 
 
-point_list = []
-for i in range(4000):
-    point = (random.randint(0, 1000), random.randint(0, 1000))
-    point_list.append(point)
+# point_list = []
+# for i in range(30):
+#     point = (random.randint(0, 100), random.randint(0, 100))
+#     point_list.append(point)
 # point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
 # point_list = [(64, 53), (47, 24), (15, 17), (13, 3), (44, 77), (4, 53), (81, 26), (72, 21), (82, 48), (70, 15)]
+point_list = [(0, 36), (4, 84), (6, 48), (7, 65), (9, 66), (9, 75), (11, 25), (14, 16), (29, 32), (33, 44), (39, 52), (43, 96), (43, 76), (48, 0), (50, 51), (55, 47), (61, 88), (64, 73), (66, 66), (68, 0), (68, 94), (73, 8), (74, 0), (76, 22), (91, 90), (99, 85), (100, 95), (100, 57), (100, 8), (100, 97)]
 
 print("Starting Scitree")
 start = datetime.now()
@@ -108,13 +111,16 @@ print(datetime.now() - start)
 
 for i in tree2.nodes:
     print(i)
+    if i.data == (64, 73):
+        random_point = i
 
-random_point = random.choice(point_list)
+# random_point = random.choice(tree2.nodes)
 # random_point = (49, 32)
 # random_point = (81, 26) # (70, 15)
 box_radius = 12
-topleft = random_point[0] - box_radius, random_point[1] + box_radius
-bottomright = random_point[0] + box_radius, random_point[1] - box_radius
+topleft = random_point.data[0] - box_radius, random_point.data[1] + box_radius
+bottomright = random_point.data[0] + box_radius, random_point.data[1] - box_radius
+print(point_list)
 print(f"Searching for {random_point}")
 list_returned = tree2.range_search(random_point, topleft, bottomright)
 print("Final List")
