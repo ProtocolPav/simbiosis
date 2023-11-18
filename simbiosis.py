@@ -552,13 +552,14 @@ class Camera:
                 drawing_rect.width *= self.zoom_level
                 drawing_rect.height *= self.zoom_level
 
-                copy_image = food_image.copy()
-                copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
-                rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
-                food_rect = rotated_image.get_rect(center=drawing_rect.center)
-                self.screen.blit(rotated_image, food_rect)
+                if -2 < drawing_rect.x < self.screen.get_width() and -2 < drawing_rect.y < self.screen.get_height():
+                    copy_image = food_image.copy()
+                    copy_image = pygame.transform.scale(copy_image, (drawing_rect.w, drawing_rect.h))
+                    rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
+                    food_rect = rotated_image.get_rect(center=drawing_rect.center)
+                    self.screen.blit(rotated_image, food_rect)
 
-                # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
+                    # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
 
         # Draw Creatures
         for creature in world.creatures:
@@ -683,6 +684,10 @@ class Simulation:
 
         self.screen = pygame.display.set_mode((1800, 950), pygame.RESIZABLE)
 
+        pygame.mouse.set_visible(False)
+        self.cursor_image = pygame.image.load('textures/cursor.png')
+        self.cursor_rect = self.cursor_image.get_rect()
+
         self.creature_image = pygame.image.load('textures/creature3.png')
         self.food_image = pygame.image.load('textures/food1.png')
         self.menu_background = pygame.image.load('screens/menu_background.png')
@@ -733,6 +738,9 @@ class Simulation:
                 self.camera.move(deltatime)
                 self.camera.draw_world(self.world)
 
+            self.cursor_rect.topleft = pygame.mouse.get_pos()
+            self.screen.blit(self.cursor_image, self.cursor_rect)
+
             pygame.display.flip()
 
     def start_menu(self):
@@ -747,7 +755,7 @@ class Simulation:
                          self.screen.get_height() // 2 - 100)
         play_button.check_for_hover()
         if play_button.check_for_press():
-            self.world = World(size=1000, start_species=100, start_creatures=10, start_cluster=200)
+            self.world = World(size=1000, start_species=10, start_creatures=10, start_cluster=200)
             self.game_being_played = True
             self.start_menu_screen = False
 
