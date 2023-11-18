@@ -127,6 +127,8 @@ list_returned = tree2.range_search(random_point, topleft, bottomright)
 print("Final List")
 print(list_returned)
 
+print(tree.query_ball_point((7, 65), box_radius))
+
 x = []
 y = []
 for i in point_list:
