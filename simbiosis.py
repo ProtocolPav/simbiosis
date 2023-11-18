@@ -629,7 +629,7 @@ class Camera:
             self.y_offset -= self.camera_speed * deltatime
 
     def zoom(self, change: int):
-        if 1 <= self.zoom_level + 2 * change <= 40:
+        if 1 <= self.zoom_level + 2 * change <= 200:
             old_zoom = self.zoom_level
             self.zoom_level += 2 * change
             self.camera_speed += 10 * change
