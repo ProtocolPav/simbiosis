@@ -634,8 +634,8 @@ class Camera:
             self.zoom_level += 2 * change
             self.camera_speed += 10 * change
 
-            self.x_offset //= old_zoom/self.zoom_level
-            self.y_offset //= old_zoom/self.zoom_level
+            self.x_offset /= old_zoom/self.zoom_level
+            self.y_offset /= old_zoom/self.zoom_level
 
 
 class Button:
