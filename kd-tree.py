@@ -26,6 +26,7 @@ class KDTree:
     def __init__(self, points: list[tuple[float, float]], depth: int = 0):
         self.nodes = []
         self.__create_tree(points, depth)
+        self.queue = []
 
     def __create_tree(self, points: list[tuple[float, float]], depth: int = 0):
         # Get the axis to sort the points by initially. The root note will be 0, and thus give me the x-axis (0)
@@ -42,29 +43,56 @@ class KDTree:
             self.nodes.insert(0, node)
             return node
 
-    def range_search(self, point: tuple[float, float], radius: float):
-        ...
+    def range_search(self, point: tuple[float, float], topleft: tuple[float, float], bottomright: tuple[float, float]):
+        points_list = []
+        self.queue.append(self.nodes[0])
+        depth = 0
+
+        while len(self.queue) != 0:
+            print(f"QUEUE {self.queue}")
+            axis = depth % 2
+            opposite = (depth + 1) % 2
+            current_node: Node = self.queue.pop(0)
+            while current_node is None:
+                print("Popping again")
+                current_node: Node = self.queue.pop(0)
+
+            lb = topleft[axis] if axis == 0 else bottomright[axis]
+            ub = bottomright[axis] if axis == 0 else topleft[axis]
+
+            print(f"Currently at: {current_node.data}. Depth {depth}")
+
+            print(lb, current_node.data[axis], ub, lb < current_node.data[axis] < ub)
+            if lb < current_node.data[axis] < ub:
+                if current_node.left_child is not None:
+                    self.queue.append(current_node.left_child)
+                if current_node.right_child is not None:
+                    self.queue.append(current_node.right_child)
+
+                lb = topleft[opposite] if opposite == 0 else bottomright[opposite]
+                ub = bottomright[opposite] if opposite == 0 else topleft[opposite]
+
+                print(lb, current_node.data[opposite], ub, lb < current_node.data[opposite] < ub)
+                if lb < current_node.data[opposite] < ub:
+                    print(f"POINT FOUND {current_node.data}")
+                    points_list.append(current_node.data)
+            else:
+                print("appending most probable subtree")
+                if point[axis] > current_node.data[axis] and current_node.left_child is not None:
+                    self.queue.append(current_node.left_child)
+                elif point[axis] < current_node.data[axis] and current_node.right_child is not None:
+                    self.queue.append(current_node.right_child)
+
+            depth += 1
+
+        return points_list
 
 
-class KdTree2:
-    def __init__(self, P, d=0):
-        n = len(P)
-        m = n // 2
-        P.sort(key = lambda x: x[d])
-        self.point = P[m]
-        self.d = d
-        d = (d + 1) % len(P[0])-1 # -1 because then the last element will not be a dimension (wanted since last ele is info obj)
-        self.left = self.right = None
-        if m > 0 :
-            self.left = KdTree2(P[:m], d)
-        if n - (m+1) > 0:
-            self.right = KdTree2(P[m+1:], d)
-
-
-point_list = []
-for i in range(30000):
-    point = (random.randint(0, 100), random.randint(0, 100))
-    point_list.append(point)
+# point_list = []
+# for i in range(10):
+#     point = (random.randint(0, 100), random.randint(0, 100))
+#     point_list.append(point)
+point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
 
 print("Starting Scitree")
 start = datetime.now()
@@ -76,10 +104,13 @@ start = datetime.now()
 tree2 = KDTree(point_list)
 print(datetime.now() - start)
 
-print("Starting Other Tree")
-start = datetime.now()
-tree3 = KdTree2(point_list)
-print(datetime.now() - start)
+for i in tree2.nodes:
+    print(i)
 
-query_point = point_list[random.randint(0, 300)]
-query = tree.query_ball_point(query_point, 10)
+random_point = (49, 32)
+topleft = random_point[0] - 12, random_point[1] + 12
+bottomright = random_point[0] + 12, random_point[1] - 12
+print(f"Searching for {random_point}")
+list_returned = tree2.range_search(random_point, topleft, bottomright)
+print("Final List")
+print(list_returned)
