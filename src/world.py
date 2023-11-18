@@ -21,6 +21,8 @@ class World:
 
         self.seconds = 0
         self.delta_second = 0
+        # I decided to add a delta_second variable.
+        # This counts all the deltatime until it adds up to over a second, then it restarts.
 
         for i in range(start_food):
             self.food.append(Food(random.randint(0, self.size - 1),
@@ -42,7 +44,7 @@ class World:
 
         if self.delta_second >= 1:
             self.delta_second = 0
-        if self.delta_second >= 0.2:
+        if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
             self.spawn_food()
 
         for c in self.creatures:
@@ -193,3 +195,4 @@ class Camera:
 
             self.x_offset /= old_zoom/self.zoom_level
             self.y_offset /= old_zoom/self.zoom_level
+            # After implementing the offset values, I managed to fix the zoom bug that I had since the beginning.

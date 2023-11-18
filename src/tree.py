@@ -70,6 +70,7 @@ class KDTree:
                 node = node.left_child
             elif point[axis] >= node.data.get_coordinates()[axis]:
                 node = node.right_child
+            # There was a bug here where i didnt have the equals and it would enter a forever loop and crash. I fixed it.
 
     def range_search(self, node: Node, radius: float):
         """

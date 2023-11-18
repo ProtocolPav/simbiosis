@@ -7,6 +7,9 @@ import pygame
 from logs import log
 from src.genes import CreatureGenes
 
+# I decided to make a Base Entity class since both food and creatures were in the same tree, in the old implementation
+# I would keep getting errors since they did not have the same methods to get the x and y coordinates
+
 
 class BaseEntity:
     """
@@ -71,7 +74,7 @@ class Creature(BaseEntity):
         """
         if 0 <= self.x <= self.world_bottom_right[0] and 0 <= self.y <= self.world_bottom_right[1]:
             return True
-        # This needs work and testing
+        # This needs work and testing. Essentially this whole if statememnt is never True
         elif (not 0 <= self.x + self.radius <= self.world_bottom_right[0] or
               not 0 <= self.x - self.radius <= self.world_bottom_right[0] or
               not 0 <= self.y + self.radius <= self.world_bottom_right[1] or
