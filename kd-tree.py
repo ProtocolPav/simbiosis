@@ -48,16 +48,13 @@ class KDTree:
     def range_search(self, point_node: Node, topleft: tuple[float, float], bottomright: tuple[float, float]):
         points_list = []
         self.queue.append(self.nodes[0])
-        depth = 0
 
         while len(self.queue) != 0:
+            current_node: Node = self.queue.pop(0)
+            depth = current_node.depth
             print(f"QUEUE {self.queue}")
             axis = depth % 2
             opposite = (depth + 1) % 2
-            current_node: Node = self.queue.pop(0)
-            while current_node is None:
-                print("Popping again")
-                current_node: Node = self.queue.pop(0)
 
             lb = topleft[axis] if axis == 0 else bottomright[axis]
             ub = bottomright[axis] if axis == 0 else topleft[axis]
@@ -86,13 +83,13 @@ class KDTree:
                     self.queue.append(current_node.right_child)
                     print(f"PROBABLE SUBTREE {current_node.right_child}")
 
-            depth += 1
+            # depth += 1
 
         return points_list
 
 
 # point_list = []
-# for i in range(30):
+# for i in range(300):
 #     point = (random.randint(0, 100), random.randint(0, 100))
 #     point_list.append(point)
 # point_list = [(38, 48), (7, 68), (79, 72), (55, 31), (50, 88), (49, 32), (26, 6), (17, 79), (18, 21), (4, 100)]
@@ -111,7 +108,11 @@ print(datetime.now() - start)
 
 for i in tree2.nodes:
     print(i)
-    if i.data == (64, 73):
+    # if i.data == (49, 32):
+    #     random_point = i
+    # if i.data == (81, 26):
+    #     random_point = i
+    if i.data == (7, 65):
         random_point = i
 
 # random_point = random.choice(tree2.nodes)
