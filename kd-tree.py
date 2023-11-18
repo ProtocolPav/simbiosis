@@ -61,8 +61,8 @@ class KDTree:
 
             print(f"Currently at: {current_node.data}. Depth {depth}")
 
-            print(lb, current_node.data[axis], ub, lb < current_node.data[axis] < ub)
-            if lb < current_node.data[axis] < ub:
+            print(lb, current_node.data[axis], ub, lb <= current_node.data[axis] <= ub)
+            if lb <= current_node.data[axis] <= ub:
                 if current_node.left_child is not None:
                     self.queue.append(current_node.left_child)
                 if current_node.right_child is not None:
@@ -71,8 +71,8 @@ class KDTree:
                 lb = topleft[opposite] if opposite == 0 else bottomright[opposite]
                 ub = bottomright[opposite] if opposite == 0 else topleft[opposite]
 
-                print(lb, current_node.data[opposite], ub, lb < current_node.data[opposite] < ub)
-                if lb < current_node.data[opposite] < ub:
+                print(lb, current_node.data[opposite], ub, lb <= current_node.data[opposite] <= ub)
+                if lb <= current_node.data[opposite] <= ub:
                     print(f"POINT FOUND {current_node.data}")
                     points_list.append(current_node.data)
             else:
@@ -118,7 +118,7 @@ for i in tree2.nodes:
 random_point = random.choice(tree2.nodes)
 # random_point = (49, 32)
 # random_point = (81, 26) # (70, 15)
-box_radius = 12
+box_radius = 0
 topleft = random_point.data[0] - box_radius, random_point.data[1] + box_radius
 bottomright = random_point.data[0] + box_radius, random_point.data[1] - box_radius
 print(point_list)
