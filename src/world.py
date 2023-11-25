@@ -44,8 +44,9 @@ class World:
 
         if self.delta_second >= 1:
             self.delta_second = 0
-        if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
             self.spawn_food()
+        if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
+            ...
 
         for c in self.creatures:
             c.tick(deltatime)
@@ -158,8 +159,8 @@ class Camera:
                 self.screen.blit(rotated_image, creature_rect)
                 # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
                 # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
-                pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                                   radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
+                # pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                #                    radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 
     def debug_draw_world(self, world: World):
         pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)

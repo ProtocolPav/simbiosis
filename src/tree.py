@@ -31,7 +31,7 @@ class KDTree:
         self.queue = []
         start = datetime.now()
         self.__create_tree(points, depth)
-        log(f"Tree of size {len(self.nodes)} created in {datetime.now() - start}")
+        # log(f"Tree of size {len(self.nodes)} created in {datetime.now() - start}")
 
     def __create_tree(self, entities: list[BaseEntity], depth: int = 0):
         axis = depth % 2
@@ -65,12 +65,14 @@ class KDTree:
                 return False
             elif node.data.get_coordinates() == point:
                 found = True
+                print(point)
                 return node.data
             elif point[axis] <= node.data.get_coordinates()[axis]:
                 node = node.left_child
             elif point[axis] >= node.data.get_coordinates()[axis]:
                 node = node.right_child
             # There was a bug here where i didnt have the equals and it would enter a forever loop and crash. I fixed it.
+            # Bug where it does not properly find all of the points...
 
     def range_search(self, node: Node, radius: float):
         """
