@@ -31,7 +31,7 @@ class KDTree:
         self.queue = []
         start = datetime.now()
         self.__create_tree(points, depth)
-        # log(f"Tree of size {len(self.nodes)} created in {datetime.now() - start}")
+        log(f"Tree of size {len(self.nodes)} created in {datetime.now() - start}")
 
     def __create_tree(self, entities: list[BaseEntity], depth: int = 0):
         axis = depth % 2
@@ -72,7 +72,9 @@ class KDTree:
             elif point[axis] >= node.data.get_coordinates()[axis]:
                 node = node.right_child
             # There was a bug here where i didnt have the equals and it would enter a forever loop and crash. I fixed it.
-            # Now I can see that some food still spawns on top of other food, meaning that this algorithm does not work.
+            # Bug where it does not properly find all of the points...
+            # I believe this is due to the fact that there is <= sign. There needs to be a separate == check, where it checks
+            # one subtree until it reaches a "dead end" (it cant possibly be any further), and then switches to the next subtree.
 
     def range_search(self, node: Node, radius: float):
         """
