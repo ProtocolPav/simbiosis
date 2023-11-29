@@ -72,7 +72,7 @@ class KDTree:
             elif point[axis] >= node.data.get_coordinates()[axis]:
                 node = node.right_child
             # There was a bug here where i didnt have the equals and it would enter a forever loop and crash. I fixed it.
-            # Bug where it does not properly find all of the points...
+            # Now I can see that some food still spawns on top of other food, meaning that this algorithm does not work.
 
     def range_search(self, node: Node, radius: float):
         """
