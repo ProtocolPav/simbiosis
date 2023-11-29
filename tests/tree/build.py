@@ -2092,6 +2092,8 @@ def test_3(display_tree: bool = False):
     if display_tree:
         print(tree)
 
+# Make another test where there are many points with the same values of x and y
+
 
 if __name__ == "__main__":
     test_1()
