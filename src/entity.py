@@ -98,6 +98,17 @@ class Creature(BaseEntity):
         self.x += x_dist
         self.y += y_dist
 
+    def collision(self):
+        """
+        Checks if the creature is colliding with another Entity.
+        Returns False if it is not, and returns the Entity if it is.
+        :return:
+        """
+        ...
+
+    def vision(self):
+        ...
+
     def tick(self, deltatime: float) -> bool:
         """
         Runs all the processes of the creature, movement, vision, collision and returns True if the creature has died
