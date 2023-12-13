@@ -27,7 +27,7 @@ class BaseEntity:
         self.world_bottom_right = world_bottomright
 
         BaseEntity.id += 1
-        log(f"[ENTITY] Created Entity with ID {self.id}")
+        # log(f"[ENTITY] Created Entity with ID {self.id}")
 
     def get_coordinates(self) -> tuple[float, float]:
         return self.x, self.y
