@@ -89,7 +89,7 @@ class KDTree:
                 lb = topleft[opposite] if opposite == 0 else bottomright[opposite]
                 ub = bottomright[opposite] if opposite == 0 else topleft[opposite]
 
-                if lb <= current_node.data.get_coordinates()[opposite] <= ub:
+                if lb <= current_node.data.get_coordinates()[opposite] <= ub and current_node.data.get_coordinates() != point:
                     points_list.append(current_node.data)
             else:
                 if point[axis] < current_node.data.get_coordinates()[axis] and current_node.left_child is not None:
