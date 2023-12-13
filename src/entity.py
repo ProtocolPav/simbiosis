@@ -15,14 +15,19 @@ class BaseEntity:
     """
     Base Entity class to inherit from. Stores the basics such as position, rect and image
     """
+    id = 1
+
     def __init__(self, x_position: float, y_position: float, radius: float, image: pygame.Surface,
                  world_bottomright: tuple[int, int]):
-
+        self.id = BaseEntity.id
         self.x = x_position
         self.y = y_position
         self.radius = radius
         self.image = image
         self.world_bottom_right = world_bottomright
+
+        BaseEntity.id += 1
+        log(f"[ENTITY] Created Entity with ID {self.id}")
 
     def get_coordinates(self) -> tuple[float, float]:
         return self.x, self.y
@@ -32,8 +37,6 @@ class BaseEntity:
 
 
 class Creature(BaseEntity):
-    id = 1
-
     def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
                  genes: CreatureGenes = None, energy: float = None):
         self.id = Creature.id
@@ -45,7 +48,6 @@ class Creature(BaseEntity):
         self.dead = False
 
         super().__init__(x_position, y_position, self.genes.radius.value, image, world_bottomright)
-        Creature.id += 1
 
     def __repr__(self):
         return f"Creature(ID{self.id}, x={self.x}, y={self.y}, a={self.direction}, dead={self.dead}))"
@@ -126,13 +128,10 @@ class Creature(BaseEntity):
 
 
 class Food(BaseEntity):
-    id = 1
-
     def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int]):
         # Perhaps the radius can be determined by the energy amount?
         super().__init__(x_position, y_position, 0.5, image, world_bottomright)
 
-        self.id = Food.id
         self.energy = random.uniform(100, 1000)
         self.eaten = False
 
