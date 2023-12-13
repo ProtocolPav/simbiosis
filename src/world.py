@@ -55,9 +55,8 @@ class World:
 
         if self.delta_second >= 1:
             self.delta_second = 0
-            self.spawn_food()
         if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
-            ...
+            self.spawn_food()
 
         for creature in self.creatures:
             coordinates = creature.get_coordinates()
@@ -66,6 +65,10 @@ class World:
                                                     (coordinates[0] - boxsize, coordinates[1] + boxsize),
                                                     (coordinates[0] + boxsize, coordinates[1] - boxsize))
             creature.tick(deltatime, creature_check)
+
+            for food in creature.food_list:
+                self.food.remove(food)
+
             if creature.dead:
                 self.creatures.remove(creature)
 

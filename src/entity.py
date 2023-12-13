@@ -44,6 +44,7 @@ class Creature(BaseEntity):
         self.genes = CreatureGenes(species=1, generation=1) if genes is None else genes
         self.energy = self.genes.base_energy.value * 6000 if energy is None else energy
         self.direction = random.randint(0, 360)
+        self.food_list = []
 
         self.dead = False
 
@@ -113,32 +114,46 @@ class Creature(BaseEntity):
         return False
 
     def vision(self, entity: BaseEntity) -> bool:
-        ...
+        distance_between_points = math.sqrt((self.x - entity.x)**2 + (self.y - entity.y)**2)
+        if distance_between_points < self.genes.vision_radius.value:
+            hypotenuse = distance_between_points
+            adjacent = max(entity.x, self.x) - min(entity.x, self.x)
+            angle = math.acos(adjacent/hypotenuse)
 
-    def tick(self, deltatime: float, range_search_box: list[BaseEntity]) -> bool:
+            new_angle = angle - self.direction_radians()
+
+    def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """
-        Runs all the processes of the creature, movement, vision, collision and returns True if the creature has died
+        Runs all the processes of the creature, movement, vision, collision
         :param range_search_box:
         :param deltatime:
         :return:
         """
+        self.food_list = []
+
         if not self.dead:
             self.energy -= self.genes.base_energy.value * deltatime
 
             for entity in range_search_box:
                 if self.vision(entity):
-                    print(f"{self.id} is colliding with {entity.id}")
+                    print(f"{self.id} is seeing {entity.id}")
 
             self.move(deltatime)
 
             for entity in range_search_box:
-                if self.collision(entity):
-                    print(f"{self.id} is colliding with {entity.id}")
+                if self.collision(entity) and isinstance(entity, Food):
+                    print(f"{self.id} is eating Food {entity.id}")
+                    self.energy += entity.energy
+                    self.food_list.append(entity)
+
+                elif self.collision(entity) and isinstance(entity, Creature):
+                    print(f"{self.id} is colliding with Creature {entity.id}")
+                    angle = random.randint(90, 180)
+                    self.direction += angle
+                    self.energy -= self.genes.turning_energy.value * angle
 
         if self.energy <= 0:
             self.dead = True
-
-        return self.dead
 
 
 class Food(BaseEntity):
