@@ -30,11 +30,18 @@ class World:
                                   self.food_image,
                                   (self.size, self.size)))
 
-        for i in range(start_creatures):
-            self.creatures.append(Creature(random.randint(0, self.size - 1),
-                                           random.randint(0, self.size - 1),
-                                           self.creature_image,
-                                           (self.size, self.size)))
+        for i in range(start_species):
+            specimen = Creature(random.randint(0, self.size - 1),
+                                random.randint(0, self.size - 1),
+                                self.creature_image,
+                                (self.size, self.size))
+
+            for creature in range(start_creatures//start_species):
+                self.creatures.append(Creature(random.randint(0, self.size - 1),
+                                               random.randint(0, self.size - 1),
+                                               self.creature_image,
+                                               (self.size, self.size),
+                                               specimen.genes))
 
     def tick_world(self, deltatime: float):
         self.seconds += deltatime
