@@ -141,16 +141,17 @@ class Creature(BaseEntity):
             self.move(deltatime)
 
             for entity in range_search_box:
-                if self.collision(entity) and isinstance(entity, Food):
+                if self.collision(entity) and isinstance(entity, Food) and not entity.eaten:
                     print(f"{self.id} is eating Food {entity.id}")
+                    entity.eaten = True
                     self.energy += entity.energy
                     self.food_list.append(entity)
 
-                elif self.collision(entity) and isinstance(entity, Creature):
-                    print(f"{self.id} is colliding with Creature {entity.id}")
-                    angle = random.randint(90, 180)
-                    self.direction += angle
-                    self.energy -= self.genes.turning_energy.value * angle
+                # elif self.collision(entity) and isinstance(entity, Creature):
+                #     print(f"{self.id} is colliding with Creature {entity.id}")
+                #     angle = random.randint(90, 180)
+                #     self.direction += angle
+                #     self.energy -= self.genes.turning_energy.value * angle
 
         if self.energy <= 0:
             self.dead = True
