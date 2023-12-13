@@ -111,7 +111,7 @@ class Simulation:
                     self.world.tick_world(deltatime)
 
                 self.camera.move(deltatime)
-                self.camera.draw_world(self.world)
+                self.camera.draw_world(self.world, self.debug_screen)
 
             self.cursor_rect.topleft = pygame.mouse.get_pos()
             self.screen.blit(self.cursor_image, self.cursor_rect)

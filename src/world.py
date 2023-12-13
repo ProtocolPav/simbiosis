@@ -18,6 +18,7 @@ class World:
         self.creatures: list[Creature] = []
         self.food: list[Food] = []
         self.tree: KDTree = KDTree([])
+        self.largest_radius = 0
 
         self.seconds = 0
         self.delta_second = 0
@@ -35,6 +36,9 @@ class World:
                                 random.randint(0, self.size - 1),
                                 self.creature_image,
                                 (self.size, self.size))
+
+            if specimen.radius >= self.largest_radius:
+                self.largest_radius = specimen.radius
 
             for creature in range(start_creatures//start_species):
                 self.creatures.append(Creature(random.randint(0, self.size - 1),
@@ -55,10 +59,15 @@ class World:
         if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
             ...
 
-        for c in self.creatures:
-            c.tick(deltatime)
-            if c.dead:
-                self.creatures.remove(c)
+        for creature in self.creatures:
+            coordinates = creature.get_coordinates()
+            boxsize = 2*creature.genes.vision_radius.value + self.largest_radius
+            creature_check = self.tree.range_search(coordinates,
+                                                    (coordinates[0] - boxsize, coordinates[1] + boxsize),
+                                                    (coordinates[0] + boxsize, coordinates[1] - boxsize))
+            creature.tick(deltatime, creature_check)
+            if creature.dead:
+                self.creatures.remove(creature)
 
     def spawn_food(self):
         food = random.choice(self.food) if len(self.food) != 0 else None
@@ -93,7 +102,7 @@ class Camera:
         self.x_offset = 0
         self.y_offset = 0
 
-    def draw_world(self, world: World):
+    def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour
         pygame.draw.rect(surface=self.screen,
                          color=[0, 10, 27],
@@ -164,23 +173,19 @@ class Camera:
                 # Sets the center of the image to be aligned with the center position
                 creature_rect = rotated_image.get_rect(center=drawing_rect.center)
                 self.screen.blit(rotated_image, creature_rect)
-                # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
-                # pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
-                # pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                #                    radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 
-    def debug_draw_world(self, world: World):
-        pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
+                if debug:
+                    pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
+                    pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                                       radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 
-        for food_cluster in world.food_clusters:
-            for food in food_cluster.food:
-                pygame.draw.rect(surface=self.screen, rect=food, color=[0, 255, 0])
+                    pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                                       radius=(2*creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
+                                       color=(220, 20, 60), width=1)
 
-        for creature in world.creatures:
-            pygame.draw.circle(surface=self.screen, center=creature.body.center, radius=1, color=[245, 245, 245])
-
-            if creature.vision_rect is not None:
-                pygame.draw.rect(self.screen, [255, 0, 0], creature.vision_rect)
+                    pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
+                                       radius=creature.genes.vision_radius.value * self.zoom_level,
+                                       color=(144, 238, 144), width=1)
 
     def move(self, deltatime):
         self.centre_x = self.screen.get_width() // 2

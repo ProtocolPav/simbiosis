@@ -100,26 +100,40 @@ class Creature(BaseEntity):
         self.x += x_dist
         self.y += y_dist
 
-    def collision(self):
+    def collision(self, entity: BaseEntity) -> bool:
         """
         Checks if the creature is colliding with another Entity.
-        Returns False if it is not, and returns the Entity if it is.
+        :param entity:
         :return:
         """
+        distance_between_points = math.sqrt((self.x - entity.x)**2 + (self.y - entity.y)**2)
+        if distance_between_points <= self.radius + entity.radius:
+            return True
+
+        return False
+
+    def vision(self, entity: BaseEntity) -> bool:
         ...
 
-    def vision(self):
-        ...
-
-    def tick(self, deltatime: float) -> bool:
+    def tick(self, deltatime: float, range_search_box: list[BaseEntity]) -> bool:
         """
         Runs all the processes of the creature, movement, vision, collision and returns True if the creature has died
+        :param range_search_box:
         :param deltatime:
         :return:
         """
         if not self.dead:
             self.energy -= self.genes.base_energy.value * deltatime
+
+            for entity in range_search_box:
+                if self.vision(entity):
+                    print(f"{self.id} is colliding with {entity.id}")
+
             self.move(deltatime)
+
+            for entity in range_search_box:
+                if self.collision(entity):
+                    print(f"{self.id} is colliding with {entity.id}")
 
         if self.energy <= 0:
             self.dead = True
