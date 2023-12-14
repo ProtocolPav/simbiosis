@@ -40,7 +40,7 @@ class World:
             if specimen.radius >= self.largest_radius:
                 self.largest_radius = specimen.radius
 
-            for creature in range(start_creatures//start_species):
+            for creature in range(start_creatures // start_species):
                 self.creatures.append(Creature(random.randint(0, self.size - 1),
                                                random.randint(0, self.size - 1),
                                                self.creature_image,
@@ -60,7 +60,7 @@ class World:
 
         for creature in self.creatures:
             coordinates = creature.get_coordinates()
-            boxsize = 2*creature.genes.vision_radius.value + self.largest_radius
+            boxsize = 2 * creature.genes.vision_radius.value + self.largest_radius
             creature_check = self.tree.range_search(coordinates,
                                                     (coordinates[0] - boxsize, coordinates[1] + boxsize),
                                                     (coordinates[0] + boxsize, coordinates[1] - boxsize))
@@ -85,12 +85,15 @@ class World:
             while not spawned:
                 # Does not check for if it is out of bounds yet
                 temporary_coordinates = (food.x + random.randint(-5, 5), food.y + random.randint(-5, 5))
-                if not self.tree.find(temporary_coordinates):
+
+                new_food = Food(temporary_coordinates[0],
+                                temporary_coordinates[1],
+                                self.food_image,
+                                (self.size, self.size))
+
+                if not self.tree.find(temporary_coordinates) and new_food.within_border():
                     spawned = True
-                    self.food.append(Food(temporary_coordinates[0],
-                                          temporary_coordinates[1],
-                                          self.food_image,
-                                          (self.size, self.size)))
+                    self.food.append(new_food)
                 else:
                     food = random.choice(self.food)
 
@@ -154,7 +157,8 @@ class Camera:
             # but the point that is stored is the centre point, so I must adjust for that
             rect_left = creature.x - creature.genes.radius.value
             rect_top = creature.y - creature.genes.radius.value
-            drawing_rect = pygame.Rect(rect_left, rect_top, creature.genes.radius.value * 2, creature.genes.radius.value * 2)
+            drawing_rect = pygame.Rect(rect_left, rect_top, creature.genes.radius.value * 2,
+                                       creature.genes.radius.value * 2)
             drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
             drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
             drawing_rect.width *= self.zoom_level
@@ -180,10 +184,12 @@ class Camera:
                 if debug:
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                                       radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
+                                       radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244),
+                                       width=1)
 
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                                       radius=(2*creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
+                                       radius=(
+                                                          2 * creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
                                        color=(220, 20, 60), width=1)
 
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
@@ -209,6 +215,6 @@ class Camera:
             self.zoom_level += 2 * change
             self.camera_speed += 10 * change
 
-            self.x_offset /= old_zoom/self.zoom_level
-            self.y_offset /= old_zoom/self.zoom_level
+            self.x_offset /= old_zoom / self.zoom_level
+            self.y_offset /= old_zoom / self.zoom_level
             # After implementing the offset values, I managed to fix the zoom bug that I had since the beginning.
