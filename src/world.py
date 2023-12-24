@@ -1,3 +1,5 @@
+import math
+
 import pygame
 
 from src.entity import Creature, Food
@@ -179,6 +181,7 @@ class Camera:
 
                 if debug:
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
+
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
                                        radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244), width=1)
 

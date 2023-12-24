@@ -60,13 +60,18 @@ class Creature(BaseEntity):
         """
         return self.direction / (180 / math.pi)
 
-    def update_direction(self, angle: float):
+    @staticmethod
+    def map_angle(angle: float) -> float:
         """
-        Updates the direction of the creature, making sure the value falls within [0, 360]
+        Maps the angle given to fall within [0, 360]
         :param angle:
         :return:
         """
-        ...
+        if angle > 360:
+            multiples = (angle / 360) - 1
+            angle -= 360*multiples
+
+        return angle
 
     def within_border(self) -> bool:
         """
@@ -90,7 +95,7 @@ class Creature(BaseEntity):
         if not self.within_border():
             # The values need tweaking as sometimes they bug out and leave the border
             angle = random.randint(90, 180)
-            self.direction += angle
+            self.direction = self.map_angle(self.direction + angle)
             self.energy -= self.genes.turning_energy.value * angle
 
         x_dist = math.cos(self.direction_radians()) * self.genes.speed.value * deltatime
@@ -114,13 +119,25 @@ class Creature(BaseEntity):
         return False
 
     def vision(self, entity: BaseEntity) -> bool:
-        distance_between_points = math.sqrt((self.x - entity.x)**2 + (self.y - entity.y)**2)
-        if distance_between_points < self.genes.vision_radius.value:
-            hypotenuse = distance_between_points
-            adjacent = max(entity.x, self.x) - min(entity.x, self.x)
-            angle = math.acos(adjacent/hypotenuse)
+        # Because of how pygame works, angle 0 is facing to the right, and 360 is facing up
+        vector = (entity.x - self.x,
+                  entity.y - self.y)
+        vector_distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
+        if vector_distance < self.genes.vision_radius.value:
+            bearing = math.degrees(math.atan2(vector[1], vector[0]))
 
-            new_angle = angle - self.direction_radians()
+            angular_distance = self.map_angle(max(bearing, self.direction) - min(bearing, self.direction))
+            # Sometimes the distance tends to 360 and idk why
+
+            print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
+
+            if angular_distance < self.genes.vision_angle.value:
+                return True
+            else:
+                ...
+                # Check if line segments intersect. Later...
+
+        return False
 
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """
