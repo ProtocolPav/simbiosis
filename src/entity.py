@@ -85,11 +85,7 @@ class Creature(BaseEntity):
         :param angle:
         :return:
         """
-        if angle > 360:
-            multiples = (angle / 360) - 1
-            angle -= 360*multiples
-
-        return angle
+        return angle % 360
 
     def move(self, deltatime: float):
         if not self.within_border():
