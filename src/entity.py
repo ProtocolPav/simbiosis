@@ -125,7 +125,7 @@ class Creature(BaseEntity):
             angular_distance = self.map_angle(max(bearing, self.direction) - min(bearing, self.direction))
             # Sometimes the distance tends to 360 and idk why
 
-            print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
+            # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
 
             if angular_distance < self.genes.vision_angle.value:
                 return True
@@ -134,6 +134,30 @@ class Creature(BaseEntity):
                 # Check if line segments intersect. Later...
 
         return False
+
+    def react(self, entity: BaseEntity):
+        vector = (entity.x - self.x,
+                  entity.y - self.y)
+        bearing = math.degrees(math.atan2(vector[1], vector[0]))
+
+        self.energy -= self.genes.turning_energy.value * 1
+
+        reaction = random.choices(["towards", "away"],
+                                  [self.genes.react_towards.value, self.genes.react_away.value])[0]
+
+        if reaction == "towards":
+            print(f"{self.id} is Reacting Towards")
+            if bearing >= 0:
+                self.direction = self.map_angle(self.direction + 1)
+            elif bearing < 0:
+                self.direction = self.map_angle(self.direction - 1)
+
+        else:
+            print(f"{self.id} is Reacting Away")
+            if bearing >= 0:
+                self.direction = self.map_angle(self.direction - 1)
+            elif bearing < 0:
+                self.direction = self.map_angle(self.direction + 1)
 
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """
@@ -150,6 +174,7 @@ class Creature(BaseEntity):
             for entity in range_search_box:
                 if self.vision(entity):
                     print(f"{self.id} is seeing {entity.id}")
+                    self.react(entity)
 
             self.move(deltatime)
 
