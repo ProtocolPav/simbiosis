@@ -35,6 +35,24 @@ class BaseEntity:
     def get_rect(self) -> pygame.Rect:
         return pygame.Rect(self.x, self.y, self.radius*2, self.radius*2)
 
+    def within_border(self) -> bool:
+        """
+        Checks whether the centre lies within the borders.
+        If it does, then it checks to see if the circle collides with the borders
+        by adding and subtracting the radius to the x and y-axis
+        :return:
+        """
+        if 0 <= self.x <= self.world_bottom_right[0] and 0 <= self.y <= self.world_bottom_right[1]:
+            return True
+        # This needs work and testing. Essentially this whole if statememnt is never True
+        elif (not 0 <= self.x + self.radius <= self.world_bottom_right[0] or
+              not 0 <= self.x - self.radius <= self.world_bottom_right[0] or
+              not 0 <= self.y + self.radius <= self.world_bottom_right[1] or
+              not 0 <= self.y - self.radius <= self.world_bottom_right[1]):
+            return False
+
+        return False
+
 
 class Creature(BaseEntity):
     def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
@@ -72,24 +90,6 @@ class Creature(BaseEntity):
             angle -= 360*multiples
 
         return angle
-
-    def within_border(self) -> bool:
-        """
-        Checks whether the centre lies within the borders.
-        If it does, then it checks to see if the circle collides with the borders
-        by adding and subtracting the radius to the x and y-axis
-        :return:
-        """
-        if 0 <= self.x <= self.world_bottom_right[0] and 0 <= self.y <= self.world_bottom_right[1]:
-            return True
-        # This needs work and testing. Essentially this whole if statememnt is never True
-        elif (not 0 <= self.x + self.radius <= self.world_bottom_right[0] or
-              not 0 <= self.x - self.radius <= self.world_bottom_right[0] or
-              not 0 <= self.y + self.radius <= self.world_bottom_right[1] or
-              not 0 <= self.y - self.radius <= self.world_bottom_right[1]):
-            return False
-
-        return False
 
     def move(self, deltatime: float):
         if not self.within_border():
