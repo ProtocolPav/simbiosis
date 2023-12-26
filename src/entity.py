@@ -63,6 +63,7 @@ class Creature(BaseEntity):
         self.energy = self.genes.base_energy.value * 6000 if energy is None else energy
         self.direction = random.randint(0, 360)
         self.food_list = []
+        self.visible_entity = None
 
         self.dead = False
 
@@ -128,11 +129,13 @@ class Creature(BaseEntity):
             # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
 
             if angular_distance < self.genes.vision_angle.value:
+                self.visible_entity = entity
                 return True
             else:
                 ...
                 # Check if line segments intersect. Later...
 
+        self.visible_entity = None
         return False
 
     def react(self, entity: BaseEntity):

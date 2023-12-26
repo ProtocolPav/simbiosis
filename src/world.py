@@ -191,13 +191,38 @@ class Camera:
                                        width=1)
 
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                                       radius=(
-                                                          2 * creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
+                                       radius=(2 * creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
                                        color=(220, 20, 60), width=1)
 
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
                                        radius=creature.genes.vision_radius.value * self.zoom_level,
                                        color=(144, 238, 144), width=1)
+
+                    end_pos = (drawing_rect.center[0] + (creature.genes.vision_radius.value * self.zoom_level) + math.cos(creature.direction_radians()),
+                               drawing_rect.center[1] + (creature.genes.vision_radius.value * self.zoom_level) + math.sin(creature.direction_radians())
+                               )
+                    pygame.draw.line(surface=self.screen, color=colour_to_draw,
+                                     start_pos=drawing_rect.center, end_pos=end_pos)
+
+                    end_pos = (drawing_rect.center[0] + (creature.genes.vision_radius.value * self.zoom_level) + math.cos(creature.direction_radians()),
+                               drawing_rect.center[1] + (creature.genes.vision_radius.value * self.zoom_level) + math.sin(creature.direction_radians())
+                               )
+                    pygame.draw.line(surface=self.screen, color=colour_to_draw,
+                                     start_pos=drawing_rect.center, end_pos=end_pos)
+
+                    if creature.visible_entity:
+                        rect_left = creature.visible_entity.x - creature.visible_entity.radius
+                        rect_top = creature.visible_entity.y - creature.visible_entity.radius
+                        drawing_rect2 = pygame.Rect(rect_left, rect_top, creature.visible_entity.radius * 2,
+                                                    creature.visible_entity.radius * 2)
+                        drawing_rect2.x = world_rect.x + round(drawing_rect2.x / scale)
+                        drawing_rect2.y = world_rect.y + round(drawing_rect2.y / scale)
+                        drawing_rect2.width *= self.zoom_level
+                        drawing_rect2.height *= self.zoom_level
+
+                        pygame.draw.rect(surface=self.screen, rect=drawing_rect2, color=[170, 255, 170])
+                        pygame.draw.line(surface=self.screen, color=colour_to_draw,
+                                         start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
 
     def move(self, deltatime):
         self.centre_x = self.screen.get_width() // 2
