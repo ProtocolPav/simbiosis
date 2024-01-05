@@ -58,10 +58,9 @@ class CreatureGenes:
         self.plant_energy = Gene(name="% of Energy Gained From Eating", acronym="ENP", value=random.random())
 
         # Genes affecting Creature Behaviour
-        self.vision_radius = Gene(name="Vision Radius", acronym="VIR", value=random.uniform(self.radius.value, 10))
+        self.vision_radius = Gene(name="Vision Radius", acronym="VIR", value=random.uniform(self.radius.value, self.radius.value+10))
         self.vision_angle = Gene(name="Vision Angle", acronym="VIA", value=random.randint(1, 180))
-        self.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=1)
-        # self.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=random.random())
+        self.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=random.random())
         self.react_away = Gene(name="Reaction Away from Entity", acronym="RAW", value=1-self.react_towards.value)
         self.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.randint(1, 13))
 
