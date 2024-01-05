@@ -109,6 +109,7 @@ class Camera:
         self.centre_y = self.screen.get_height() // 2
         self.x_offset = 0
         self.y_offset = 0
+        self.font = pygame.Font('freesansbold.ttf', 25)
 
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour
@@ -198,17 +199,11 @@ class Camera:
                                        radius=creature.genes.vision_radius.value * self.zoom_level,
                                        color=(144, 238, 144), width=1)
 
-                    end_pos = (drawing_rect.center[0] + (creature.genes.vision_radius.value * self.zoom_level) + math.cos(creature.direction_radians()),
-                               drawing_rect.center[1] + (creature.genes.vision_radius.value * self.zoom_level) + math.sin(creature.direction_radians())
-                               )
-                    pygame.draw.line(surface=self.screen, color=colour_to_draw,
-                                     start_pos=drawing_rect.center, end_pos=end_pos)
-
-                    end_pos = (drawing_rect.center[0] + (creature.genes.vision_radius.value * self.zoom_level) + math.cos(creature.direction_radians()),
-                               drawing_rect.center[1] + (creature.genes.vision_radius.value * self.zoom_level) + math.sin(creature.direction_radians())
-                               )
-                    pygame.draw.line(surface=self.screen, color=colour_to_draw,
-                                     start_pos=drawing_rect.center, end_pos=end_pos)
+                    self.font = pygame.Font('freesansbold.ttf', 2*self.zoom_level)
+                    text = self.font.render(f'{creature.direction}*', color=(255, 255, 255), antialias=True)
+                    text_rect = text.get_rect()
+                    text_rect.center = (drawing_rect.center[0], drawing_rect.y+10*self.zoom_level)
+                    self.screen.blit(text, text_rect)
 
                     if creature.visible_entity:
                         rect_left = creature.visible_entity.x - creature.visible_entity.radius
