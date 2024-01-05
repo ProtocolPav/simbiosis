@@ -185,6 +185,35 @@ class Camera:
                 self.screen.blit(rotated_image, creature_rect)
 
                 if debug:
+                    # Draw all the vision lines to see what entities the creature is checking against
+                    for entity in creature.all_check_entities:
+                        rect_left = entity.x - entity.radius
+                        rect_top = entity.y - entity.radius
+                        drawing_rect2 = pygame.Rect(rect_left, rect_top, entity.radius * 2,
+                                                    entity.radius * 2)
+                        drawing_rect2.x = world_rect.x + round(drawing_rect2.x / scale)
+                        drawing_rect2.y = world_rect.y + round(drawing_rect2.y / scale)
+                        drawing_rect2.width *= self.zoom_level
+                        drawing_rect2.height *= self.zoom_level
+
+                        pygame.draw.rect(surface=self.screen, rect=drawing_rect2, color=[23, 5, 60])
+                        pygame.draw.line(surface=self.screen, color=[23, 5, 60],
+                                         start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
+
+                    for entity in creature.check_entities:
+                        rect_left = entity.x - entity.radius
+                        rect_top = entity.y - entity.radius
+                        drawing_rect2 = pygame.Rect(rect_left, rect_top, entity.radius * 2,
+                                                    entity.radius * 2)
+                        drawing_rect2.x = world_rect.x + round(drawing_rect2.x / scale)
+                        drawing_rect2.y = world_rect.y + round(drawing_rect2.y / scale)
+                        drawing_rect2.width *= self.zoom_level
+                        drawing_rect2.height *= self.zoom_level
+
+                        pygame.draw.rect(surface=self.screen, rect=drawing_rect2, color=[120, 55, 170])
+                        pygame.draw.line(surface=self.screen, color=[120, 55, 170],
+                                         start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
+
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
 
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
@@ -231,9 +260,16 @@ class Camera:
                         drawing_rect2.width *= self.zoom_level
                         drawing_rect2.height *= self.zoom_level
 
-                        pygame.draw.rect(surface=self.screen, rect=drawing_rect2, color=[170, 255, 170])
-                        pygame.draw.line(surface=self.screen, color=colour_to_draw,
+                        pygame.draw.rect(surface=self.screen, rect=drawing_rect2, color=[255, 255, 255])
+                        pygame.draw.line(surface=self.screen, color=[255, 255, 255],
                                          start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
+
+                    if creature.reaction is not None:
+                        self.font = pygame.Font('freesansbold.ttf', 2 * self.zoom_level)
+                        text = self.font.render(f'{creature.reaction[0]}', color=(255, 255, 255), antialias=True)
+                        text_rect = text.get_rect()
+                        text_rect.center = (drawing_rect.center[0], drawing_rect.y + 20 * self.zoom_level)
+                        self.screen.blit(text, text_rect)
 
     def move(self, deltatime):
         self.centre_x = self.screen.get_width() // 2

@@ -63,7 +63,11 @@ class Creature(BaseEntity):
         self.energy = self.genes.base_energy.value * 6000 if energy is None else energy
         self.direction = random.randint(0, 360)
         self.food_list = []
+
+        self.reaction = None
         self.visible_entity = None
+        self.check_entities = []
+        self.all_check_entities = []
 
         self.dead = False
 
@@ -121,10 +125,12 @@ class Creature(BaseEntity):
                   entity.y - self.y)
         vector_distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
         if vector_distance < self.genes.vision_radius.value:
+            self.check_entities.append(entity)
             bearing = math.degrees(math.atan2(vector[1], vector[0]))
 
             angular_distance = self.map_angle(max(bearing, self.direction) - min(bearing, self.direction))
             # Sometimes the distance tends to 360 and idk why
+            # I believe the issue here is with the angular distance
 
             # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
 
@@ -145,6 +151,7 @@ class Creature(BaseEntity):
 
         reaction = random.choices(["towards", "away"],
                                   [self.genes.react_towards.value, self.genes.react_away.value])[0]
+        self.reaction = reaction
 
         if reaction == "towards":
             print(f"{self.id} is Reacting Towards")
@@ -172,13 +179,16 @@ class Creature(BaseEntity):
         if not self.dead:
             self.energy -= self.genes.base_energy.value * deltatime
 
+            self.check_entities = []
+            self.all_check_entities = []
+            self.reaction = None
+
             for entity in range_search_box:
+                self.all_check_entities.append(entity)
                 if self.vision(entity):
                     print(f"{self.id} is seeing {entity.id}")
                     self.visible_entity = entity
                     self.react(entity)
-                else:
-                    self.visible_entity = None
 
             self.move(deltatime)
 
