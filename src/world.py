@@ -55,11 +55,6 @@ class World:
 
         self.tree = KDTree(self.creatures + self.food)
 
-        if self.delta_second >= 1:
-            self.delta_second = 0
-        if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
-            self.spawn_food()
-
         for creature in self.creatures:
             coordinates = creature.get_coordinates()
             boxsize = 2 * creature.genes.vision_radius.value + self.largest_radius
@@ -73,6 +68,14 @@ class World:
 
             if creature.dead:
                 self.creatures.remove(creature)
+
+            if self.delta_second >= 1:
+                creature.visible_entity = None
+
+        if self.delta_second >= 1:
+            self.delta_second = 0
+        if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
+            self.spawn_food()
 
     def spawn_food(self):
         food = random.choice(self.food) if len(self.food) != 0 else None
@@ -214,42 +217,42 @@ class Camera:
                         pygame.draw.line(surface=self.screen, color=[120, 55, 170],
                                          start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
 
+                    # Display the centre position of the creature
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
 
+                    # Display the radius of the creature
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
                                        radius=creature.genes.radius.value * self.zoom_level, color=(255, 255, 244),
                                        width=1)
 
+                    # Display the Range Search area for the creature's vision and collision detection
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
                                        radius=(2 * creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
                                        color=(220, 20, 60), width=1)
 
+                    # Display the creature's vision radius
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
                                        radius=creature.genes.vision_radius.value * self.zoom_level,
                                        color=(144, 238, 144), width=1)
 
-                    self.font = pygame.Font('freesansbold.ttf', 2*self.zoom_level)
-                    text = self.font.render(f'{creature.direction}*', color=(255, 255, 255), antialias=True)
-                    text_rect = text.get_rect()
-                    text_rect.center = (drawing_rect.center[0], drawing_rect.y+10*self.zoom_level)
-                    self.screen.blit(text, text_rect)
-
+                    # Display the vision angle of the creature
                     # Calculate the end position of the first line. This is done using the direction the creature is facing.
                     # Add half of the vision radius to it, and then use the cos and sin formula to determine where it should be.
-                    direction = creature.direction_radians() + math.radians(creature.genes.vision_angle.value)
+                    direction = creature.direction_radians() + math.radians(creature.genes.vision_angle.value/2)
                     x_dist = math.cos(direction) * creature.genes.vision_radius.value * self.zoom_level
                     y_dist = math.sin(direction) * creature.genes.vision_radius.value * self.zoom_level
                     pygame.draw.line(surface=self.screen, start_pos=drawing_rect.center,
                                      end_pos=(drawing_rect.center[0] + x_dist, drawing_rect.center[1] + y_dist),
                                      color=(144, 238, 144))
 
-                    direction = creature.direction_radians() - math.radians(creature.genes.vision_angle.value)
+                    direction = creature.direction_radians() - math.radians(creature.genes.vision_angle.value/2)
                     x_dist = math.cos(direction) * creature.genes.vision_radius.value * self.zoom_level
                     y_dist = math.sin(direction) * creature.genes.vision_radius.value * self.zoom_level
                     pygame.draw.line(surface=self.screen, start_pos=drawing_rect.center,
                                      end_pos=(drawing_rect.center[0] + x_dist, drawing_rect.center[1] + y_dist),
                                      color=(144, 238, 144))
 
+                    # Display the entity that the creature is "seeing"
                     if creature.visible_entity:
                         rect_left = creature.visible_entity.x - creature.visible_entity.radius
                         rect_top = creature.visible_entity.y - creature.visible_entity.radius
@@ -264,12 +267,27 @@ class Camera:
                         pygame.draw.line(surface=self.screen, color=[255, 255, 255],
                                          start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
 
+                    # Display the direction the creature is facing towards
+                    self.font = pygame.Font('freesansbold.ttf', 2*self.zoom_level)
+                    text = self.font.render(f'{creature.direction}*', color=(255, 255, 255), antialias=True)
+                    text_rect = text.get_rect()
+                    text_rect.center = (drawing_rect.center[0], drawing_rect.y+10*self.zoom_level)
+                    self.screen.blit(text, text_rect)
+
+                    # Display the previous reaction of the creature towards an entity
                     if creature.reaction is not None:
                         self.font = pygame.Font('freesansbold.ttf', 2 * self.zoom_level)
-                        text = self.font.render(f'{creature.reaction[0]}', color=(255, 255, 255), antialias=True)
+                        text = self.font.render(f'{creature.reaction}', color=(255, 255, 255), antialias=True)
                         text_rect = text.get_rect()
-                        text_rect.center = (drawing_rect.center[0], drawing_rect.y + 20 * self.zoom_level)
+                        text_rect.center = (drawing_rect.center[0], drawing_rect.y + 12 * self.zoom_level)
                         self.screen.blit(text, text_rect)
+
+                    # Display the Energy of the creature
+                    self.font = pygame.Font('freesansbold.ttf', 2*self.zoom_level)
+                    text = self.font.render(f'{round(creature.energy)}E', color=(255, 255, 255), antialias=True)
+                    text_rect = text.get_rect()
+                    text_rect.center = (drawing_rect.center[0], drawing_rect.y+14*self.zoom_level)
+                    self.screen.blit(text, text_rect)
 
     def move(self, deltatime):
         self.centre_x = self.screen.get_width() // 2

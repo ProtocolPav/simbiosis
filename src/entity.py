@@ -147,7 +147,7 @@ class Creature(BaseEntity):
                   entity.y - self.y)
         bearing = math.degrees(math.atan2(vector[1], vector[0]))
 
-        self.energy -= self.genes.turning_energy.value * 1
+        self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value
 
         reaction = random.choices(["towards", "away"],
                                   [self.genes.react_towards.value, self.genes.react_away.value])[0]
@@ -156,16 +156,16 @@ class Creature(BaseEntity):
         if reaction == "towards":
             print(f"{self.id} is Reacting Towards")
             if bearing >= 0:
-                self.direction = self.map_angle(self.direction + 1)
+                self.direction = self.map_angle(self.direction + self.genes.react_speed.value)
             elif bearing < 0:
-                self.direction = self.map_angle(self.direction - 1)
+                self.direction = self.map_angle(self.direction - self.genes.react_speed.value)
 
         else:
             print(f"{self.id} is Reacting Away")
             if bearing >= 0:
-                self.direction = self.map_angle(self.direction - 1)
+                self.direction = self.map_angle(self.direction - self.genes.react_speed.value)
             elif bearing < 0:
-                self.direction = self.map_angle(self.direction + 1)
+                self.direction = self.map_angle(self.direction + self.genes.react_speed.value)
 
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """
@@ -181,7 +181,6 @@ class Creature(BaseEntity):
 
             self.check_entities = []
             self.all_check_entities = []
-            self.reaction = None
 
             for entity in range_search_box:
                 self.all_check_entities.append(entity)
