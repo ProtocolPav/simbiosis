@@ -129,13 +129,11 @@ class Creature(BaseEntity):
             # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
 
             if angular_distance < self.genes.vision_angle.value:
-                self.visible_entity = entity
                 return True
             else:
                 ...
                 # Check if line segments intersect. Later...
 
-        self.visible_entity = None
         return False
 
     def react(self, entity: BaseEntity):
@@ -177,7 +175,10 @@ class Creature(BaseEntity):
             for entity in range_search_box:
                 if self.vision(entity):
                     print(f"{self.id} is seeing {entity.id}")
+                    self.visible_entity = entity
                     self.react(entity)
+                else:
+                    self.visible_entity = None
 
             self.move(deltatime)
 

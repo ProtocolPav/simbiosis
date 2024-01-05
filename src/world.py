@@ -205,6 +205,22 @@ class Camera:
                     text_rect.center = (drawing_rect.center[0], drawing_rect.y+10*self.zoom_level)
                     self.screen.blit(text, text_rect)
 
+                    # Calculate the end position of the first line. This is done using the direction the creature is facing.
+                    # Add half of the vision radius to it, and then use the cos and sin formula to determine where it should be.
+                    direction = creature.direction_radians() + math.radians(creature.genes.vision_angle.value)
+                    x_dist = math.cos(direction) * creature.genes.vision_radius.value * self.zoom_level
+                    y_dist = math.sin(direction) * creature.genes.vision_radius.value * self.zoom_level
+                    pygame.draw.line(surface=self.screen, start_pos=drawing_rect.center,
+                                     end_pos=(drawing_rect.center[0] + x_dist, drawing_rect.center[1] + y_dist),
+                                     color=(144, 238, 144))
+
+                    direction = creature.direction_radians() - math.radians(creature.genes.vision_angle.value)
+                    x_dist = math.cos(direction) * creature.genes.vision_radius.value * self.zoom_level
+                    y_dist = math.sin(direction) * creature.genes.vision_radius.value * self.zoom_level
+                    pygame.draw.line(surface=self.screen, start_pos=drawing_rect.center,
+                                     end_pos=(drawing_rect.center[0] + x_dist, drawing_rect.center[1] + y_dist),
+                                     color=(144, 238, 144))
+
                     if creature.visible_entity:
                         rect_left = creature.visible_entity.x - creature.visible_entity.radius
                         rect_top = creature.visible_entity.y - creature.visible_entity.radius
