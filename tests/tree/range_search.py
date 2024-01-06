@@ -89,6 +89,8 @@ class KDTree:
                     self.queue.append(current_node.right_child)
                     print(f"PROBABLE SUBTREE {current_node.right_child}")
 
+        points_list.sort(key=lambda pt: (pt[0] - point[0])**2 + (pt[1] - point[1])**2)
+
         return points_list
 
 

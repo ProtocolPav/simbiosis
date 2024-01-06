@@ -97,4 +97,5 @@ class KDTree:
                 elif point[axis] > current_node.data.get_coordinates()[axis] and current_node.right_child is not None:
                     self.queue.append(current_node.right_child)
 
+        points_list.sort(key=lambda pt: (pt.x - point[0])**2 + (pt.y - point[1])**2)
         return points_list

@@ -211,7 +211,7 @@ class Creature(BaseEntity):
 
                 elif self.collision(entity) and isinstance(entity, Creature):
                     print(f"{self.id} is colliding with Creature {entity.id}")
-                    self.birth()
+                    # self.birth()
                     # angle = random.randint(90, 180)
                     # self.direction += angle
                     # self.energy -= self.genes.turning_energy.value * angle
