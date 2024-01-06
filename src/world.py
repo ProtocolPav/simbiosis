@@ -76,6 +76,10 @@ class World:
                 if self.delta_second >= 1:
                     creature.visible_entity = None
 
+                if creature.child is not None:
+                    self.creatures.append(creature.child)
+                    creature.child = None
+
             if self.delta_second >= 1:
                 self.delta_second = 0
             if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1

@@ -68,6 +68,7 @@ class Creature(BaseEntity):
         self.visible_entity = None
         self.check_entities = []
         self.all_check_entities = []
+        self.child = None
 
         self.dead = False
 
@@ -167,6 +168,16 @@ class Creature(BaseEntity):
             elif bearing < 0:
                 self.direction = self.map_angle(self.direction + self.genes.react_speed.value)
 
+    def birth(self):
+        if self.energy > self.genes.birth_energy.value:
+            self.energy -= self.genes.birth_energy.value
+
+            self.child = Creature(self.x+self.radius*2, self.y-self.radius*2, self.image, self.world_bottom_right,
+                                  copy.deepcopy(self.genes), energy=self.genes.birth_energy.value)
+
+            for gene, gene_object in vars(self.child.genes).items():
+                gene_object.mutate()
+
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """
         Runs all the processes of the creature, movement, vision, collision
@@ -198,11 +209,15 @@ class Creature(BaseEntity):
                     self.energy += entity.energy
                     self.food_list.append(entity)
 
-                # elif self.collision(entity) and isinstance(entity, Creature):
-                #     print(f"{self.id} is colliding with Creature {entity.id}")
-                #     angle = random.randint(90, 180)
-                #     self.direction += angle
-                #     self.energy -= self.genes.turning_energy.value * angle
+                elif self.collision(entity) and isinstance(entity, Creature):
+                    print(f"{self.id} is colliding with Creature {entity.id}")
+                    self.birth()
+                    # angle = random.randint(90, 180)
+                    # self.direction += angle
+                    # self.energy -= self.genes.turning_energy.value * angle
+
+            if random.randint(1, 5) == 1:
+                self.birth()
 
         if self.energy <= 0:
             self.dead = True

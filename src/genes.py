@@ -26,7 +26,7 @@ class Gene:
                 else:
                     self.value += random.uniform(-0.2, 0.2)
 
-                if self.acronym in ['CLH', 'RTL', 'RTR', 'RTB', 'RTW', 'RAW', 'RBO', 'RTF', 'RAF', 'RLF', 'RRF', 'RBF']:
+                if self.acronym in ['RTO', 'RAW', 'ENP']:
                     if self.value < 0:
                         self.value = abs(self.value)
                     elif self.value > 1:
