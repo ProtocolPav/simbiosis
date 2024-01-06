@@ -22,6 +22,9 @@ class World:
         self.tree: KDTree = KDTree([])
         self.largest_radius = 0
 
+        self.food_spawnrate = 3
+        self.tick_speed = 1
+
         self.seconds = 0
         self.delta_second = 0
         # I decided to add a delta_second variable.
@@ -50,32 +53,34 @@ class World:
                                                specimen.genes))
 
     def tick_world(self, deltatime: float):
-        self.seconds += deltatime
-        self.delta_second += deltatime
+        for i in range(self.tick_speed):
+            self.seconds += deltatime
+            self.delta_second += deltatime
 
-        self.tree = KDTree(self.creatures + self.food)
+            self.tree = KDTree(self.creatures + self.food)
 
-        for creature in self.creatures:
-            coordinates = creature.get_coordinates()
-            boxsize = 2 * creature.genes.vision_radius.value + self.largest_radius
-            creature_check = self.tree.range_search(coordinates,
-                                                    (coordinates[0] - boxsize, coordinates[1] + boxsize),
-                                                    (coordinates[0] + boxsize, coordinates[1] - boxsize))
-            creature.tick(deltatime, creature_check)
+            for creature in self.creatures:
+                coordinates = creature.get_coordinates()
+                boxsize = 2 * creature.genes.vision_radius.value + self.largest_radius
+                creature_check = self.tree.range_search(coordinates,
+                                                        (coordinates[0] - boxsize, coordinates[1] + boxsize),
+                                                        (coordinates[0] + boxsize, coordinates[1] - boxsize))
+                creature.tick(deltatime, creature_check)
 
-            for food in creature.food_list:
-                self.food.remove(food)
+                for food in creature.food_list:
+                    self.food.remove(food)
 
-            if creature.dead:
-                self.creatures.remove(creature)
+                if creature.dead:
+                    self.creatures.remove(creature)
+
+                if self.delta_second >= 1:
+                    creature.visible_entity = None
 
             if self.delta_second >= 1:
-                creature.visible_entity = None
-
-        if self.delta_second >= 1:
-            self.delta_second = 0
-        if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
-            self.spawn_food()
+                self.delta_second = 0
+            if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
+                for j in range(self.food_spawnrate):
+                    self.spawn_food()
 
     def spawn_food(self):
         food = random.choice(self.food) if len(self.food) != 0 else None
