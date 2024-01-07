@@ -18,7 +18,7 @@ class Gene:
 
             if random.choices(population=["mutate", "no mutate"], weights=[50, 250])[0] == "mutate":
                 if self.acronym in ['CLR', 'CLB', 'CLG']:
-                    self.value += random.randint(2, 2)
+                    self.value += random.randint(-2, 2)
                     if self.value < 0:
                         self.value = 10
                     elif self.value > 255:
