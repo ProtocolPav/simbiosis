@@ -64,11 +64,16 @@ class Creature(BaseEntity):
         self.direction = random.randint(0, 360)
         self.food_list = []
 
+        # Attributes used for debug
         self.reaction = None
         self.visible_entity = None
         self.check_entities = []
         self.all_check_entities = []
         self.child = None
+
+        # Memory attributes
+        self.memory_entity = self
+        self.memory_reaction = None
 
         self.dead = False
 
@@ -144,29 +149,28 @@ class Creature(BaseEntity):
         return False
 
     def react(self, entity: BaseEntity):
+        towards = 1
+        away = -1
+
+        if entity.id != self.memory_entity.id:
+            reaction = random.choices([towards, away],
+                                      [self.genes.react_towards.value, self.genes.react_away.value])[0]
+            self.reaction = reaction
+            self.memory_reaction = reaction
+        else:
+            reaction = self.memory_reaction
+
         vector = (entity.x - self.x,
                   entity.y - self.y)
         bearing = math.degrees(math.atan2(vector[1], vector[0]))
 
+        if bearing >= 0:
+            self.direction = self.map_angle(self.direction + self.genes.react_speed.value*reaction)
+        elif bearing < 0:
+            self.direction = self.map_angle(self.direction - self.genes.react_speed.value*reaction)
+
         self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value
-
-        reaction = random.choices(["towards", "away"],
-                                  [self.genes.react_towards.value, self.genes.react_away.value])[0]
-        self.reaction = reaction
-
-        if reaction == "towards":
-            print(f"{self.id} is Reacting Towards")
-            if bearing >= 0:
-                self.direction = self.map_angle(self.direction + self.genes.react_speed.value)
-            elif bearing < 0:
-                self.direction = self.map_angle(self.direction - self.genes.react_speed.value)
-
-        else:
-            print(f"{self.id} is Reacting Away")
-            if bearing >= 0:
-                self.direction = self.map_angle(self.direction - self.genes.react_speed.value)
-            elif bearing < 0:
-                self.direction = self.map_angle(self.direction + self.genes.react_speed.value)
+        print(f"{self.id} is Reacting {'Towards' if reaction == 1 else 'Away'}")
 
     def birth(self):
         if self.energy > self.genes.birth_energy.value:
@@ -199,6 +203,8 @@ class Creature(BaseEntity):
                     print(f"{self.id} is seeing {entity.id}")
                     self.visible_entity = entity
                     self.react(entity)
+
+                    self.memory_entity = entity
 
             self.move(deltatime)
 
