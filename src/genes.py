@@ -61,7 +61,6 @@ class CreatureGenes:
         self.vision_radius = Gene(name="Vision Radius", acronym="VIR", value=random.uniform(self.radius.value, self.radius.value+10))
         self.vision_angle = Gene(name="Vision Angle", acronym="VIA", value=random.randint(1, 180))
         self.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=random.random())
-        self.react_away = Gene(name="Reaction Away from Entity", acronym="RAW", value=1-self.react_towards.value)
         self.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.randint(1, 13))
 
         # Data Genes (No mutation, affects Data)

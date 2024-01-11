@@ -154,7 +154,7 @@ class Creature(BaseEntity):
 
         if entity.id != self.memory_entity.id:
             reaction = random.choices([towards, away],
-                                      [self.genes.react_towards.value, self.genes.react_away.value])[0]
+                                      [self.genes.react_towards.value, 1-self.genes.react_towards.value])[0]
             self.reaction = reaction
             self.memory_reaction = reaction
         else:
