@@ -72,7 +72,7 @@ class Creature(BaseEntity):
         self.child = None
 
         # Memory attributes
-        self.memory_entity = self
+        self.seeing = False
         self.memory_reaction = None
 
         self.dead = False
@@ -152,7 +152,7 @@ class Creature(BaseEntity):
         towards = 1
         away = -1
 
-        if entity.id != self.memory_entity.id:
+        if not self.seeing:
             reaction = random.choices([towards, away],
                                       [self.genes.react_towards.value, 1-self.genes.react_towards.value])[0]
             self.reaction = reaction
@@ -164,7 +164,7 @@ class Creature(BaseEntity):
                   entity.y - self.y)
         bearing = math.degrees(math.atan2(vector[1], vector[0]))
 
-        if bearing >= 0:
+        if bearing > 0:
             self.direction = self.map_angle(self.direction + self.genes.react_speed.value*reaction)
         elif bearing < 0:
             self.direction = self.map_angle(self.direction - self.genes.react_speed.value*reaction)
@@ -203,8 +203,9 @@ class Creature(BaseEntity):
                     print(f"{self.id} is seeing {entity.id}")
                     self.visible_entity = entity
                     self.react(entity)
-
-                    self.memory_entity = entity
+                    self.seeing = True
+                else:
+                    self.seeing = False
 
             self.move(deltatime)
 
@@ -217,13 +218,13 @@ class Creature(BaseEntity):
 
                 elif self.collision(entity) and isinstance(entity, Creature):
                     print(f"{self.id} is colliding with Creature {entity.id}")
-                    # self.birth()
-                    # angle = random.randint(90, 180)
-                    # self.direction += angle
-                    # self.energy -= self.genes.turning_energy.value * angle
+                    self.birth()
+                    angle = random.randint(90, 180)
+                    self.direction += angle
+                    self.energy -= self.genes.turning_energy.value * angle
 
-            if random.randint(1, 5) == 1:
-                self.birth()
+            # if random.randint(1, 5) == 1:
+            #     self.birth()
 
         if self.energy <= 0:
             self.dead = True
