@@ -63,6 +63,11 @@ class CreatureGenes:
         self.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=random.random())
         self.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.randint(1, 13))
 
+        # Genes which offset the RTO based on what the creature is seeing
+        self.food_offset = Gene(name="Reaction Food Offset", acronym="RFO", value=random.uniform(-0.5, 0.5))
+        self.stranger_offset = Gene(name="Reaction Stranger Offset", acronym="RSO", value=random.uniform(-0.5, 0.5))
+        self.known_offset = Gene(name="Reaction Known Offset", acronym="RKO", value=random.uniform(-0.5, 0.5))
+
         # Data Genes (No mutation, affects Data)
         self.species = Gene(name="Species", acronym="SPE", value=species, can_mutate=False)
         self.generation = Gene(name="Generation", acronym="GEN", value=generation, can_mutate=False)
