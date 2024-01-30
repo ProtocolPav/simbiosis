@@ -72,7 +72,7 @@ class Creature(BaseEntity):
         self.child = None
 
         # Memory attributes
-        self.memory_entity = self
+        self.seeing = False
         self.memory_reaction = None
 
         self.dead = False
@@ -152,9 +152,21 @@ class Creature(BaseEntity):
         towards = 1
         away = -1
 
-        if entity.id != self.memory_entity.id:
+        if not self.seeing:
+            offset = 0
+
+            if isinstance(entity, Food):
+                offset += self.genes.food_offset.value
+            elif isinstance(entity, Creature):
+                if entity.genes.species.value == self.genes.species.value:
+                    offset += self.genes.known_offset.value
+                else:
+                    offset += self.genes.stranger_offset.value
+
+            probability_towards = abs(self.genes.react_towards.value + offset)
+
             reaction = random.choices([towards, away],
-                                      [self.genes.react_towards.value, self.genes.react_away.value])[0]
+                                      [probability_towards, 1-probability_towards])[0]
             self.reaction = reaction
             self.memory_reaction = reaction
         else:
@@ -164,7 +176,7 @@ class Creature(BaseEntity):
                   entity.y - self.y)
         bearing = math.degrees(math.atan2(vector[1], vector[0]))
 
-        if bearing >= 0:
+        if bearing > 0:
             self.direction = self.map_angle(self.direction + self.genes.react_speed.value*reaction)
         elif bearing < 0:
             self.direction = self.map_angle(self.direction - self.genes.react_speed.value*reaction)
@@ -172,15 +184,22 @@ class Creature(BaseEntity):
         self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value
         print(f"{self.id} is Reacting {'Towards' if reaction == 1 else 'Away'}")
 
-    def birth(self):
+    def birth(self, parent=None):
         if self.energy > self.genes.birth_energy.value:
             self.energy -= self.genes.birth_energy.value
 
-            self.child = Creature(self.x+self.radius*2, self.y-self.radius*2, self.image, self.world_bottom_right,
-                                  copy.deepcopy(self.genes), energy=self.genes.birth_energy.value)
+            child_genes = copy.deepcopy(self.genes)
+            if parent is None:
+                for gene, gene_object in vars(child_genes).items():
+                    gene_object.mutate()
+            else:
+                parent_genes = vars(parent.genes)
+                for gene, gene_object in vars(child_genes).items():
+                    gene_object.value = (gene_object.value + parent_genes[gene].value)//2
+                    gene_object.mutate()
 
-            for gene, gene_object in vars(self.child.genes).items():
-                gene_object.mutate()
+            self.child = Creature(self.x + self.radius * 2, self.y - self.radius * 2, self.image, self.world_bottom_right,
+                                  child_genes, energy=self.genes.birth_energy.value)
 
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """
@@ -203,8 +222,9 @@ class Creature(BaseEntity):
                     print(f"{self.id} is seeing {entity.id}")
                     self.visible_entity = entity
                     self.react(entity)
-
-                    self.memory_entity = entity
+                    self.seeing = True
+                else:
+                    self.seeing = False
 
             self.move(deltatime)
 
@@ -214,16 +234,15 @@ class Creature(BaseEntity):
                     entity.eaten = True
                     self.energy += entity.energy
                     self.food_list.append(entity)
+                    if random.randint(1, 200) == 1:
+                        self.birth()
 
                 elif self.collision(entity) and isinstance(entity, Creature):
                     print(f"{self.id} is colliding with Creature {entity.id}")
-                    # self.birth()
-                    # angle = random.randint(90, 180)
-                    # self.direction += angle
-                    # self.energy -= self.genes.turning_energy.value * angle
-
-            if random.randint(1, 5) == 1:
-                self.birth()
+                    self.birth(entity)
+                    angle = random.randint(90, 180)
+                    self.direction += angle
+                    self.energy -= self.genes.turning_energy.value * angle
 
         if self.energy <= 0:
             self.dead = True
