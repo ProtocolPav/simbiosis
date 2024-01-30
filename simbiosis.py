@@ -1,55 +1,17 @@
 # Alpha v0.4
 import pygame
 from src.world import World, Camera
+from src.ui import Button
 
 
 pygame.init()
 
-creature_image = pygame.image.load('textures/creature3.png')
-food_image = pygame.image.load('textures/food1.png')
+creature_image = pygame.image.load('resources/textures/creature3.png')
+food_image = pygame.image.load('resources/textures/food1.png')
 
 pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
 clock = pygame.time.Clock()
-
-
-class Button:
-    def __init__(self, image: pygame.Surface, x_pos: int, y_pos: int):
-        self.rect = pygame.Rect(x_pos, y_pos, image.get_width(), image.get_height())
-        self.image = image
-
-        # Create the image of the button when it is hovered/pressed
-        self.pressed = self.image.copy()
-        pygame.PixelArray(self.pressed).replace((0, 0, 0), (46, 139, 87))
-
-        self.is_hovered = False
-
-    def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
-        self.rect.x = x_pos
-        self.rect.y = y_pos
-
-        if not self.is_hovered:
-            screen.blit(self.image, self.rect)
-        else:
-            screen.blit(self.pressed, self.rect)
-
-    def check_for_hover(self):
-        mos_x, mos_y = pygame.mouse.get_pos()
-        x_inside = False
-        y_inside = False
-
-        if mos_x > self.rect.x and (mos_x < self.rect.x + self.rect.w):
-            x_inside = True
-        if mos_y > self.rect.y and (mos_y < self.rect.y + self.rect.h):
-            y_inside = True
-        if x_inside and y_inside:
-            self.is_hovered = True
-        else:
-            self.is_hovered = False
-
-    def check_for_press(self):
-        if pygame.mouse.get_pressed()[0] and self.is_hovered:
-            return True
 
 
 class Simulation:
@@ -59,14 +21,14 @@ class Simulation:
         self.screen = pygame.display.set_mode((1800, 950), pygame.RESIZABLE)
 
         pygame.mouse.set_visible(False)
-        self.cursor_image = pygame.image.load('textures/cursor.png')
+        self.cursor_image = pygame.image.load('resources/textures/cursor.png')
         self.cursor_rect = self.cursor_image.get_rect()
 
-        self.creature_image = pygame.image.load('textures/creature3.png')
-        self.food_image = pygame.image.load('textures/food1.png')
-        self.menu_background = pygame.image.load('screens/menu_background.png')
-        self.logo = pygame.image.load('screens/logo.png')
-        self.buttons = {'play': Button(pygame.image.load('screens/buttons/play.png'),
+        self.creature_image = pygame.image.load('resources/textures/creature3.png')
+        self.food_image = pygame.image.load('resources/textures/food1.png')
+        self.menu_background = pygame.image.load('resources/screens/menu_background.png')
+        self.logo = pygame.image.load('resources/screens/logo.png')
+        self.buttons = {'play': Button('play',
                                        (self.screen.get_width() - 64) // 2,
                                        self.screen.get_height() // 2 - 100)}
 
@@ -75,7 +37,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=1000, start_species=2, start_creatures=100, start_food=1000,
+        self.world: World = World(size=1000, start_species=10, start_creatures=50, start_food=50,
                                   creature_image=self.creature_image, food_image=self.food_image)
 
         # Menu Booleans
@@ -116,6 +78,7 @@ class Simulation:
 
                 self.camera.move(deltatime)
                 self.camera.draw_world(self.world, self.debug_screen)
+                self.camera.draw_ui(self.world)
 
             self.cursor_rect.topleft = pygame.mouse.get_pos()
             self.screen.blit(self.cursor_image, self.cursor_rect)

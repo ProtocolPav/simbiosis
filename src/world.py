@@ -2,8 +2,11 @@ import math
 
 import pygame
 
+from datetime import timedelta
+
 from src.entity import Creature, Food
 from src.tree import KDTree
+from src.ui import SmallContentDisplay
 from logs import log
 
 import random
@@ -121,6 +124,20 @@ class Camera:
         self.x_offset = 0
         self.y_offset = 0
         self.font = pygame.Font('freesansbold.ttf', 25)
+
+        self.time_display = SmallContentDisplay('time', 5, 5)
+        self.creature_display = SmallContentDisplay('creatures', 5, 5)
+        self.species_display = SmallContentDisplay('species', 5, 5)
+        self.food_display = SmallContentDisplay('food', 5, 5)
+
+    def draw_ui(self, world: World):
+        DISPLAY_SIZE = 100
+
+        time = timedelta(seconds=round(world.seconds))
+        self.time_display.draw(self.screen, time, 10, 15)
+        self.creature_display.draw(self.screen, len(world.creatures), 10, DISPLAY_SIZE + 30)
+        self.species_display.draw(self.screen, 1, 10, DISPLAY_SIZE * 2 + 45)
+        self.food_display.draw(self.screen, len(world.food), 10, DISPLAY_SIZE * 3 + 60)
 
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour
