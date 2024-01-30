@@ -4,6 +4,7 @@ import pygame
 
 from src.entity import Creature, Food
 from src.tree import KDTree
+from src.ui import SmallContentDisplay
 from logs import log
 
 import random
@@ -122,6 +123,14 @@ class Camera:
         self.x_offset = 0
         self.y_offset = 0
         self.font = pygame.Font('freesansbold.ttf', 25)
+
+        self.test_display = SmallContentDisplay(pygame.image.load('resources/screens/components/contentdisplay.png'),
+                                                'Test Display',
+                                                5,
+                                                5)
+
+    def draw_ui(self):
+        self.test_display.draw(self.screen, 1034, 10, 15)
 
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour

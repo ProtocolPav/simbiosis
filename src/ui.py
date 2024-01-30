@@ -41,7 +41,34 @@ class Button:
 
 
 class SmallContentDisplay:
-    ...
+    def __init__(self, image: pygame.Surface, content_name: str, x_pos: int, y_pos: int):
+        self.image = image
+        self.rect = pygame.Rect(x_pos, y_pos, image.get_width(), image.get_height())
+
+        # Create font object
+        self.content_font = pygame.font.Font('resources/pixel_digivolve.otf', 20)
+        self.value_font = pygame.font.Font('resources/pixel_digivolve.otf', 50)
+
+        self.content_name = self.content_font.render(content_name, False, (108, 122, 103))
+
+    def draw(self, screen: pygame.Surface, value: int, x_pos: int, y_pos: int):
+        self.rect.x = x_pos
+        self.rect.y = y_pos
+
+        screen.blit(self.image, self.rect)
+
+        # To get the text displayed in the centre of the box:
+        # Subtract the width of the box and the text and divide by 2
+        content_rect = self.rect.copy()
+        content_rect.x += (self.rect.w - self.content_name.get_width()) // 2
+        content_rect.y += 15
+        screen.blit(self.content_name, content_rect)
+
+        value_text = self.value_font.render(str(value), False, (108, 122, 103))
+        value_rect = self.rect.copy()
+        value_rect.x += (self.rect.w - value_text.get_width()) // 2
+        value_rect.y += 30
+        screen.blit(value_text, value_rect)
 
 
 class LargeContentDisplay:

@@ -37,7 +37,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=1000, start_species=10, start_creatures=500, start_food=50,
+        self.world: World = World(size=1000, start_species=10, start_creatures=50, start_food=50,
                                   creature_image=self.creature_image, food_image=self.food_image)
 
         # Menu Booleans
@@ -78,6 +78,7 @@ class Simulation:
 
                 self.camera.move(deltatime)
                 self.camera.draw_world(self.world, self.debug_screen)
+                self.camera.draw_ui()
 
             self.cursor_rect.topleft = pygame.mouse.get_pos()
             self.screen.blit(self.cursor_image, self.cursor_rect)
