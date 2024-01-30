@@ -28,7 +28,7 @@ class Simulation:
         self.food_image = pygame.image.load('resources/textures/food1.png')
         self.menu_background = pygame.image.load('resources/screens/menu_background.png')
         self.logo = pygame.image.load('resources/screens/logo.png')
-        self.buttons = {'play': Button(pygame.image.load('resources/screens/components/play.png'),
+        self.buttons = {'play': Button('play',
                                        (self.screen.get_width() - 64) // 2,
                                        self.screen.get_height() // 2 - 100)}
 
