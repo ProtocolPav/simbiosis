@@ -10,6 +10,7 @@ creature_image = pygame.image.load('resources/textures/creature3.png')
 food_image = pygame.image.load('resources/textures/food1.png')
 
 pygame.display.set_caption("Simbiosis - Evolution Simulator")
+pygame.display.set_icon(food_image)
 
 clock = pygame.time.Clock()
 
@@ -20,9 +21,9 @@ class Simulation:
 
         self.screen = pygame.display.set_mode((1800, 950), pygame.RESIZABLE)
 
-        pygame.mouse.set_visible(False)
-        self.cursor_image = pygame.image.load('resources/textures/cursor.png')
-        self.cursor_rect = self.cursor_image.get_rect()
+        # pygame.mouse.set_visible(False)
+        # self.cursor_image = pygame.image.load('resources/textures/cursor.png')
+        # self.cursor_rect = self.cursor_image.get_rect()
 
         self.creature_image = pygame.image.load('resources/textures/creature3.png')
         self.food_image = pygame.image.load('resources/textures/food1.png')
@@ -37,7 +38,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=500, start_species=10, start_creatures=70, start_food=10,
+        self.world: World = World(size=1000, start_species=10, start_creatures=70, start_food=1000,
                                   creature_image=self.creature_image, food_image=self.food_image)
 
         # Menu Booleans
@@ -79,8 +80,8 @@ class Simulation:
                 self.camera.draw_world(self.world, self.debug_screen)
                 self.camera.draw_ui(self.world)
 
-            self.cursor_rect.topleft = pygame.mouse.get_pos()
-            self.screen.blit(self.cursor_image, self.cursor_rect)
+            # self.cursor_rect.topleft = pygame.mouse.get_pos()
+            # self.screen.blit(self.cursor_image, self.cursor_rect)
 
             pygame.display.flip()
 

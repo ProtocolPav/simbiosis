@@ -101,7 +101,7 @@ class Creature(BaseEntity):
     def move(self, deltatime: float):
         if not self.within_border():
             # The values need tweaking as sometimes they bug out and leave the border
-            angle = random.randint(90, 180)
+            angle = random.randint(20, 90)
             self.direction = self.map_angle(self.direction + angle)
             self.energy -= self.genes.turning_energy.value * angle
 
@@ -232,7 +232,7 @@ class Creature(BaseEntity):
                 if self.collision(entity) and isinstance(entity, Food) and not entity.eaten:
                     print(f"{self.id} is eating Food {entity.id}")
                     entity.eaten = True
-                    self.energy += entity.energy
+                    self.energy += entity.energy * self.genes.plant_energy.value
                     self.food_list.append(entity)
                     if random.randint(1, 200) == 1:
                         self.birth()
@@ -253,7 +253,7 @@ class Food(BaseEntity):
         # Perhaps the radius can be determined by the energy amount?
         super().__init__(x_position, y_position, 0.5, image, world_bottomright)
 
-        self.energy = random.uniform(100, 1000)
+        self.energy = random.uniform(1000, 10000)
         self.eaten = False
 
     def __repr__(self):
