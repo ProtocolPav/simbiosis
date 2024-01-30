@@ -50,17 +50,17 @@ class Button:
 
 
 class SmallContentDisplay:
-    def __init__(self, image: pygame.Surface, content_name: str, x_pos: int, y_pos: int):
-        self.image = image
-        self.rect = pygame.Rect(x_pos, y_pos, image.get_width(), image.get_height())
+    def __init__(self, content_name: str, x_pos: int, y_pos: int):
+        self.image = pygame.image.load('resources/screens/components/contentdisplay.png')
+        self.rect = pygame.Rect(x_pos, y_pos, self.image.get_width(), self.image.get_height())
 
         # Create font object
         self.content_font = pygame.font.Font('resources/pixel_digivolve.otf', 20)
-        self.value_font = pygame.font.Font('resources/pixel_digivolve.otf', 50)
+        self.value_font = pygame.font.Font('resources/pixel_digivolve.otf', 40)
 
         self.content_name = self.content_font.render(content_name, False, (108, 122, 103))
 
-    def draw(self, screen: pygame.Surface, value: int, x_pos: int, y_pos: int):
+    def draw(self, screen: pygame.Surface, value, x_pos: int, y_pos: int):
         self.rect.x = x_pos
         self.rect.y = y_pos
 
@@ -76,7 +76,7 @@ class SmallContentDisplay:
         value_text = self.value_font.render(str(value), False, (108, 122, 103))
         value_rect = self.rect.copy()
         value_rect.x += (self.rect.w - value_text.get_width()) // 2
-        value_rect.y += 30
+        value_rect.y += 35
         screen.blit(value_text, value_rect)
 
 
