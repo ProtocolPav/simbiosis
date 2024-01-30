@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from src.entity import Creature, Food
 from src.tree import KDTree
-from src.ui import SmallContentDisplay
+from src.ui import SmallContentDisplay, Button
 from logs import log
 
 import random
@@ -32,6 +32,7 @@ class World:
         self.seconds = 0
         self.delta_second = 0
         self.food_second = 0
+        self.paused = False
         # I decided to add a delta_second variable.
         # This counts all the deltatime until it adds up to over a second, then it restarts.
 
@@ -117,6 +118,10 @@ class World:
                 else:
                     food = random.choice(self.food)
 
+    def change_tick_speed(self, direction: int):
+        if 0 < self.tick_speed + direction <= 10:
+            self.tick_speed += direction
+
 
 class Camera:
     def __init__(self, screen: pygame.Surface):
@@ -134,6 +139,9 @@ class Camera:
         self.species_display = SmallContentDisplay('species', 5, 5)
         self.food_display = SmallContentDisplay('food', 5, 5)
 
+        self.pause_button = Button('Pause', 10, self.screen.get_height() - 15)
+        self.tickspeed_button = Button('x1', 10, self.screen.get_height() - 15)
+
     def draw_ui(self, world: World):
         DISPLAY_SIZE = 100
 
@@ -142,6 +150,25 @@ class Camera:
         self.creature_display.draw(self.screen, len(world.creatures), 10, DISPLAY_SIZE + 30)
         self.species_display.draw(self.screen, 1, 10, DISPLAY_SIZE * 2 + 45)
         self.food_display.draw(self.screen, len(world.food), 10, DISPLAY_SIZE * 3 + 60)
+
+        self.pause_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE - 15)
+        self.pause_button.check_for_hover()
+        if self.pause_button.check_for_press():
+            world.paused = not world.paused
+
+        if world.paused:
+            self.pause_button.change_text('play')
+        else:
+            self.pause_button.change_text('pause')
+
+        self.tickspeed_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE*2 - 30)
+        self.tickspeed_button.check_for_hover()
+        if self.tickspeed_button.check_for_press():
+            if world.tick_speed < 10:
+                world.change_tick_speed(1)
+            else:
+                world.tick_speed = 1
+        self.tickspeed_button.change_text(f'x{world.tick_speed}')
 
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour

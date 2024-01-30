@@ -1,4 +1,5 @@
 import pygame
+from datetime import datetime, timedelta
 
 
 class Button:
@@ -11,6 +12,8 @@ class Button:
         # Create the image of the button when it is hovered/pressed
         self.pressed = self.image.copy()
         pygame.PixelArray(self.pressed).replace((0, 0, 0), (46, 139, 87))
+
+        self.last_pressed = datetime.now()
 
         self.is_hovered = False
 
@@ -30,6 +33,9 @@ class Button:
         text_rect.y += (self.rect.h - self.text.get_height()) / 2
         screen.blit(self.text, text_rect)
 
+    def change_text(self, text: str):
+        self.text = self.font.render(text, False, (0, 0, 0))
+
     def check_for_hover(self):
         mos_x, mos_y = pygame.mouse.get_pos()
         x_inside = False
@@ -45,7 +51,9 @@ class Button:
             self.is_hovered = False
 
     def check_for_press(self):
-        if pygame.mouse.get_pressed()[0] and self.is_hovered:
+        # The time check is to make sure that you can't just hold down the button
+        if pygame.mouse.get_pressed()[0] and self.is_hovered and datetime.now() - self.last_pressed > timedelta(seconds=0.2):
+            self.last_pressed = datetime.now()
             return True
 
 

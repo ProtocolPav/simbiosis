@@ -46,7 +46,6 @@ class Simulation:
         self.help_menu = False
         self.load_menu = False
         self.game_being_played = False
-        self.world_paused = False
         self.debug_screen = False
 
     def main(self):
@@ -60,20 +59,20 @@ class Simulation:
                     self.camera.zoom(event.y)
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        self.world_paused = not self.world_paused
+                        self.world.paused = not self.world.paused
                     elif event.key == pygame.K_q:
                         self.debug_screen = not self.debug_screen
                     elif event.key == pygame.K_ESCAPE:
                         self.program_running = False
                     elif event.key == pygame.K_EQUALS:
-                        self.change_tick_speed(1)
+                        self.world.change_tick_speed(1)
                     elif event.key == pygame.K_MINUS:
-                        self.change_tick_speed(-1)
+                        self.world.change_tick_speed(-1)
 
             if self.start_menu_screen:
                 self.start_menu()
             elif self.game_being_played:
-                if not self.world_paused:
+                if not self.world.paused:
                     self.world.tick_world(deltatime)
 
                 self.camera.move(deltatime)
@@ -99,10 +98,6 @@ class Simulation:
         if play_button.check_for_press():
             self.game_being_played = True
             self.start_menu_screen = False
-
-    def change_tick_speed(self, direction: int):
-        if 0 < self.world.tick_speed + direction <= 10:
-            self.world.tick_speed += direction
 
 
 simulation = Simulation()
