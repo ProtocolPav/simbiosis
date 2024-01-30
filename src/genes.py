@@ -74,7 +74,6 @@ class CreatureGenes:
                                 min_value=0)
 
         # Genes which offset the RTO based on what the creature is seeing
-        # Currently does nothing
         self.food_offset = Gene(name="Reaction Food Offset", acronym="RFO", value=random.uniform(-0.5, 0.5),
                                 min_value=-0.5, max_value=0.5)
         self.stranger_offset = Gene(name="Reaction Stranger Offset", acronym="RSO", value=random.uniform(-0.5, 0.5),

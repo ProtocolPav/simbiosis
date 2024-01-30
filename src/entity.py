@@ -153,7 +153,17 @@ class Creature(BaseEntity):
         away = -1
 
         if not self.seeing:
-            probability_towards = self.genes.react_towards.value
+            offset = 0
+
+            if isinstance(entity, Food):
+                offset += self.genes.food_offset.value
+            elif isinstance(entity, Creature):
+                if entity.genes.species.value == self.genes.species.value:
+                    offset += self.genes.known_offset.value
+                else:
+                    offset += self.genes.stranger_offset.value
+
+            probability_towards = abs(self.genes.react_towards.value + offset)
 
             reaction = random.choices([towards, away],
                                       [probability_towards, 1-probability_towards])[0]
