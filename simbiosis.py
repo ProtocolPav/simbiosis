@@ -37,7 +37,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=1000, start_species=10, start_creatures=700, start_food=10,
+        self.world: World = World(size=500, start_species=10, start_creatures=70, start_food=10,
                                   creature_image=self.creature_image, food_image=self.food_image)
 
         # Menu Booleans
@@ -66,9 +66,9 @@ class Simulation:
                     elif event.key == pygame.K_ESCAPE:
                         self.program_running = False
                     elif event.key == pygame.K_EQUALS:
-                        self.world.tick_speed += 1
+                        self.change_tick_speed(1)
                     elif event.key == pygame.K_MINUS:
-                        self.world.tick_speed -= 1
+                        self.change_tick_speed(-1)
 
             if self.start_menu_screen:
                 self.start_menu()
@@ -99,6 +99,10 @@ class Simulation:
         if play_button.check_for_press():
             self.game_being_played = True
             self.start_menu_screen = False
+
+    def change_tick_speed(self, direction: int):
+        if 0 < self.world.tick_speed + direction <= 10:
+            self.world.tick_speed += direction
 
 
 simulation = Simulation()
