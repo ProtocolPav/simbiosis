@@ -85,7 +85,7 @@ class World:
 
             if self.delta_second >= 1:
                 self.delta_second = 0
-            if self.delta_second >= 0.2:  # BUG. This will wait until it is 0.2 and then will constnatly keep spawning until it reaches 1
+            if round(self.delta_second, 1) == 0.5:
                 for j in range(self.food_spawnrate):
                     self.spawn_food()
 
@@ -100,7 +100,6 @@ class World:
         else:
             spawned = False
             while not spawned:
-                # Does not check for if it is out of bounds yet
                 temporary_coordinates = (food.x + random.randint(-5, 5), food.y + random.randint(-5, 5))
 
                 new_food = Food(temporary_coordinates[0],
