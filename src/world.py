@@ -22,11 +22,13 @@ class World:
         self.tree: KDTree = KDTree([])
         self.largest_radius = 0
 
-        self.food_spawnrate = 3
+        self.food_spawnrate = 30
+        self.food_second_split = 1/self.food_spawnrate
         self.tick_speed = 1
 
         self.seconds = 0
         self.delta_second = 0
+        self.food_second = 0
         # I decided to add a delta_second variable.
         # This counts all the deltatime until it adds up to over a second, then it restarts.
 
@@ -56,6 +58,7 @@ class World:
         for i in range(self.tick_speed):
             self.seconds += deltatime
             self.delta_second += deltatime
+            self.food_second += deltatime
 
             self.tree = KDTree(self.creatures + self.food)
 
@@ -82,9 +85,10 @@ class World:
 
             if self.delta_second >= 1:
                 self.delta_second = 0
-            if round(self.delta_second, 1) == 0.5:
-                for j in range(self.food_spawnrate):
-                    self.spawn_food()
+
+            if round(self.food_second, 2) == round(self.food_second_split, 2):
+                self.spawn_food()
+                self.food_second = 0
 
     def spawn_food(self):
         food = random.choice(self.food) if len(self.food) != 0 else None
