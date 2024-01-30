@@ -31,7 +31,14 @@ class Simulation:
         self.logo = pygame.image.load('resources/screens/logo.png')
         self.buttons = {'play': Button('play',
                                        (self.screen.get_width() - 64) // 2,
-                                       self.screen.get_height() // 2 - 100)}
+                                       self.screen.get_height() // 2 - 100),
+                        'load': Button('load',
+                                       (self.screen.get_width() - 64) // 2,
+                                       self.screen.get_height() // 2 - 200),
+                        'help': Button('help',
+                                       (self.screen.get_width() - 64) // 2,
+                                       self.screen.get_height() // 2 - 300)
+                        }
 
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
@@ -99,6 +106,20 @@ class Simulation:
         if play_button.check_for_press():
             self.game_being_played = True
             self.start_menu_screen = False
+
+        load_button = self.buttons['load']
+        load_button.draw(self.screen, (self.screen.get_width() - load_button.rect.w) // 2,
+                         self.screen.get_height() // 2 + 15)
+        load_button.check_for_hover()
+        if load_button.check_for_press():
+            ...
+
+        help_button = self.buttons['help']
+        help_button.draw(self.screen, (self.screen.get_width() - help_button.rect.w) // 2,
+                         self.screen.get_height() // 2 + 130)
+        help_button.check_for_hover()
+        if help_button.check_for_press():
+            ...
 
 
 simulation = Simulation()
