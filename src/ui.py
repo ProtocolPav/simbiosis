@@ -103,7 +103,7 @@ class LargeContentDisplay:
         self.image = pygame.image.load('resources/screens/components/largecontentdisplay.png')
         self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
 
-        self.title = TextDisplay(title_text, (73, 82, 69), 40)
+        self.title = TextDisplay(title_text, (73, 82, 69), 35)
         self.content = [TextDisplay(line, (102, 122, 103), 20) for line in content.split('\n')]
 
     def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
@@ -127,7 +127,7 @@ class PresetDisplay(LargeContentDisplay):
 
     def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
         super().draw(screen, x_pos, y_pos)
-        self.button.draw(screen, x_pos + (self.rect.w - self.button.rect.w) // 2, y_pos + self.rect.h + 15)
+        self.button.draw(screen, x_pos + (self.rect.w - self.button.rect.w) // 2, y_pos + self.rect.h - self.button.rect.h - 15)
 
 
 class SaveSlotDisplay(LargeContentDisplay):

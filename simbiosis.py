@@ -13,6 +13,7 @@ from src.world import World, Camera
 from src.ui import Button, TextDisplay, LargeContentDisplay, PresetDisplay, SaveSlotDisplay
 
 from datetime import datetime
+import time
 
 creature_image = pygame.image.load('resources/textures/creature3.png')
 food_image = pygame.image.load('resources/textures/food1.png')
@@ -43,21 +44,34 @@ class Simulation:
         self.help_button = Button('help')
         self.back_button = Button('back')
 
-        self.save_slot_1 = SaveSlotDisplay('Slot 1',
-                                           'Empty')
-        self.save_slot_2 = SaveSlotDisplay('Slot 2',
-                                           'Empty')
-        self.save_slot_3 = SaveSlotDisplay('Slot 3',
-                                           'Empty')
-        self.save_slot_4 = SaveSlotDisplay('Slot 4',
-                                           'Empty')
+        self.save_display_1 = SaveSlotDisplay('Slot 1',
+                                              'Empty')
+        self.save_display_2 = SaveSlotDisplay('Slot 2',
+                                              'Empty')
+        self.save_display_3 = SaveSlotDisplay('Slot 3',
+                                              'Empty')
+        self.save_display_4 = SaveSlotDisplay('Slot 4',
+                                              'Empty')
+
+        self.preset_1 = PresetDisplay('Lone Island',
+                                      'two species compete\nfor one island of food\nlocated in the centre.\n'
+                                      'they are complete\nopposites.\nwho will win?')
+        self.preset_2 = PresetDisplay('RedGreenBlue',
+                                      'the reds, the greens\nand the blues exist in\n'
+                                      'one world. their\ncolour defines the\nspecies. how many new\ncolours will be made?')
+        self.preset_3 = PresetDisplay('Evolve+',
+                                      'an environment\ndesigned to foster\nevolution. everything\n'
+                                      'is precisely adjusted.\nwatch as the species\ngrow and change.')
+        self.preset_4 = PresetDisplay('Forever',
+                                      'A preset designed\njust to watch the\ncreatures move.\n'
+                                      'these species never die\nand only grow in size.')
 
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=1000, start_species=1, start_creatures=1, start_food=1,
+        self.world: World = World(size=1000, start_species=1, start_creatures=100, start_food=100,
                                   creature_image=self.creature_image, food_image=self.food_image)
 
         # Menu Booleans
@@ -132,7 +146,7 @@ class Simulation:
             })
 
         files_list = os.listdir('saves/')
-        save_file = open(f'saves/sim{len(files_list) + 1}.json', 'w')
+        save_file = open(f'saves/sim{self.save_slot}.json', 'w')
 
         json.dump(save_dict, save_file, indent=4)
         save_file.close()
@@ -227,24 +241,28 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        self.save_slot_1.draw(self.screen, self.screen.get_width() // 4 - self.save_slot_1.rect.w, 300)
-        if self.save_slot_1.button.check_for_press():
+        self.save_display_1.draw(self.screen, self.screen.get_width() // 4 - self.save_display_1.rect.w, 300)
+        if self.save_display_1.button.check_for_press():
             self.save_slot = 1
+            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
-        self.save_slot_2.draw(self.screen, self.screen.get_width() // 4 + self.save_slot_2.rect.w // 4 + 25, 300)
-        if self.save_slot_2.button.check_for_press():
+        self.save_display_2.draw(self.screen, self.screen.get_width() // 4 + self.save_display_2.rect.w // 4 + 25, 300)
+        if self.save_display_2.button.check_for_press():
             self.save_slot = 2
+            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
-        self.save_slot_3.draw(self.screen, self.screen.get_width() // 2 + self.save_slot_3.rect.w // 4 - 25, 300)
-        if self.save_slot_3.button.check_for_press():
+        self.save_display_3.draw(self.screen, self.screen.get_width() // 2 + self.save_display_3.rect.w // 4 - 25, 300)
+        if self.save_display_3.button.check_for_press():
             self.save_slot = 3
+            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
-        self.save_slot_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
-        if self.save_slot_4.button.check_for_press():
+        self.save_display_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.save_display_4.button.check_for_press():
             self.save_slot = 4
+            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
     def choose_preset_menu(self):
@@ -267,6 +285,22 @@ class Simulation:
         self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
         if self.back_button.check_for_press():
             self.current_menu = 'start'
+
+        self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 300)
+        if self.preset_1.button.check_for_press():
+            self.current_menu = 'sim_screen'
+
+        self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 300)
+        if self.preset_2.button.check_for_press():
+            self.current_menu = 'sim_screen'
+
+        self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 300)
+        if self.preset_3.button.check_for_press():
+            self.current_menu = 'sim_screen'
+
+        self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.preset_4.button.check_for_press():
+            self.current_menu = 'sim_screen'
 
     def simulation_screen(self, deltatime):
         if not self.world.paused:
