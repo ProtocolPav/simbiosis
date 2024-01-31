@@ -134,7 +134,7 @@ class SaveSlotDisplay(LargeContentDisplay):
     def __init__(self, title_text: str, content: str):
         super().__init__(title_text, content)
 
-        self.button = Button('select', 45)
+        self.button: Button = Button('select', 45)
 
     def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
         super().draw(screen, x_pos, y_pos)

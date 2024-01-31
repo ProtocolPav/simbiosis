@@ -43,6 +43,15 @@ class Simulation:
         self.help_button = Button('help')
         self.back_button = Button('back')
 
+        self.save_slot_1 = SaveSlotDisplay('Slot 1',
+                                           'Empty')
+        self.save_slot_2 = SaveSlotDisplay('Slot 2',
+                                           'Empty')
+        self.save_slot_3 = SaveSlotDisplay('Slot 3',
+                                           'Empty')
+        self.save_slot_4 = SaveSlotDisplay('Slot 4',
+                                           'Empty')
+
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
         self.clock = pygame.time.Clock()
@@ -58,6 +67,9 @@ class Simulation:
         # Variable that stores the current menu. Choose from:
         # start, help, load, select_save, select_preset, configure, sim_screen, graph
         self.current_menu = 'start'
+
+        # Variable that holds the save slot
+        self.save_slot = 0
 
     def save_game(self):
         save_dict = {
@@ -215,29 +227,25 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        slot_1 = SaveSlotDisplay('Slot 1',
-                                 '47 January\n \nNo preset selected')
-        slot_1.draw(self.screen, self.screen.get_width() // 4 - slot_1.rect.w, 300)
-        if slot_1.button.check_for_press():
-            print("aha")
+        self.save_slot_1.draw(self.screen, self.screen.get_width() // 4 - self.save_slot_1.rect.w, 300)
+        if self.save_slot_1.button.check_for_press():
+            self.save_slot = 1
+            self.current_menu = 'select_preset'
 
-        slot_2 = SaveSlotDisplay('Slot 2',
-                                 '47 January\n \nNo preset selected')
-        slot_2.draw(self.screen, self.screen.get_width() // 4 + slot_2.rect.w//4 + 25, 300)
-        if slot_2.button.check_for_press():
-            ...
+        self.save_slot_2.draw(self.screen, self.screen.get_width() // 4 + self.save_slot_2.rect.w // 4 + 25, 300)
+        if self.save_slot_2.button.check_for_press():
+            self.save_slot = 2
+            self.current_menu = 'select_preset'
 
-        slot_3 = SaveSlotDisplay('Slot 3',
-                                 '47 January\n \nNo preset selected')
-        slot_3.draw(self.screen, self.screen.get_width() // 2 + slot_3.rect.w//4 - 25, 300)
-        if slot_3.button.check_for_press():
-            ...
+        self.save_slot_3.draw(self.screen, self.screen.get_width() // 2 + self.save_slot_3.rect.w // 4 - 25, 300)
+        if self.save_slot_3.button.check_for_press():
+            self.save_slot = 3
+            self.current_menu = 'select_preset'
 
-        slot_4 = SaveSlotDisplay('Slot 3',
-                                 '47 January\n \nNo preset selected')
-        slot_4.draw(self.screen, self.screen.get_width() - self.screen.get_width()//4, 300)
-        if slot_4.button.check_for_press():
-            ...
+        self.save_slot_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.save_slot_4.button.check_for_press():
+            self.save_slot = 4
+            self.current_menu = 'select_preset'
 
     def choose_preset_menu(self):
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
