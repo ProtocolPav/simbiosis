@@ -145,7 +145,6 @@ class Simulation:
                 "position": [food.x, food.y]
             })
 
-        files_list = os.listdir('saves/')
         save_file = open(f'saves/sim{self.save_slot}.json', 'w')
 
         json.dump(save_dict, save_file, indent=4)
