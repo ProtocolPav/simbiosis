@@ -242,27 +242,23 @@ class Simulation:
             self.current_menu = 'start'
 
         self.save_display_1.draw(self.screen, self.screen.get_width() // 4 - self.save_display_1.rect.w, 300)
-        if self.save_display_1.button.check_for_press():
+        if self.save_display_1.button.check_for_press(0.1):
             self.save_slot = 1
-            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
         self.save_display_2.draw(self.screen, self.screen.get_width() // 4 + self.save_display_2.rect.w // 4 + 25, 300)
-        if self.save_display_2.button.check_for_press():
+        if self.save_display_2.button.check_for_press(0.1):
             self.save_slot = 2
-            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
         self.save_display_3.draw(self.screen, self.screen.get_width() // 2 + self.save_display_3.rect.w // 4 - 25, 300)
-        if self.save_display_3.button.check_for_press():
+        if self.save_display_3.button.check_for_press(0.1):
             self.save_slot = 3
-            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
         self.save_display_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
-        if self.save_display_4.button.check_for_press():
+        if self.save_display_4.button.check_for_press(0.1):
             self.save_slot = 4
-            time.sleep(0.1)
             self.current_menu = 'select_preset'
 
     def choose_preset_menu(self):
