@@ -16,10 +16,10 @@ class TextDisplay:
 
 
 class Button:
-    def __init__(self, text: str):
+    def __init__(self, text: str, textsize: int = 50):
         self.image = pygame.image.load('resources/screens/components/button.png')
         self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
-        self.text = TextDisplay(text, (0, 0, 0), 50)
+        self.text = TextDisplay(text, (0, 0, 0), textsize)
 
         # Create the image of the button when it is hovered/pressed
         self.pressed = self.image.copy()
@@ -40,8 +40,8 @@ class Button:
 
         self.text.draw(screen, x_pos + (self.rect.w - self.text.rect.w) // 2, y_pos + (self.rect.h - self.text.rect.h) // 2)
 
-    def change_text(self, text: str):
-        self.text = TextDisplay(text, (0, 0, 0), 50)
+    def change_text(self, text: str, textsize: int = 50):
+        self.text = TextDisplay(text, (0, 0, 0), textsize)
 
     def check_for_hover(self):
         mos_x, mos_y = pygame.mouse.get_pos()
@@ -119,8 +119,22 @@ class LargeContentDisplay:
 
 
 class PresetDisplay(LargeContentDisplay):
-    ...
+    def __init__(self, title_text: str, content: str):
+        super().__init__(title_text, content)
+
+        self.button = Button('select', 45)
+
+    def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
+        super().draw(screen, x_pos, y_pos)
+        self.button.draw(screen, x_pos + (self.rect.w - self.button.rect.w) // 2, y_pos + self.rect.h + 15)
 
 
 class SaveSlotDisplay(LargeContentDisplay):
-    ...
+    def __init__(self, title_text: str, content: str):
+        super().__init__(title_text, content)
+
+        self.button = Button('select', 45)
+
+    def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
+        super().draw(screen, x_pos, y_pos)
+        self.button.draw(screen, x_pos + (self.rect.w - self.button.rect.w) // 2, y_pos + self.rect.h - self.button.rect.h - 15)

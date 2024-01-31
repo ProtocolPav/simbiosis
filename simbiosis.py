@@ -1,14 +1,18 @@
 # Alpha v0.4
-import json
 import os
+
+if not os.path.exists('logs/'):
+    os.mkdir('logs/')
+if not os.path.exists('saves/'):
+    os.mkdir('saves/')
+
+import json
 
 import pygame
 from src.world import World, Camera
 from src.ui import Button, TextDisplay, LargeContentDisplay, PresetDisplay, SaveSlotDisplay
 
 from datetime import datetime
-
-pygame.init()
 
 creature_image = pygame.image.load('resources/textures/creature3.png')
 food_image = pygame.image.load('resources/textures/food1.png')
@@ -44,7 +48,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=1000, start_species=10, start_creatures=100, start_food=10,
+        self.world: World = World(size=1000, start_species=1, start_creatures=1, start_food=1,
                                   creature_image=self.creature_image, food_image=self.food_image)
 
         # Menu Booleans
@@ -52,7 +56,7 @@ class Simulation:
         self.debug_screen = False
 
         # Variable that stores the current menu. Choose from:
-        # start, help, load, select_save, select_preset, configure, main, graph
+        # start, help, load, select_save, select_preset, configure, sim_screen, graph
         self.current_menu = 'start'
 
     def save_game(self):
@@ -128,20 +132,23 @@ class Simulation:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.program_running = False
+
                 elif event.type == pygame.MOUSEWHEEL:
                     self.camera.zoom(event.y)
+
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        self.world.paused = not self.world.paused
-                    elif event.key == pygame.K_q:
-                        self.debug_screen = not self.debug_screen
-                    elif event.key == pygame.K_ESCAPE:
+                    if event.key == pygame.K_ESCAPE:
                         self.program_running = False
-                    elif event.key == pygame.K_EQUALS:
+
+                    if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
+                        self.world.paused = not self.world.paused
+                    elif event.key == pygame.K_q and self.current_menu == 'sim_screen':
+                        self.debug_screen = not self.debug_screen
+                    elif event.key == pygame.K_EQUALS and self.current_menu == 'sim_screen':
                         self.world.change_tick_speed(1)
-                    elif event.key == pygame.K_MINUS:
+                    elif event.key == pygame.K_MINUS and self.current_menu == 'sim_screen':
                         self.world.change_tick_speed(-1)
-                    elif event.key == pygame.K_0:
+                    elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
                         self.save_game()
 
             match self.current_menu:
@@ -154,16 +161,11 @@ class Simulation:
                 case 'select_save':
                     self.choose_new_save_menu()
 
-                case 'main':
-                    if not self.world.paused:
-                        self.world.tick_world(deltatime)
+                case 'select_preset':
+                    self.choose_preset_menu()
 
-                    self.camera.move(deltatime)
-                    self.camera.draw_world(self.world, self.debug_screen)
-                    self.camera.draw_ui(self.world)
-
-                case _:
-                    self.start_menu()
+                case 'sim_screen':
+                    self.simulation_screen(deltatime)
 
             # self.cursor_rect.topleft = pygame.mouse.get_pos()
             # self.screen.blit(self.cursor_image, self.cursor_rect)
@@ -217,9 +219,39 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        display_test = LargeContentDisplay('Slot 1',
-                                           '47 January\n \nNo preset selected')
+        display_test = SaveSlotDisplay('Slot 1',
+                                       '47 January\n \nNo preset selected')
         display_test.draw(self.screen, 500, 500)
+
+    def choose_preset_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Choose from curated',
+                              (217, 255, 200), 50),
+                  TextDisplay('presets or configure',
+                              (217, 255, 200), 50),
+                  TextDisplay('your own simulation',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2, 30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        self.back_button.check_for_hover()
+        if self.back_button.check_for_press():
+            self.current_menu = 'start'
+
+    def simulation_screen(self, deltatime):
+        if not self.world.paused:
+            self.world.tick_world(deltatime)
+
+        self.camera.move(deltatime)
+        self.camera.draw_world(self.world, self.debug_screen)
+        self.camera.draw_ui(self.world)
 
 
 simulation = Simulation()
