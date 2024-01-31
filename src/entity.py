@@ -125,6 +125,18 @@ class Creature(BaseEntity):
 
         return False
 
+    def food_collision(self, food: BaseEntity):
+        """
+        Checks if the creature is colliding with Food
+        :param entity:
+        :return:
+        """
+        distance_between_points = math.sqrt((self.x - entity.x)**2 + (self.y - entity.y)**2)
+        if distance_between_points <= self.radius + entity.radius:
+            return True
+
+        return False
+
     def vision(self, entity: BaseEntity) -> bool:
         # Because of how pygame works, angle 0 is facing to the right, and 360 is facing up
         vector = (entity.x - self.x,
@@ -230,6 +242,9 @@ class Creature(BaseEntity):
 
             for entity in range_search_box:
                 if self.collision(entity) and isinstance(entity, Food) and not entity.eaten:
+                    mouth_x = math.cos(self.direction_radians()) * self.radius
+                    mouth_y = math.sin(self.direction_radians()) * self.radius
+
                     print(f"{self.id} is eating Food {entity.id}")
                     entity.eaten = True
                     self.energy += entity.energy * self.genes.plant_energy.value

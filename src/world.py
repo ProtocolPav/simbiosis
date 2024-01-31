@@ -25,7 +25,7 @@ class World:
         self.tree: KDTree = KDTree([])
         self.largest_radius = 0
 
-        self.food_spawnrate = 200
+        self.food_spawnrate = 2000
         self.food_second_split = 1 / self.food_spawnrate
         self.tick_speed = 1
 
@@ -90,7 +90,7 @@ class World:
             if self.delta_second >= 1:
                 self.delta_second = 0
 
-            if round(self.food_second, 2) >= round(self.food_second_split, 2):
+            if self.food_second >= self.food_second_split:
                 self.spawn_food()
                 self.food_second = 0
 
