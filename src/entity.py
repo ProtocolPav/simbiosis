@@ -27,7 +27,7 @@ class BaseEntity:
         self.world_bottom_right = world_bottomright
 
         BaseEntity.id += 1
-        # log(f"[ENTITY] Created Entity with ID {self.id}")
+        log(f"[ENTITY] Created Entity {type(self).__name__} with ID {self.id}")
 
     def get_coordinates(self) -> tuple[float, float]:
         return self.x, self.y
@@ -116,18 +116,6 @@ class Creature(BaseEntity):
     def collision(self, entity: BaseEntity) -> bool:
         """
         Checks if the creature is colliding with another Entity.
-        :param entity:
-        :return:
-        """
-        distance_between_points = math.sqrt((self.x - entity.x)**2 + (self.y - entity.y)**2)
-        if distance_between_points <= self.radius + entity.radius:
-            return True
-
-        return False
-
-    def food_collision(self, food: BaseEntity):
-        """
-        Checks if the creature is colliding with Food
         :param entity:
         :return:
         """
@@ -242,9 +230,6 @@ class Creature(BaseEntity):
 
             for entity in range_search_box:
                 if self.collision(entity) and isinstance(entity, Food) and not entity.eaten:
-                    mouth_x = math.cos(self.direction_radians()) * self.radius
-                    mouth_y = math.sin(self.direction_radians()) * self.radius
-
                     print(f"{self.id} is eating Food {entity.id}")
                     entity.eaten = True
                     self.energy += entity.energy * self.genes.plant_energy.value
@@ -265,7 +250,6 @@ class Creature(BaseEntity):
 
 class Food(BaseEntity):
     def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int]):
-        # Perhaps the radius can be determined by the energy amount?
         super().__init__(x_position, y_position, 0.5, image, world_bottomright)
 
         self.energy = random.uniform(1000, 10000)

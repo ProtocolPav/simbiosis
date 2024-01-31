@@ -33,6 +33,15 @@ class Gene:
             else:
                 log(f"[MUTATION] {self.name} ({old_value} -> {self.value})")
 
+    def save_gene(self) -> dict:
+        return {'name': self.name,
+                'acronym': self.acronym,
+                'value': self.value,
+                'can_mutate': self.can_mutate,
+                'min': self.min,
+                'max': self.max,
+                'is_integer': self.is_type_integer}
+
 
 class CreatureGenes:
     def __init__(self, species: int, generation: int):

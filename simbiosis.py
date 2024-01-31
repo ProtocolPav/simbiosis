@@ -76,6 +76,8 @@ class Simulation:
                         self.world.change_tick_speed(1)
                     elif event.key == pygame.K_MINUS:
                         self.world.change_tick_speed(-1)
+                    elif event.key == pygame.K_0:
+                        self.world.save_game()
 
             if self.start_menu_screen:
                 self.start_menu()

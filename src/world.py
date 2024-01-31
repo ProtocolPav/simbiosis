@@ -4,10 +4,12 @@ import pygame
 
 from datetime import timedelta
 
+import os
+import json
+
 from src.entity import Creature, Food
 from src.tree import KDTree
 from src.ui import SmallContentDisplay, Button
-from logs import log
 
 import random
 
@@ -57,6 +59,89 @@ class World:
                                                self.creature_image,
                                                (self.size, self.size),
                                                specimen.genes))
+
+    @classmethod
+    def load_from_save(cls):
+        """
+        This method is used when loading from a save file. It takes all the data from the file
+        and pushes it to __init__
+        :return:
+        """
+        ...
+
+    @classmethod
+    def create(cls):
+        """
+        This method is used when creating a new world, normally when starting a new simulation.
+        :return:
+        """
+        ...
+
+    def save_game(self):
+        save_dict = {
+            "world": {
+                "size": self.size,
+                "largest_radius": self.largest_radius,
+                "food_spawn_rate": self.food_spawnrate,
+                "tick_speed": self.tick_speed,
+                "seconds": self.seconds,
+                "delta_seconds": self.delta_second,
+                "food_seconds": self.food_second,
+                "paused": self.paused
+            },
+            "creatures": [],
+            "food": [],
+            "data": {}
+        }
+
+        for creature in self.creatures:
+            genes = creature.genes
+            save_dict['creatures'].append({
+                "id": creature.id,
+                "energy": creature.energy,
+                "direction": creature.direction,
+                "dead": creature.dead,
+                "seeing": creature.seeing,
+                "memory_reaction": creature.memory_reaction,
+                "position": [creature.x, creature.y],
+                "genes": [genes.colour_red.save_gene(),
+                          genes.colour_green.save_gene(),
+                          genes.colour_blue.save_gene(),
+                          genes.radius.save_gene(),
+                          genes.speed.save_gene(),
+                          genes.base_energy.save_gene(),
+                          genes.movement_energy.save_gene(),
+                          genes.turning_energy.save_gene(),
+                          genes.birth_energy.save_gene(),
+                          genes.plant_energy.save_gene(),
+                          genes.vision_radius.save_gene(),
+                          genes.vision_angle.save_gene(),
+                          genes.react_towards.save_gene(),
+                          genes.react_speed.save_gene(),
+                          genes.food_offset.save_gene(),
+                          genes.stranger_offset.save_gene(),
+                          genes.known_offset.save_gene(),
+                          genes.species.save_gene(),
+                          genes.generation.save_gene()]
+            })
+
+        for food in self.food:
+            save_dict['food'].append({
+                "id": food.id,
+                "eaten": food.eaten,
+                "energy": food.energy,
+                "position": [food.x, food.y]
+            })
+
+        files_list = os.listdir('saves/')
+        if len(files_list) == 0:
+            save_file = open('saves/sim1.json', 'x')
+        else:
+            savenum = int(files_list[-1].split('sim')[1].split('.json')[0]) + 1
+            save_file = open(f'saves/sim{savenum}.json', 'x')
+
+        json.dump(save_dict, save_file, indent=4)
+        save_file.close()
 
     def tick_world(self, deltatime: float):
         for i in range(self.tick_speed):

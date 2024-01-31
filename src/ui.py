@@ -81,8 +81,8 @@ class SmallContentDisplay:
         content_rect.y += 15
         screen.blit(self.content_name, content_rect)
 
-        if type(value) == int and value >= 1000:
-            value = f'{round(value/1000, 1)}k'
+        if type(value) is int and value >= 1000:
+            value = f'{round(value / 1000, 1)}k'
         value_text = self.value_font.render(str(value), False, (108, 122, 103))
         value_rect = self.rect.copy()
         value_rect.x += (self.rect.w - value_text.get_width()) // 2
