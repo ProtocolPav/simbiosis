@@ -166,7 +166,6 @@ class Camera:
         self.food_display.draw(self.screen, len(world.food), 10, DISPLAY_SIZE * 3 + 60)
 
         self.pause_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE - 15)
-        self.pause_button.check_for_hover()
         if self.pause_button.check_for_press():
             world.paused = not world.paused
 
@@ -176,7 +175,6 @@ class Camera:
             self.pause_button.change_text('pause')
 
         self.tickspeed_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE*2 - 30)
-        self.tickspeed_button.check_for_hover()
         if self.tickspeed_button.check_for_press():
             if world.tick_speed < 10:
                 world.change_tick_speed(1)

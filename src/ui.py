@@ -58,6 +58,7 @@ class Button:
             self.is_hovered = False
 
     def check_for_press(self):
+        self.check_for_hover()
         # The time check is to make sure that you can't just hold down the button
         if pygame.mouse.get_pressed()[0] and self.is_hovered and datetime.now() - self.last_pressed > timedelta(seconds=0.2):
             self.last_pressed = datetime.now()

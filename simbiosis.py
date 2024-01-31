@@ -181,19 +181,16 @@ class Simulation:
 
         self.play_button.draw(self.screen, (self.screen.get_width() - self.play_button.rect.w) // 2,
                               self.screen.get_height() // 2 - 100)
-        self.play_button.check_for_hover()
         if self.play_button.check_for_press():
             self.current_menu = 'select_save'
 
         self.load_button.draw(self.screen, (self.screen.get_width() - self.load_button.rect.w) // 2,
                               self.screen.get_height() // 2 + 15)
-        self.load_button.check_for_hover()
         if self.load_button.check_for_press():
             self.current_menu = 'load'
 
         self.help_button.draw(self.screen, (self.screen.get_width() - self.help_button.rect.w) // 2,
                               self.screen.get_height() // 2 + 130)
-        self.help_button.check_for_hover()
         if self.help_button.check_for_press():
             self.current_menu = 'help'
 
@@ -215,13 +212,32 @@ class Simulation:
             title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2, 30 + 10 * index + title.rect.height * index)
 
         self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
-        self.back_button.check_for_hover()
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        display_test = SaveSlotDisplay('Slot 1',
-                                       '47 January\n \nNo preset selected')
-        display_test.draw(self.screen, 500, 500)
+        slot_1 = SaveSlotDisplay('Slot 1',
+                                 '47 January\n \nNo preset selected')
+        slot_1.draw(self.screen, self.screen.get_width() // 4 - slot_1.rect.w, 300)
+        if slot_1.button.check_for_press():
+            print("aha")
+
+        slot_2 = SaveSlotDisplay('Slot 2',
+                                 '47 January\n \nNo preset selected')
+        slot_2.draw(self.screen, self.screen.get_width() // 4 + slot_2.rect.w//4 + 25, 300)
+        if slot_2.button.check_for_press():
+            ...
+
+        slot_3 = SaveSlotDisplay('Slot 3',
+                                 '47 January\n \nNo preset selected')
+        slot_3.draw(self.screen, self.screen.get_width() // 2 + slot_3.rect.w//4 - 25, 300)
+        if slot_3.button.check_for_press():
+            ...
+
+        slot_4 = SaveSlotDisplay('Slot 3',
+                                 '47 January\n \nNo preset selected')
+        slot_4.draw(self.screen, self.screen.get_width() - self.screen.get_width()//4, 300)
+        if slot_4.button.check_for_press():
+            ...
 
     def choose_preset_menu(self):
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
@@ -241,7 +257,6 @@ class Simulation:
             title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2, 30 + 10 * index + title.rect.height * index)
 
         self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
-        self.back_button.check_for_hover()
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
