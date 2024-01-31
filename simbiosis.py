@@ -1,8 +1,12 @@
 # Alpha v0.4
+import json
+import os
+
 import pygame
 from src.world import World, Camera
-from src.ui import Button
+from src.ui import Button, TextDisplay, LargeContentDisplay, PresetDisplay, SaveSlotDisplay
 
+from datetime import datetime
 
 pygame.init()
 
@@ -29,16 +33,11 @@ class Simulation:
         self.food_image = pygame.image.load('resources/textures/food1.png')
         self.menu_background = pygame.image.load('resources/screens/menu_background.png')
         self.logo = pygame.image.load('resources/screens/logo.png')
-        self.buttons = {'play': Button('play',
-                                       (self.screen.get_width() - 64) // 2,
-                                       self.screen.get_height() // 2 - 100),
-                        'load': Button('load',
-                                       (self.screen.get_width() - 64) // 2,
-                                       self.screen.get_height() // 2 - 200),
-                        'help': Button('help',
-                                       (self.screen.get_width() - 64) // 2,
-                                       self.screen.get_height() // 2 - 300)
-                        }
+
+        self.play_button = Button('play')
+        self.load_button = Button('load')
+        self.help_button = Button('help')
+        self.back_button = Button('back')
 
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
@@ -50,11 +49,77 @@ class Simulation:
 
         # Menu Booleans
         self.program_running = True
-        self.start_menu_screen = True
-        self.help_menu = False
-        self.load_menu = False
-        self.game_being_played = False
         self.debug_screen = False
+
+        # Variable that stores the current menu. Choose from:
+        # start, help, load, select_save, select_preset, configure, main, graph
+        self.current_menu = 'start'
+
+    def save_game(self):
+        save_dict = {
+            "save_data": {
+                "time": str(datetime.today()),
+                "preset": None
+            },
+            "world": {
+                "size": self.world.size,
+                "largest_radius": self.world.largest_radius,
+                "food_spawn_rate": self.world.food_spawnrate,
+                "tick_speed": self.world.tick_speed,
+                "seconds": self.world.seconds,
+                "delta_seconds": self.world.delta_second,
+                "food_seconds": self.world.food_second,
+                "paused": self.world.paused
+            },
+            "creatures": [],
+            "food": [],
+            "data": {}
+        }
+
+        for creature in self.world.creatures:
+            genes = creature.genes
+            save_dict['creatures'].append({
+                "id": creature.id,
+                "energy": creature.energy,
+                "direction": creature.direction,
+                "dead": creature.dead,
+                "seeing": creature.seeing,
+                "memory_reaction": creature.memory_reaction,
+                "position": [creature.x, creature.y],
+                "genes": [genes.colour_red.save_gene(),
+                          genes.colour_green.save_gene(),
+                          genes.colour_blue.save_gene(),
+                          genes.radius.save_gene(),
+                          genes.speed.save_gene(),
+                          genes.base_energy.save_gene(),
+                          genes.movement_energy.save_gene(),
+                          genes.turning_energy.save_gene(),
+                          genes.birth_energy.save_gene(),
+                          genes.plant_energy.save_gene(),
+                          genes.vision_radius.save_gene(),
+                          genes.vision_angle.save_gene(),
+                          genes.react_towards.save_gene(),
+                          genes.react_speed.save_gene(),
+                          genes.food_offset.save_gene(),
+                          genes.stranger_offset.save_gene(),
+                          genes.known_offset.save_gene(),
+                          genes.species.save_gene(),
+                          genes.generation.save_gene()]
+            })
+
+        for food in self.world.food:
+            save_dict['food'].append({
+                "id": food.id,
+                "eaten": food.eaten,
+                "energy": food.energy,
+                "position": [food.x, food.y]
+            })
+
+        files_list = os.listdir('saves/')
+        save_file = open(f'saves/sim{len(files_list) + 1}.json', 'w')
+
+        json.dump(save_dict, save_file, indent=4)
+        save_file.close()
 
     def main(self):
         while self.program_running:
@@ -77,17 +142,28 @@ class Simulation:
                     elif event.key == pygame.K_MINUS:
                         self.world.change_tick_speed(-1)
                     elif event.key == pygame.K_0:
-                        self.world.save_game()
+                        self.save_game()
 
-            if self.start_menu_screen:
-                self.start_menu()
-            elif self.game_being_played:
-                if not self.world.paused:
-                    self.world.tick_world(deltatime)
+            match self.current_menu:
+                case 'start':
+                    self.start_menu()
 
-                self.camera.move(deltatime)
-                self.camera.draw_world(self.world, self.debug_screen)
-                self.camera.draw_ui(self.world)
+                case 'load':
+                    self.start_menu()
+
+                case 'select_save':
+                    self.choose_new_save_menu()
+
+                case 'main':
+                    if not self.world.paused:
+                        self.world.tick_world(deltatime)
+
+                    self.camera.move(deltatime)
+                    self.camera.draw_world(self.world, self.debug_screen)
+                    self.camera.draw_ui(self.world)
+
+                case _:
+                    self.start_menu()
 
             # self.cursor_rect.topleft = pygame.mouse.get_pos()
             # self.screen.blit(self.cursor_image, self.cursor_rect)
@@ -101,27 +177,49 @@ class Simulation:
         copy_image = pygame.transform.scale_by(self.logo, 0.4)
         self.screen.blit(copy_image, ((self.screen.get_width() - copy_image.get_width()) // 2, 0))
 
-        play_button = self.buttons['play']
-        play_button.draw(self.screen, (self.screen.get_width() - play_button.rect.w) // 2,
-                         self.screen.get_height() // 2 - 100)
-        play_button.check_for_hover()
-        if play_button.check_for_press():
-            self.game_being_played = True
-            self.start_menu_screen = False
+        self.play_button.draw(self.screen, (self.screen.get_width() - self.play_button.rect.w) // 2,
+                              self.screen.get_height() // 2 - 100)
+        self.play_button.check_for_hover()
+        if self.play_button.check_for_press():
+            self.current_menu = 'select_save'
 
-        load_button = self.buttons['load']
-        load_button.draw(self.screen, (self.screen.get_width() - load_button.rect.w) // 2,
-                         self.screen.get_height() // 2 + 15)
-        load_button.check_for_hover()
-        if load_button.check_for_press():
-            ...
+        self.load_button.draw(self.screen, (self.screen.get_width() - self.load_button.rect.w) // 2,
+                              self.screen.get_height() // 2 + 15)
+        self.load_button.check_for_hover()
+        if self.load_button.check_for_press():
+            self.current_menu = 'load'
 
-        help_button = self.buttons['help']
-        help_button.draw(self.screen, (self.screen.get_width() - help_button.rect.w) // 2,
-                         self.screen.get_height() // 2 + 130)
-        help_button.check_for_hover()
-        if help_button.check_for_press():
-            ...
+        self.help_button.draw(self.screen, (self.screen.get_width() - self.help_button.rect.w) // 2,
+                              self.screen.get_height() // 2 + 130)
+        self.help_button.check_for_hover()
+        if self.help_button.check_for_press():
+            self.current_menu = 'help'
+
+    def choose_new_save_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Select a save slot',
+                              (217, 255, 200), 50),
+                  TextDisplay('to save your simulation into.',
+                              (217, 255, 200), 50),
+                  TextDisplay('Simbiosis auto-saves every 10 minutes.',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2, 30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        self.back_button.check_for_hover()
+        if self.back_button.check_for_press():
+            self.current_menu = 'start'
+
+        display_test = LargeContentDisplay('Slot 1',
+                                           '47 January\n \nNo preset selected')
+        display_test.draw(self.screen, 500, 500)
 
 
 simulation = Simulation()

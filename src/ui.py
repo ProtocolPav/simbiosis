@@ -2,12 +2,24 @@ import pygame
 from datetime import datetime, timedelta
 
 
+class TextDisplay:
+    def __init__(self, text: str, colour: tuple[int, int, int], size: int):
+        self.font = pygame.font.Font('resources/pixel_digivolve.otf', size)
+        self.text = self.font.render(text, False, colour)
+        self.rect = pygame.Rect(0, 0, self.text.get_width(), self.text.get_height())
+
+    def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
+        self.rect.x = x_pos
+        self.rect.y = y_pos
+
+        screen.blit(self.text, self.rect)
+
+
 class Button:
-    def __init__(self, text: str, x_pos: int, y_pos: int):
+    def __init__(self, text: str):
         self.image = pygame.image.load('resources/screens/components/button.png')
-        self.rect = pygame.Rect(x_pos, y_pos, self.image.get_width(), self.image.get_height())
-        self.font = pygame.font.Font('resources/pixel_digivolve.otf', 50)
-        self.text = self.font.render(text, False, (0, 0, 0))
+        self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
+        self.text = TextDisplay(text, (0, 0, 0), 50)
 
         # Create the image of the button when it is hovered/pressed
         self.pressed = self.image.copy()
@@ -26,15 +38,10 @@ class Button:
         else:
             screen.blit(self.pressed, self.rect)
 
-        # To get the text displayed in the centre of the box:
-        # Subtract the width and height of the box and the text and divide by 2
-        text_rect = self.rect.copy()
-        text_rect.x += (self.rect.w - self.text.get_width()) / 2
-        text_rect.y += (self.rect.h - self.text.get_height()) / 2
-        screen.blit(self.text, text_rect)
+        self.text.draw(screen, x_pos + (self.rect.w - self.text.rect.w) // 2, y_pos + (self.rect.h - self.text.rect.h) // 2)
 
     def change_text(self, text: str):
-        self.text = self.font.render(text, False, (0, 0, 0))
+        self.text = TextDisplay(text, (0, 0, 0), 50)
 
     def check_for_hover(self):
         mos_x, mos_y = pygame.mouse.get_pos()
@@ -91,8 +98,29 @@ class SmallContentDisplay:
 
 
 class LargeContentDisplay:
-    ...
+    def __init__(self, title_text: str, content: str):
+        self.image = pygame.image.load('resources/screens/components/largecontentdisplay.png')
+        self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
+
+        self.title = TextDisplay(title_text, (73, 82, 69), 40)
+        self.content = [TextDisplay(line, (102, 122, 103), 20) for line in content.split('\n')]
+
+    def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
+        self.rect.x = x_pos
+        self.rect.y = y_pos
+
+        screen.blit(self.image, self.rect)
+
+        self.title.draw(screen, x_pos + (self.rect.w - self.title.rect.w) // 2, y_pos + 10)
+
+        for line in self.content:
+            index = self.content.index(line)
+            line.draw(screen, x_pos + (self.rect.w - line.rect.w) // 2, y_pos + 20 + self.title.rect.h + 20*index)
 
 
 class PresetDisplay(LargeContentDisplay):
+    ...
+
+
+class SaveSlotDisplay(LargeContentDisplay):
     ...
