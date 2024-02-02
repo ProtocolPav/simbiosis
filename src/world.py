@@ -12,7 +12,7 @@ import random
 
 
 class World:
-    def __init__(self, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
+    def old_init(self, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
                  start_species: int = 4, start_creatures: int = 10, start_food: int = 500):
         self.size = size
 
@@ -55,14 +55,50 @@ class World:
                                                (self.size, self.size),
                                                specimen.genes))
 
+    def __init__(self, creature_image: pygame.Surface, food_image: pygame.Surface, world_size: int,
+                 creatures: list[Creature], foods: list[Food], largest_radius: float, tick_speed: int,
+                 food_spawn_rate: int, seconds: float, delta_seconds: float, food_seconds: float, paused: bool):
+        self.creature_image = creature_image
+        self.food_image = food_image
+
+        self.size = world_size
+
+        self.creatures = creatures
+        self.food = foods
+        self.tree: KDTree = KDTree([])
+        self.largest_radius = largest_radius
+
+        self.food_spawnrate = food_spawn_rate
+        self.food_second_split = 1 / food_spawn_rate
+        self.tick_speed = tick_speed
+
+        self.min_food_energy = 1000
+        self.max_food_energy = 100000
+        self.mutation_chance = 0.2
+        self.mutation_factor = 2
+
+        self.seconds = seconds
+        self.delta_second = delta_seconds
+        self.food_second = food_seconds
+
+        self.paused = paused
+
     @classmethod
-    def load_from_save(cls):
+    def load_from_save(cls, save_dict: dict, creature_image: pygame.Surface, food_image: pygame.Surface):
         """
         This method is used when loading from a save file. It takes all the data from the file
         and pushes it to __init__
         :return:
         """
-        ...
+        creatures_list = []
+        for creature in save_dict['creatures']:
+            creatures_list.append(Creature())
+
+        world_data = save_dict['world']
+        return cls(creature_image, food_image, world_data['size'], creatures_list, food_list,
+                   world_data['largest_radius'], world_data['tick_speed'], world_data['food_spawn_rate'],
+                   world_data['seconds'], world_data['delta_seconds'], world_data['food_seconds'],
+                   world_data['paused'])
 
     @classmethod
     def create(cls):
@@ -112,19 +148,21 @@ class World:
         food = random.choice(self.food) if len(self.food) != 0 else None
 
         if food is None:
-            self.food.append(Food(random.randint(0, self.size - 1),
-                                  random.randint(0, self.size - 1),
-                                  self.food_image,
-                                  (self.size, self.size)))
+            self.food.append(Food.create(random.randint(0, self.size - 1),
+                                         random.randint(0, self.size - 1),
+                                         self.food_image,
+                                         (self.size, self.size),
+                                         self.min_food_energy, self.max_food_energy))
         else:
             spawned = False
             while not spawned:
                 temporary_coordinates = (food.x + random.randint(-5, 5), food.y + random.randint(-5, 5))
 
-                new_food = Food(temporary_coordinates[0],
-                                temporary_coordinates[1],
-                                self.food_image,
-                                (self.size, self.size))
+                new_food = Food.create(temporary_coordinates[0],
+                                       temporary_coordinates[1],
+                                       self.food_image,
+                                       (self.size, self.size),
+                                       self.min_food_energy, self.max_food_energy)
 
                 if not self.tree.find(temporary_coordinates) and new_food.within_border():
                     spawned = True
@@ -174,7 +212,7 @@ class Camera:
         else:
             self.pause_button.change_text('pause')
 
-        self.tickspeed_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE*2 - 30)
+        self.tickspeed_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE * 2 - 30)
         if self.tickspeed_button.check_for_press():
             if world.tick_speed < 10:
                 world.change_tick_speed(1)
@@ -306,14 +344,14 @@ class Camera:
                     # Display the vision angle of the creature
                     # Calculate the end position of the first line. This is done using the direction the creature is facing.
                     # Add half of the vision radius to it, and then use the cos and sin formula to determine where it should be.
-                    direction = creature.direction_radians() + math.radians(creature.genes.vision_angle.value/2)
+                    direction = creature.direction_radians() + math.radians(creature.genes.vision_angle.value / 2)
                     x_dist = math.cos(direction) * creature.genes.vision_radius.value * self.zoom_level
                     y_dist = math.sin(direction) * creature.genes.vision_radius.value * self.zoom_level
                     pygame.draw.line(surface=self.screen, start_pos=drawing_rect.center,
                                      end_pos=(drawing_rect.center[0] + x_dist, drawing_rect.center[1] + y_dist),
                                      color=(144, 238, 144))
 
-                    direction = creature.direction_radians() - math.radians(creature.genes.vision_angle.value/2)
+                    direction = creature.direction_radians() - math.radians(creature.genes.vision_angle.value / 2)
                     x_dist = math.cos(direction) * creature.genes.vision_radius.value * self.zoom_level
                     y_dist = math.sin(direction) * creature.genes.vision_radius.value * self.zoom_level
                     pygame.draw.line(surface=self.screen, start_pos=drawing_rect.center,
@@ -336,10 +374,10 @@ class Camera:
                                          start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
 
                     # Display the direction the creature is facing towards
-                    self.font = pygame.Font('freesansbold.ttf', 2*self.zoom_level)
+                    self.font = pygame.Font('freesansbold.ttf', 2 * self.zoom_level)
                     text = self.font.render(f'{creature.direction}*', color=(255, 255, 255), antialias=True)
                     text_rect = text.get_rect()
-                    text_rect.center = (drawing_rect.center[0], drawing_rect.y+10*self.zoom_level)
+                    text_rect.center = (drawing_rect.center[0], drawing_rect.y + 10 * self.zoom_level)
                     self.screen.blit(text, text_rect)
 
                     # Display the previous reaction of the creature towards an entity
@@ -351,10 +389,10 @@ class Camera:
                         self.screen.blit(text, text_rect)
 
                     # Display the Energy of the creature
-                    self.font = pygame.Font('freesansbold.ttf', 2*self.zoom_level)
+                    self.font = pygame.Font('freesansbold.ttf', 2 * self.zoom_level)
                     text = self.font.render(f'{round(creature.energy)}E', color=(255, 255, 255), antialias=True)
                     text_rect = text.get_rect()
-                    text_rect.center = (drawing_rect.center[0], drawing_rect.y+14*self.zoom_level)
+                    text_rect.center = (drawing_rect.center[0], drawing_rect.y + 14 * self.zoom_level)
                     self.screen.blit(text, text_rect)
 
     def move(self, deltatime):

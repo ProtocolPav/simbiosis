@@ -249,11 +249,22 @@ class Creature(BaseEntity):
 
 
 class Food(BaseEntity):
-    def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int]):
+    def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+                 energy: float, eaten: bool = False):
         super().__init__(x_position, y_position, 0.5, image, world_bottomright)
 
-        self.energy = random.uniform(1000, 10000)
-        self.eaten = False
+        self.energy = energy
+        self.eaten = eaten
+
+    @classmethod
+    def load(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+             energy: float, eaten: bool):
+        return cls(x_position, y_position, image, world_bottomright, energy, eaten)
+
+    @classmethod
+    def create(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+               min_energy: int, max_energy: int):
+        return cls(x_position, y_position, image, world_bottomright, random.randint(min_energy, max_energy))
 
     def __repr__(self):
         return f"Food(ID{self.id}, x={self.x}, y={self.y}, eaten={self.eaten}))"
