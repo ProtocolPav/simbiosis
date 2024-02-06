@@ -284,19 +284,19 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 300)
+        self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 400)
         if self.preset_1.button.check_for_press():
             self.current_menu = 'sim_screen'
 
-        self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 300)
+        self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 400)
         if self.preset_2.button.check_for_press():
             self.current_menu = 'sim_screen'
 
-        self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 300)
+        self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 400)
         if self.preset_3.button.check_for_press():
             self.current_menu = 'sim_screen'
 
-        self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 400)
         if self.preset_4.button.check_for_press():
             self.current_menu = 'sim_screen'
 
