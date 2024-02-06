@@ -71,8 +71,9 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World(size=1000, start_species=1, start_creatures=100, start_food=100,
-                                  creature_image=self.creature_image, food_image=self.food_image)
+        self.world: World = World.create(size=1000, start_species=1, start_creatures=100, start_food=100,
+                                         food_spawn_rate=20, creature_image=self.creature_image,
+                                         food_image=self.food_image)
 
         # Menu Booleans
         self.program_running = True
@@ -234,7 +235,8 @@ class Simulation:
 
         for title in titles:
             index = titles.index(title)
-            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2, 30 + 10 * index + title.rect.height * index)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
 
         self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
         if self.back_button.check_for_press():
@@ -275,7 +277,8 @@ class Simulation:
 
         for title in titles:
             index = titles.index(title)
-            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2, 30 + 10 * index + title.rect.height * index)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
 
         self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
         if self.back_button.check_for_press():

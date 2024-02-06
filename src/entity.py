@@ -7,6 +7,7 @@ import pygame
 from logs import log
 from src.genes import CreatureGenes
 
+
 # I decided to make a Base Entity class since both food and creatures were in the same tree, in the old implementation
 # I would keep getting errors since they did not have the same methods to get the x and y coordinates
 
@@ -33,7 +34,7 @@ class BaseEntity:
         return self.x, self.y
 
     def get_rect(self) -> pygame.Rect:
-        return pygame.Rect(self.x, self.y, self.radius*2, self.radius*2)
+        return pygame.Rect(self.x, self.y, self.radius * 2, self.radius * 2)
 
     def within_border(self) -> bool:
         """
@@ -55,7 +56,7 @@ class BaseEntity:
 
 
 class Creature(BaseEntity):
-    def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+    def old_init(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
                  genes: CreatureGenes = None, energy: float = None):
         self.id = Creature.id
 
@@ -78,6 +79,54 @@ class Creature(BaseEntity):
         self.dead = False
 
         super().__init__(x_position, y_position, self.genes.radius.value, image, world_bottomright)
+
+    def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+                 genes: CreatureGenes, energy: float, direction: float, food_list: list, seeing: bool,
+                 memory_reaction: int, dead: bool, entity_id: int = None):
+        self.id = Creature.id if entity_id is None else entity_id
+
+        self.genes = genes
+        self.energy = energy
+        self.direction = direction
+        self.food_list = food_list
+
+        # Attributes used for debug
+        self.reaction = None
+        self.visible_entity = None
+        self.check_entities = []
+        self.all_check_entities = []
+        self.child = None
+
+        # Memory attributes
+        self.seeing = seeing
+        self.memory_reaction = memory_reaction
+
+        self.dead = dead
+
+        super().__init__(x_position, y_position, self.genes.radius.value, image, world_bottomright)
+
+    @classmethod
+    def load(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+             genes: CreatureGenes, energy: float, direction: float, seeing: bool,
+             memory_reaction: int, dead: bool, entity_id: int = None):
+
+        return cls(x_position, y_position, image, world_bottomright, genes=genes, energy=energy,
+                   dead=dead, direction=direction, food_list=[], memory_reaction=memory_reaction, seeing=seeing,
+                   entity_id=entity_id)
+
+    @classmethod
+    def create(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int]):
+        creature_genes = CreatureGenes(species=1, generation=1)
+        start_energy = creature_genes.base_energy.value * 6000
+        return cls(x_position, y_position, image, world_bottomright, genes=creature_genes, energy=start_energy,
+                   dead=False, direction=random.randint(0, 360), food_list=[], memory_reaction=0, seeing=False)
+
+    @classmethod
+    def create_child(cls, x_position: float, y_position: float, image: pygame.Surface,
+                     world_bottomright: tuple[int, int],
+                     genes: CreatureGenes, energy: float):
+        return cls(x_position, y_position, image, world_bottomright, genes=genes, energy=energy,
+                   dead=False, direction=random.randint(0, 360), food_list=[], memory_reaction=0, seeing=False)
 
     def __repr__(self):
         return f"Creature(ID{self.id}, x={self.x}, y={self.y}, a={self.direction}, dead={self.dead}))"
@@ -108,7 +157,7 @@ class Creature(BaseEntity):
         x_dist = math.cos(self.direction_radians()) * self.genes.speed.value * deltatime
         y_dist = math.sin(self.direction_radians()) * self.genes.speed.value * deltatime
 
-        self.energy -= self.genes.movement_energy.value * math.sqrt(x_dist**2 + y_dist**2)
+        self.energy -= self.genes.movement_energy.value * math.sqrt(x_dist ** 2 + y_dist ** 2)
 
         self.x += x_dist
         self.y += y_dist
@@ -119,7 +168,7 @@ class Creature(BaseEntity):
         :param entity:
         :return:
         """
-        distance_between_points = math.sqrt((self.x - entity.x)**2 + (self.y - entity.y)**2)
+        distance_between_points = math.sqrt((self.x - entity.x) ** 2 + (self.y - entity.y) ** 2)
         if distance_between_points <= self.radius + entity.radius:
             return True
 
@@ -166,7 +215,7 @@ class Creature(BaseEntity):
             probability_towards = abs(self.genes.react_towards.value + offset)
 
             reaction = random.choices([towards, away],
-                                      [probability_towards, 1-probability_towards])[0]
+                                      [probability_towards, 1 - probability_towards])[0]
             self.reaction = reaction
             self.memory_reaction = reaction
         else:
@@ -177,9 +226,9 @@ class Creature(BaseEntity):
         bearing = round(math.degrees(math.atan2(vector[1], vector[0])))
 
         if bearing > 0:
-            self.direction = self.map_angle(self.direction + self.genes.react_speed.value*reaction)
+            self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction)
         elif bearing < 0:
-            self.direction = self.map_angle(self.direction - self.genes.react_speed.value*reaction)
+            self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction)
 
         self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value
         print(f"{self.id} is Reacting {'Towards' if reaction == 1 else 'Away'}")
@@ -195,11 +244,11 @@ class Creature(BaseEntity):
             else:
                 parent_genes = vars(parent.genes)
                 for gene, gene_object in vars(child_genes).items():
-                    gene_object.value = (gene_object.value + parent_genes[gene].value)//2
+                    gene_object.value = (gene_object.value + parent_genes[gene].value) // 2
                     gene_object.mutate()
 
-            self.child = Creature(self.x + self.radius * 2, self.y - self.radius * 2, self.image, self.world_bottom_right,
-                                  child_genes, energy=self.genes.birth_energy.value)
+            self.child = Creature.create_child(self.x + self.radius * 2, self.y - self.radius * 2, self.image,
+                                               self.world_bottom_right, child_genes, self.genes.birth_energy.value)
 
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """

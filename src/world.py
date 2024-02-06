@@ -40,20 +40,20 @@ class World:
                                   (self.size, self.size)))
 
         for i in range(start_species):
-            specimen = Creature(random.randint(0, self.size - 1),
-                                random.randint(0, self.size - 1),
-                                self.creature_image,
-                                (self.size, self.size))
+            specimen = Creature.create(random.randint(0, self.size - 1),
+                                       random.randint(0, self.size - 1),
+                                       self.creature_image,
+                                       (self.size, self.size))
 
             if specimen.radius >= self.largest_radius:
                 self.largest_radius = specimen.radius
 
             for creature in range(start_creatures // start_species):
-                self.creatures.append(Creature(random.randint(0, self.size - 1),
-                                               random.randint(0, self.size - 1),
-                                               self.creature_image,
-                                               (self.size, self.size),
-                                               specimen.genes))
+                self.creatures.append(Creature.create_child(random.randint(0, self.size - 1),
+                                                            random.randint(0, self.size - 1),
+                                                            self.creature_image,
+                                                            (self.size, self.size),
+                                                            specimen.genes, specimen.energy))
 
     def __init__(self, creature_image: pygame.Surface, food_image: pygame.Surface, world_size: int,
                  creatures: list[Creature], foods: list[Food], largest_radius: float, tick_speed: int,
@@ -92,7 +92,7 @@ class World:
         """
         creatures_list = []
         for creature in save_dict['creatures']:
-            creatures_list.append(Creature())
+            creatures_list.append(Creature.load())
 
         world_data = save_dict['world']
         return cls(creature_image, food_image, world_data['size'], creatures_list, food_list,
@@ -101,12 +101,45 @@ class World:
                    world_data['paused'])
 
     @classmethod
-    def create(cls):
+    def create(cls, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
+               food_spawn_rate: int,
+               start_species: int = 4, start_creatures: int = 10, start_food: int = 500):
         """
         This method is used when creating a new world, normally when starting a new simulation.
         :return:
         """
-        ...
+
+        creatures_list: list[Creature] = []
+        food_list: list[Food] = []
+        largest_radius = 0
+
+        for i in range(start_food):
+            food_list.append(Food.create(random.randint(0, size - 1),
+                                         random.randint(0, size - 1),
+                                         food_image,
+                                         (size, size),
+                                         min_energy=5000,
+                                         max_energy=50000))
+
+        for i in range(start_species):
+            specimen = Creature.create(random.randint(0, size - 1),
+                                       random.randint(0, size - 1),
+                                       creature_image,
+                                       (size, size))
+
+            if specimen.radius >= largest_radius:
+                largest_radius = specimen.radius
+
+            for creature in range(start_creatures // start_species):
+                creatures_list.append(Creature.create_child(random.randint(0, size - 1),
+                                                            random.randint(0, size - 1),
+                                                            creature_image,
+                                                            (size, size),
+                                                            specimen.genes, specimen.energy))
+
+        return cls(creature_image, food_image, world_size=size, creatures=creatures_list, foods=food_list,
+                   largest_radius=largest_radius, tick_speed=1, food_spawn_rate=food_spawn_rate, delta_seconds=0,
+                   seconds=0, food_seconds=0, paused=False)
 
     def tick_world(self, deltatime: float):
         for i in range(self.tick_speed):
@@ -333,7 +366,8 @@ class Camera:
 
                     # Display the Range Search area for the creature's vision and collision detection
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center,
-                                       radius=(2 * creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
+                                       radius=(
+                                                      2 * creature.genes.vision_radius.value + world.largest_radius) * self.zoom_level,
                                        color=(220, 20, 60), width=1)
 
                     # Display the creature's vision radius
