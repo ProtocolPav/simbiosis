@@ -126,7 +126,7 @@ class Creature(BaseEntity):
     def move(self, deltatime: float):
         if not self.within_border():
             # The values need tweaking as sometimes they bug out and leave the border
-            angle = random.randint(20, 90)
+            angle = 180 + random.randint(20, 90)
             self.direction = self.map_angle(self.direction + angle)
             self.energy -= self.genes.turning_energy.value * angle
 
