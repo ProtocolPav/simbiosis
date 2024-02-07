@@ -235,35 +235,6 @@ class Camera:
         self.species_display = SmallContentDisplay('species', 5, 5)
         self.food_display = SmallContentDisplay('food', 5, 5)
 
-        self.pause_button = Button('Pause')
-        self.tickspeed_button = Button('x1')
-
-    def draw_ui(self, world: World):
-        DISPLAY_SIZE = 100
-
-        time = timedelta(seconds=round(world.seconds))
-        self.time_display.draw(self.screen, time, 10, 15)
-        self.creature_display.draw(self.screen, len(world.creatures), 10, DISPLAY_SIZE + 30)
-        self.species_display.draw(self.screen, 1, 10, DISPLAY_SIZE * 2 + 45)
-        self.food_display.draw(self.screen, len(world.food), 10, DISPLAY_SIZE * 3 + 60)
-
-        self.pause_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE - 15)
-        if self.pause_button.check_for_press():
-            world.paused = not world.paused
-
-        if world.paused:
-            self.pause_button.change_text('play')
-        else:
-            self.pause_button.change_text('pause')
-
-        self.tickspeed_button.draw(self.screen, 10, self.screen.get_height() - DISPLAY_SIZE * 2 - 30)
-        if self.tickspeed_button.check_for_press():
-            if world.tick_speed < 10:
-                world.change_tick_speed(1)
-            else:
-                world.tick_speed = 1
-        self.tickspeed_button.change_text(f'x{world.tick_speed}')
-
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour
         pygame.draw.rect(surface=self.screen,

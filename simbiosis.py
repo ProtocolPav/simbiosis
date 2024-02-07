@@ -12,7 +12,7 @@ import pygame
 from src.world import World, Camera
 from src.ui import Button, TextDisplay, LargeContentDisplay, PresetDisplay, SaveSlotDisplay
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 
 creature_image = pygame.image.load('resources/textures/creature3.png')
@@ -68,12 +68,16 @@ class Simulation:
                                       'A preset designed\njust to watch the\ncreatures move.\n'
                                       'these species never die\nand only grow in size.')
 
+        self.sim_screen_pause_button = Button('Pause')
+        self.sim_screen_tickspeed_button = Button('x1')
+        self.sim_screen_graph_button = Button('Graphs', 45)
+
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World.create(size=1000, start_species=1, start_creatures=100, start_food=100,
+        self.world: World = World.create(size=1000, start_species=10, start_creatures=100, start_food=250,
                                          food_spawn_rate=20, creature_image=self.creature_image,
                                          food_image=self.food_image)
 
@@ -195,6 +199,9 @@ class Simulation:
                     self.choose_preset_menu()
 
                 case 'sim_screen':
+                    self.simulation_screen(deltatime)
+
+                case 'graph':
                     self.simulation_screen(deltatime)
 
             # self.cursor_rect.topleft = pygame.mouse.get_pos()
@@ -353,7 +360,36 @@ class Simulation:
 
         self.camera.move(deltatime)
         self.camera.draw_world(self.world, self.debug_screen)
-        self.camera.draw_ui(self.world)
+
+        BUTTON_SIZE = 100
+
+        world_time = timedelta(seconds=round(self.world.seconds))
+        self.camera.time_display.draw(self.screen, world_time, 10, 15)
+        self.camera.creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
+        self.camera.species_display.draw(self.screen, 1, 10, BUTTON_SIZE * 2 + 45)
+        self.camera.food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
+
+        self.sim_screen_pause_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE - 15)
+        if self.sim_screen_pause_button.check_for_press():
+            self.world.paused = not self.world.paused
+
+        if self.world.paused:
+            self.sim_screen_pause_button.change_text('play')
+        else:
+            self.sim_screen_pause_button.change_text('pause')
+
+        self.sim_screen_tickspeed_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE * 2 - 30)
+        if self.sim_screen_tickspeed_button.check_for_press():
+            if self.world.tick_speed < 10:
+                self.world.change_tick_speed(1)
+            else:
+                self.world.tick_speed = 1
+        self.sim_screen_tickspeed_button.change_text(f'x{self.world.tick_speed}')
+
+        self.sim_screen_graph_button.draw(self.screen, self.screen.get_width() - BUTTON_SIZE * 2 - 20,
+                                          self.screen.get_height() - BUTTON_SIZE - 15)
+        if self.sim_screen_graph_button.check_for_press():
+            self.current_menu = 'graph'
 
 
 simulation = Simulation()
