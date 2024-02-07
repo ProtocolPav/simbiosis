@@ -158,7 +158,7 @@ class Creature(BaseEntity):
         vector_distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
         if vector_distance < self.genes.vision_radius.value:
             self.check_entities.append(entity)
-            bearing = math.degrees(math.atan2(vector[1], vector[0]))
+            bearing = math.degrees(math.atan2(vector[1], vector[0])) -45
 
             angular_distance = self.map_angle(max(bearing, self.direction) - min(bearing, self.direction))
             # Sometimes the distance tends to 360 and idk why
@@ -200,12 +200,15 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = round(math.degrees(math.atan2(vector[1], vector[0])))
+        bearing = round(math.degrees(math.atan2(vector[1], vector[0])) - 45)
 
-        if bearing > 0:
-            self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction)
-        elif bearing < 0:
-            self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction)
+        print(f'BEARING {bearing}')
+        self.direction = self.map_angle(bearing)
+
+        # if bearing > 0:
+        #     self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction)
+        # elif bearing < 0:
+        #     self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction)
 
         self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value
         print(f"{self.id} is Reacting {'Towards' if reaction == 1 else 'Away'}")
