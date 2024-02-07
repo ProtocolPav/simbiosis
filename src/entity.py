@@ -56,30 +56,6 @@ class BaseEntity:
 
 
 class Creature(BaseEntity):
-    def old_init(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
-                 genes: CreatureGenes = None, energy: float = None):
-        self.id = Creature.id
-
-        self.genes = CreatureGenes(species=1, generation=1) if genes is None else genes
-        self.energy = self.genes.base_energy.value * 6000 if energy is None else energy
-        self.direction = random.randint(0, 360)
-        self.food_list = []
-
-        # Attributes used for debug
-        self.reaction = None
-        self.visible_entity = None
-        self.check_entities = []
-        self.all_check_entities = []
-        self.child = None
-
-        # Memory attributes
-        self.seeing = False
-        self.memory_reaction = None
-
-        self.dead = False
-
-        super().__init__(x_position, y_position, self.genes.radius.value, image, world_bottomright)
-
     def __init__(self, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
                  genes: CreatureGenes, energy: float, direction: float, food_list: list, seeing: bool,
                  memory_reaction: int, dead: bool, entity_id: int = None):
@@ -116,7 +92,7 @@ class Creature(BaseEntity):
 
     @classmethod
     def create(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int]):
-        creature_genes = CreatureGenes(species=1, generation=1)
+        creature_genes = CreatureGenes.create(species=1, generation=1)
         start_energy = creature_genes.base_energy.value * 6000
         return cls(x_position, y_position, image, world_bottomright, genes=creature_genes, energy=start_energy,
                    dead=False, direction=random.randint(0, 360), food_list=[], memory_reaction=0, seeing=False)
