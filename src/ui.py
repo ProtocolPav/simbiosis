@@ -143,3 +143,7 @@ class SaveSlotDisplay(LargeContentDisplay):
     def draw(self, screen: pygame.Surface, x_pos: int, y_pos: int):
         super().draw(screen, x_pos, y_pos)
         self.button.draw(screen, x_pos + (self.rect.w - self.button.rect.w) // 2, y_pos + self.rect.h - self.button.rect.h - 15)
+
+
+class CreatureCharacteristicsDisplay(LargeContentDisplay):
+    ...

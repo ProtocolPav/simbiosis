@@ -10,10 +10,9 @@ import json
 
 import pygame
 from src.world import World, Camera
-from src.ui import Button, TextDisplay, LargeContentDisplay, PresetDisplay, SaveSlotDisplay
+from src.ui import Button, TextDisplay, SmallContentDisplay, PresetDisplay, SaveSlotDisplay
 
 from datetime import datetime, timedelta
-import time
 
 creature_image = pygame.image.load('resources/textures/creature3.png')
 food_image = pygame.image.load('resources/textures/food1.png')
@@ -71,6 +70,11 @@ class Simulation:
         self.sim_screen_pause_button = Button('Pause')
         self.sim_screen_tickspeed_button = Button('x1')
         self.sim_screen_graph_button = Button('Graphs', 45)
+
+        self.sim_screen_time_display = SmallContentDisplay('time', 5, 5)
+        self.sim_screen_creature_display = SmallContentDisplay('creatures', 5, 5)
+        self.sim_screen_species_display = SmallContentDisplay('species', 5, 5)
+        self.sim_screen_food_display = SmallContentDisplay('food', 5, 5)
 
         pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
@@ -158,56 +162,6 @@ class Simulation:
 
         json.dump(save_dict, save_file, indent=4)
         save_file.close()
-
-    def main(self):
-        while self.program_running:
-            deltatime = clock.tick(120) / 1000
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.program_running = False
-
-                elif event.type == pygame.MOUSEWHEEL:
-                    self.camera.zoom(event.y)
-
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.program_running = False
-
-                    if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
-                        self.world.paused = not self.world.paused
-                    elif event.key == pygame.K_q and self.current_menu == 'sim_screen':
-                        self.debug_screen = not self.debug_screen
-                    elif event.key == pygame.K_EQUALS and self.current_menu == 'sim_screen':
-                        self.world.change_tick_speed(1)
-                    elif event.key == pygame.K_MINUS and self.current_menu == 'sim_screen':
-                        self.world.change_tick_speed(-1)
-                    elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
-                        self.save_game()
-
-            match self.current_menu:
-                case 'start':
-                    self.start_menu()
-
-                case 'load':
-                    self.load_save_menu()
-
-                case 'select_save':
-                    self.choose_new_save_menu()
-
-                case 'select_preset':
-                    self.choose_preset_menu()
-
-                case 'sim_screen':
-                    self.simulation_screen(deltatime)
-
-                case 'graph':
-                    self.simulation_screen(deltatime)
-
-            # self.cursor_rect.topleft = pygame.mouse.get_pos()
-            # self.screen.blit(self.cursor_image, self.cursor_rect)
-
-            pygame.display.flip()
 
     def start_menu(self):
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
@@ -364,10 +318,10 @@ class Simulation:
         BUTTON_SIZE = 100
 
         world_time = timedelta(seconds=round(self.world.seconds))
-        self.camera.time_display.draw(self.screen, world_time, 10, 15)
-        self.camera.creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
-        self.camera.species_display.draw(self.screen, 1, 10, BUTTON_SIZE * 2 + 45)
-        self.camera.food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
+        self.sim_screen_time_display.draw(self.screen, world_time, 10, 15)
+        self.sim_screen_creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
+        self.sim_screen_species_display.draw(self.screen, 1, 10, BUTTON_SIZE * 2 + 45)
+        self.sim_screen_food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
 
         self.sim_screen_pause_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_pause_button.check_for_press():
@@ -390,6 +344,56 @@ class Simulation:
                                           self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_graph_button.check_for_press():
             self.current_menu = 'graph'
+    
+    def main(self):
+        while self.program_running:
+            deltatime = clock.tick(120) / 1000
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.program_running = False
+
+                elif event.type == pygame.MOUSEWHEEL:
+                    self.camera.zoom(event.y)
+
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.program_running = False
+
+                    if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
+                        self.world.paused = not self.world.paused
+                    elif event.key == pygame.K_q and self.current_menu == 'sim_screen':
+                        self.debug_screen = not self.debug_screen
+                    elif event.key == pygame.K_EQUALS and self.current_menu == 'sim_screen':
+                        self.world.change_tick_speed(1)
+                    elif event.key == pygame.K_MINUS and self.current_menu == 'sim_screen':
+                        self.world.change_tick_speed(-1)
+                    elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
+                        self.save_game()
+
+            match self.current_menu:
+                case 'start':
+                    self.start_menu()
+
+                case 'load':
+                    self.load_save_menu()
+
+                case 'select_save':
+                    self.choose_new_save_menu()
+
+                case 'select_preset':
+                    self.choose_preset_menu()
+
+                case 'sim_screen':
+                    self.simulation_screen(deltatime)
+
+                case 'graph':
+                    self.simulation_screen(deltatime)
+
+            # self.cursor_rect.topleft = pygame.mouse.get_pos()
+            # self.screen.blit(self.cursor_image, self.cursor_rect)
+
+            pygame.display.flip()
 
 
 simulation = Simulation()

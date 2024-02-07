@@ -2,12 +2,9 @@ import math
 
 import pygame
 
-from datetime import timedelta
-
 from src.entity import Creature, Food
 from src.genes import CreatureGenes
 from src.tree import KDTree
-from src.ui import SmallContentDisplay, Button
 
 import random
 
@@ -187,11 +184,6 @@ class Camera:
         self.y_offset = 0
         self.font = pygame.Font('freesansbold.ttf', 25)
 
-        self.time_display = SmallContentDisplay('time', 5, 5)
-        self.creature_display = SmallContentDisplay('creatures', 5, 5)
-        self.species_display = SmallContentDisplay('species', 5, 5)
-        self.food_display = SmallContentDisplay('food', 5, 5)
-
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour
         pygame.draw.rect(surface=self.screen,
@@ -264,6 +256,9 @@ class Camera:
                 # Sets the center of the image to be aligned with the center position
                 creature_rect = rotated_image.get_rect(center=drawing_rect.center)
                 self.screen.blit(rotated_image, creature_rect)
+
+                if self.check_for_mouse_hover(creature_rect):
+                    self.screen.blit(copy_image, creature_rect)
 
                 if debug:
                     # Draw all the vision lines to see what entities the creature is checking against
@@ -390,3 +385,17 @@ class Camera:
             self.x_offset /= old_zoom / self.zoom_level
             self.y_offset /= old_zoom / self.zoom_level
             # After implementing the offset values, I managed to fix the zoom bug that I had since the beginning.
+
+    @staticmethod
+    def check_for_mouse_hover(rect: pygame.Rect):
+        mos_x, mos_y = pygame.mouse.get_pos()
+        x_inside = False
+        y_inside = False
+
+        if mos_x > rect.x and (mos_x < rect.x + rect.w):
+            x_inside = True
+        if mos_y > rect.y and (mos_y < rect.y + rect.h):
+            y_inside = True
+        if x_inside and y_inside:
+            return True
+        return False

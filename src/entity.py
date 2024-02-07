@@ -214,6 +214,7 @@ class Creature(BaseEntity):
             self.energy -= self.genes.birth_energy.value
 
             child_genes = copy.deepcopy(self.genes)
+            child_genes.generation.value += 1
             if parent is None:
                 for gene, gene_object in vars(child_genes).items():
                     gene_object.mutate()
