@@ -290,6 +290,20 @@ class Camera:
                         pygame.draw.line(surface=self.screen, color=[120, 55, 170],
                                          start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
 
+                    for entity in creature.vision_entities:
+                        rect_left = entity.x - entity.radius
+                        rect_top = entity.y - entity.radius
+                        drawing_rect2 = pygame.Rect(rect_left, rect_top, entity.radius * 2,
+                                                    entity.radius * 2)
+                        drawing_rect2.x = world_rect.x + round(drawing_rect2.x / scale)
+                        drawing_rect2.y = world_rect.y + round(drawing_rect2.y / scale)
+                        drawing_rect2.width *= self.zoom_level
+                        drawing_rect2.height *= self.zoom_level
+
+                        pygame.draw.rect(surface=self.screen, rect=drawing_rect2, color=[255, 0, 0])
+                        pygame.draw.line(surface=self.screen, color=[255, 0, 0],
+                                         start_pos=drawing_rect.center, end_pos=drawing_rect2.center)
+
                     # Display the centre position of the creature
                     pygame.draw.circle(surface=self.screen, center=drawing_rect.center, radius=1, color=(255, 255, 244))
 

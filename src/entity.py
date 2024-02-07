@@ -71,6 +71,7 @@ class Creature(BaseEntity):
         self.visible_entity = None
         self.check_entities = []
         self.all_check_entities = []
+        self.vision_entities = []
         self.child = None
 
         # Memory attributes
@@ -241,16 +242,22 @@ class Creature(BaseEntity):
 
             self.check_entities = []
             self.all_check_entities = []
+            self.vision_entities = []
 
             for entity in range_search_box:
                 self.all_check_entities.append(entity)
                 if self.vision(entity):
                     print(f"{self.id} is seeing {entity.id}")
-                    self.visible_entity = entity
-                    self.react(entity)
-                    self.seeing = True
-                else:
-                    self.seeing = False
+                    self.vision_entities.append(entity)
+
+            print(self.vision_entities)
+            chosen_entity = random.choice(self.vision_entities) if len(self.vision_entities) != 0 else None
+            if chosen_entity:
+                self.visible_entity = chosen_entity
+                self.react(chosen_entity)
+                self.seeing = True
+            else:
+                self.seeing = False
 
             self.move(deltatime)
 
