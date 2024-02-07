@@ -271,7 +271,7 @@ class Simulation:
 
         if os.path.exists(f'saves/sim{self.save_slot}.json'):
             save_dict = json.load(open(f'saves/sim{self.save_slot}.json', 'r'))
-            self.world = World.load_from_save(save_dict, self.creature_image, self.food_image)
+            self.world = World.load(save_dict, self.creature_image, self.food_image)
             self.current_menu = 'sim_screen'
 
     def choose_new_save_menu(self):

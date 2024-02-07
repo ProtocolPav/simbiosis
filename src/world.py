@@ -13,49 +13,6 @@ import random
 
 
 class World:
-    def old_init(self, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
-                 start_species: int = 4, start_creatures: int = 10, start_food: int = 500):
-        self.size = size
-
-        self.creature_image = creature_image
-        self.food_image = food_image
-
-        self.creatures: list[Creature] = []
-        self.food: list[Food] = []
-        self.tree: KDTree = KDTree([])
-        self.largest_radius = 0
-
-        self.food_spawnrate = 2000
-        self.food_second_split = 1 / self.food_spawnrate
-        self.tick_speed = 1
-
-        self.seconds = 0
-        self.delta_second = 0
-        self.food_second = 0
-        self.paused = False
-
-        for i in range(start_food):
-            self.food.append(Food(random.randint(0, self.size - 1),
-                                  random.randint(0, self.size - 1),
-                                  self.food_image,
-                                  (self.size, self.size)))
-
-        for i in range(start_species):
-            specimen = Creature.create(random.randint(0, self.size - 1),
-                                       random.randint(0, self.size - 1),
-                                       self.creature_image,
-                                       (self.size, self.size))
-
-            if specimen.radius >= self.largest_radius:
-                self.largest_radius = specimen.radius
-
-            for creature in range(start_creatures // start_species):
-                self.creatures.append(Creature.create_child(random.randint(0, self.size - 1),
-                                                            random.randint(0, self.size - 1),
-                                                            self.creature_image,
-                                                            (self.size, self.size),
-                                                            specimen.genes, specimen.energy))
-
     def __init__(self, creature_image: pygame.Surface, food_image: pygame.Surface, world_size: int,
                  creatures: list[Creature], foods: list[Food], largest_radius: float, tick_speed: int,
                  food_spawn_rate: int, seconds: float, delta_seconds: float, food_seconds: float, paused: bool):
@@ -85,7 +42,7 @@ class World:
         self.paused = paused
 
     @classmethod
-    def load_from_save(cls, save_dict: dict, creature_image: pygame.Surface, food_image: pygame.Surface):
+    def load(cls, save_dict: dict, creature_image: pygame.Surface, food_image: pygame.Surface):
         """
         This method is used when loading from a save file. It takes all the data from the file
         and pushes it to __init__
