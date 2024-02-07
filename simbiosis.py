@@ -53,6 +53,8 @@ class Simulation:
         self.save_display_4 = SaveSlotDisplay('Slot 4',
                                               'Empty')
 
+        self.generate_save_slot_displays()
+
         self.preset_1 = PresetDisplay('Lone Island',
                                       'two species compete\nfor one island of food\nlocated in the centre.\n'
                                       'they are complete\nopposites.\nwho will win?')
@@ -71,10 +73,9 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        # self.world: World = World.create(size=1000, start_species=1, start_creatures=100, start_food=100,
-        #                                  food_spawn_rate=20, creature_image=self.creature_image,
-        #                                  food_image=self.food_image)
-        self.world: World = World.load_from_save(json.load(open('saves/sim2.json', 'r')), creature_image, food_image)
+        self.world: World = World.create(size=1000, start_species=1, start_creatures=100, start_food=100,
+                                         food_spawn_rate=20, creature_image=self.creature_image,
+                                         food_image=self.food_image)
 
         # Menu Booleans
         self.program_running = True
@@ -86,6 +87,21 @@ class Simulation:
 
         # Variable that holds the save slot
         self.save_slot = 0
+
+    def generate_save_slot_displays(self):
+        attributes = ['save_display_1', 'save_display_2', 'save_display_3', 'save_display_4']
+
+        for attr in attributes:
+            slot_num = attr[-1]
+            if os.path.exists(f'saves/sim{slot_num}.json'):
+                save_dict = json.load(open(f'saves/sim{slot_num}.json', 'r'))
+
+                date = datetime.strptime(save_dict['save_data']['time'], "%Y-%m-%d %H:%M:%S.%f")
+                formatted_date = date.strftime('%B %d %Y\n%I:%M%p')
+
+                preset = f"Preset: {save_dict['save_data']['preset']}" if save_dict['save_data']['preset'] else "No Preset"
+                self.__setattr__(attr, SaveSlotDisplay(f'Slot {slot_num}',
+                                                       f'{formatted_date}\n\n{preset}'))
 
     def save_game(self):
         save_dict = {
@@ -170,7 +186,7 @@ class Simulation:
                     self.start_menu()
 
                 case 'load':
-                    self.start_menu()
+                    self.load_save_menu()
 
                 case 'select_save':
                     self.choose_new_save_menu()
@@ -207,6 +223,49 @@ class Simulation:
                               self.screen.get_height() // 2 + 130)
         if self.help_button.check_for_press():
             self.current_menu = 'help'
+
+    def load_save_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Select a save slot',
+                              (217, 255, 200), 50),
+                  TextDisplay('to load from.',
+                              (217, 255, 200), 50),
+                  TextDisplay('Simbiosis auto-saves every 10 minutes.',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        if self.back_button.check_for_press():
+            self.current_menu = 'start'
+
+        self.save_display_1.draw(self.screen, self.screen.get_width() // 4 - self.save_display_1.rect.w, 300)
+        if self.save_display_1.button.check_for_press():
+            self.save_slot = 1
+
+        self.save_display_2.draw(self.screen, self.screen.get_width() // 4 + self.save_display_2.rect.w // 4 + 25, 300)
+        if self.save_display_2.button.check_for_press():
+            self.save_slot = 2
+
+        self.save_display_3.draw(self.screen, self.screen.get_width() // 2 + self.save_display_3.rect.w // 4 - 25, 300)
+        if self.save_display_3.button.check_for_press():
+            self.save_slot = 3
+
+        self.save_display_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.save_display_4.button.check_for_press():
+            self.save_slot = 4
+
+        if os.path.exists(f'saves/sim{self.save_slot}.json'):
+            save_dict = json.load(open(f'saves/sim{self.save_slot}.json', 'r'))
+            self.world = World.load_from_save(save_dict, self.creature_image, self.food_image)
+            self.current_menu = 'sim_screen'
 
     def choose_new_save_menu(self):
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
