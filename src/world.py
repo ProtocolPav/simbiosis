@@ -92,7 +92,10 @@ class World:
         """
         creatures_list = []
         for creature in save_dict['creatures']:
-            creatures_list.append(Creature.load())
+            creatures_list.append(Creature.load(creature['position'][0], creature['position'][1], creature_image,
+                                                (save_dict['world']['size'], save_dict['world']['size']),
+                                                genes, creature['energy'], creature['direction'], creature['seeing'],
+                                                creature['memory_reaction'], creature['dead'], creature['id']))
 
         world_data = save_dict['world']
         return cls(creature_image, food_image, world_data['size'], creatures_list, food_list,

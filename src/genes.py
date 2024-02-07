@@ -17,11 +17,11 @@ class Gene:
         if self.can_mutate:
             old_value = self.value
 
-            if random.choices(population=["mutate", "no mutate"], weights=[probability, 1-probability])[0] == "mutate":
+            if random.choices(population=["mutate", "no mutate"], weights=[probability, 1 - probability])[0] == "mutate":
                 if self.is_type_integer:
-                    self.value += round(random.uniform(-2*factor, 2*factor))
+                    self.value += round(random.uniform(-2 * factor, 2 * factor))
                 else:
-                    self.value += random.uniform(-0.2*factor, 0.2*factor)
+                    self.value += random.uniform(-0.2 * factor, 0.2 * factor)
 
                 if self.value < self.min:
                     self.value = self.min
@@ -33,8 +33,9 @@ class Gene:
             else:
                 log(f"[MUTATION] {self.name} ({old_value} -> {self.value})")
 
-    def save_gene(self) -> dict:
-        return {'name': self.name,
+    def save_gene(self, variable_name: str) -> dict:
+        return {'attr': variable_name,
+                'name': self.name,
                 'acronym': self.acronym,
                 'value': self.value,
                 'can_mutate': self.can_mutate,
@@ -44,7 +45,38 @@ class Gene:
 
 
 class CreatureGenes:
-    def __init__(self, species: int, generation: int):
+    # Genes affecting Creature Appearance (Phenotype)
+    colour_red: Gene
+    colour_green: Gene
+    colour_blue: Gene
+    radius: Gene
+
+    # Genes affecting Creature movement
+    speed: Gene
+
+    # Genes affecting the Creature's Energy Consumption
+    base_energy: Gene
+    movement_energy: Gene
+    turning_energy: Gene
+    birth_energy: Gene
+    plant_energy: Gene
+
+    # Genes affecting Creature Behaviour
+    vision_radius: Gene
+    vision_angle: Gene
+    react_towards: Gene
+    react_speed: Gene
+
+    # Genes which offset the RTO based on what the creature is seeing
+    food_offset: Gene
+    stranger_offset: Gene
+    known_offset: Gene
+
+    # Data Genes (No mutation, affects Data)
+    species: Gene
+    generation: Gene
+
+    def oldinit__(self, species: int, generation: int):
         # Genes affecting Creature Appearance (Phenotype)
         self.colour_red = Gene(name="Red Colour", acronym="CLR", value=random.randint(0, 255),
                                min_value=0, max_value=255, integer=True)
@@ -93,3 +125,21 @@ class CreatureGenes:
         # Data Genes (No mutation, affects Data)
         self.species = Gene(name="Species", acronym="SPE", value=species, can_mutate=False)
         self.generation = Gene(name="Generation", acronym="GEN", value=generation, can_mutate=False)
+
+    def __init__(self, genes_list: list[dict]):
+        """
+        Iterates over the gene_list given. This is a list of dictionaries, which is present in the save files.
+        :param genes_list:
+        """
+        for gene in genes_list:
+            self.__setattr__(gene['attr'],
+                             Gene(gene['name'], gene['acronym'], gene['value'], gene['can_mutate'], gene['min'], gene['max'],
+                                  gene['is_integer']))
+
+    @classmethod
+    def load(cls):
+        ...
+
+    @classmethod
+    def create(cls):
+        ...

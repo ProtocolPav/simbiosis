@@ -109,6 +109,11 @@ class Simulation:
 
         for creature in self.world.creatures:
             genes = creature.genes
+            save_genes = []
+
+            for gene_name, value in genes.__dict__.items():
+                save_genes.append(value.save_gene(gene_name))
+
             save_dict['creatures'].append({
                 "id": creature.id,
                 "energy": creature.energy,
@@ -117,25 +122,7 @@ class Simulation:
                 "seeing": creature.seeing,
                 "memory_reaction": creature.memory_reaction,
                 "position": [creature.x, creature.y],
-                "genes": [genes.colour_red.save_gene(),
-                          genes.colour_green.save_gene(),
-                          genes.colour_blue.save_gene(),
-                          genes.radius.save_gene(),
-                          genes.speed.save_gene(),
-                          genes.base_energy.save_gene(),
-                          genes.movement_energy.save_gene(),
-                          genes.turning_energy.save_gene(),
-                          genes.birth_energy.save_gene(),
-                          genes.plant_energy.save_gene(),
-                          genes.vision_radius.save_gene(),
-                          genes.vision_angle.save_gene(),
-                          genes.react_towards.save_gene(),
-                          genes.react_speed.save_gene(),
-                          genes.food_offset.save_gene(),
-                          genes.stranger_offset.save_gene(),
-                          genes.known_offset.save_gene(),
-                          genes.species.save_gene(),
-                          genes.generation.save_gene()]
+                "genes": save_genes
             })
 
         for food in self.world.food:
