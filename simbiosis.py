@@ -71,9 +71,10 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World.create(size=1000, start_species=1, start_creatures=100, start_food=100,
-                                         food_spawn_rate=20, creature_image=self.creature_image,
-                                         food_image=self.food_image)
+        # self.world: World = World.create(size=1000, start_species=1, start_creatures=100, start_food=100,
+        #                                  food_spawn_rate=20, creature_image=self.creature_image,
+        #                                  food_image=self.food_image)
+        self.world: World = World.load_from_save(json.load(open('saves/sim2.json', 'r')), creature_image, food_image)
 
         # Menu Booleans
         self.program_running = True

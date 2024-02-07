@@ -5,6 +5,7 @@ import pygame
 from datetime import timedelta
 
 from src.entity import Creature, Food
+from src.genes import CreatureGenes
 from src.tree import KDTree
 from src.ui import SmallContentDisplay, Button
 
@@ -92,10 +93,17 @@ class World:
         """
         creatures_list = []
         for creature in save_dict['creatures']:
+            genes = CreatureGenes.load(creature['genes'])
             creatures_list.append(Creature.load(creature['position'][0], creature['position'][1], creature_image,
                                                 (save_dict['world']['size'], save_dict['world']['size']),
                                                 genes, creature['energy'], creature['direction'], creature['seeing'],
                                                 creature['memory_reaction'], creature['dead'], creature['id']))
+
+        food_list = []
+        for food in save_dict['food']:
+            food_list.append(Food.load(food['position'][0], food['position'][1], food_image,
+                                       (save_dict['world']['size'], save_dict['world']['size']),
+                                       food['energy'], food['eaten']))
 
         world_data = save_dict['world']
         return cls(creature_image, food_image, world_data['size'], creatures_list, food_list,
