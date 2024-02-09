@@ -129,7 +129,7 @@ class CreatureGenes:
                                          min_value=1)
         genes_object.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=random.random(),
                                           min_value=0)
-        genes_object.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.uniform(1, 13),
+        genes_object.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.uniform(10, 360),
                                         min_value=0)
 
         # Genes which offset the RTO based on what the creature is seeing

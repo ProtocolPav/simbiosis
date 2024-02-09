@@ -116,13 +116,13 @@ class Creature(BaseEntity):
         return self.direction / (180 / math.pi)
 
     @staticmethod
-    def map_angle(angle: float) -> float:
+    def map_angle(angle: float, range: int = 360) -> float:
         """
         Maps the angle given to fall within [0, 360]
         :param angle:
         :return:
         """
-        return angle % 360
+        return angle % range
 
     def move(self, deltatime: float):
         if not self.within_border():
@@ -158,13 +158,11 @@ class Creature(BaseEntity):
         vector_distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
         if vector_distance < self.genes.vision_radius.value:
             self.check_entities.append(entity)
-            bearing = math.degrees(math.atan2(vector[1], vector[0])) -45
+            bearing = math.degrees(math.atan2(vector[1], vector[0])) + 60
 
-            angular_distance = self.map_angle(max(bearing, self.direction) - min(bearing, self.direction))
-            # Sometimes the distance tends to 360 and idk why
-            # I believe the issue here is with the angular distance
+            angular_distance = self.map_angle(bearing - self.direction)
 
-            # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
+            print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
 
             if angular_distance < self.genes.vision_angle.value:
                 return True
@@ -174,7 +172,7 @@ class Creature(BaseEntity):
 
         return False
 
-    def react(self, entity: BaseEntity):
+    def react(self, entity: BaseEntity, deltatime):
         towards = 1
         away = -1
 
@@ -200,17 +198,16 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = round(math.degrees(math.atan2(vector[1], vector[0])) - 45)
+        bearing = round(math.degrees(math.atan2(vector[1], vector[0]))) + 60
 
-        print(f'BEARING {bearing}')
-        self.direction = self.map_angle(bearing)
+        print(f'BEARING {bearing}, {self.map_angle(bearing)}. VECTOR {vector}')
 
-        # if bearing > 0:
-        #     self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction)
-        # elif bearing < 0:
-        #     self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction)
+        if bearing > 0:
+            self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction * deltatime)
+        elif bearing < 0:
+            self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction * deltatime)
 
-        self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value
+        self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value * deltatime
         print(f"{self.id} is Reacting {'Towards' if reaction == 1 else 'Away'}")
 
     def birth(self, parent=None):
@@ -253,11 +250,10 @@ class Creature(BaseEntity):
                     print(f"{self.id} is seeing {entity.id}")
                     self.vision_entities.append(entity)
 
-            print(self.vision_entities)
             chosen_entity = random.choice(self.vision_entities) if len(self.vision_entities) != 0 else None
             if chosen_entity:
                 self.visible_entity = chosen_entity
-                self.react(chosen_entity)
+                self.react(chosen_entity, deltatime)
                 self.seeing = True
             else:
                 self.seeing = False
