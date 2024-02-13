@@ -158,13 +158,18 @@ class Creature(BaseEntity):
         vector_distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
         if vector_distance < self.genes.vision_radius.value:
             self.check_entities.append(entity)
-            bearing = math.degrees(math.atan2(vector[1], vector[0])) + 60
+            bearing = math.degrees(math.atan2(-1 * vector[1], vector[0]))
 
-            angular_distance = self.map_angle(bearing - self.direction)
+            # angular_distance = self.map_angle(bearing - self.direction)
 
-            print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
+            # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
 
-            if angular_distance < self.genes.vision_angle.value:
+            left_boundary = self.map_angle(self.direction - self.genes.vision_angle.value//2)
+            right_boundary = self.map_angle(self.direction + self.genes.vision_angle.value//2)
+
+            # Checks for the minimum and maximum values, since sometimes the right boundary goes over 360 and
+            # becomes a small value (e.g. 366 becomes 6 degrees)
+            if min(left_boundary, right_boundary) <= -bearing <= max(right_boundary, left_boundary):
                 return True
             else:
                 ...
@@ -198,7 +203,7 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = round(math.degrees(math.atan2(vector[1], vector[0]))) + 60
+        bearing = round(math.degrees(math.atan2(-1 * vector[1], vector[0]))) + 60
 
         print(f'BEARING {bearing}, {self.map_angle(bearing)}. VECTOR {vector}')
 
