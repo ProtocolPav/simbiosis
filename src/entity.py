@@ -152,28 +152,26 @@ class Creature(BaseEntity):
         return False
 
     def vision(self, entity: BaseEntity) -> bool:
-        # Because of how pygame works, angle 0 is facing to the right, and 360 is facing up
+        # Because of how pygame works, angle 0 is facing to the right, and 270 is facing up
         vector = (entity.x - self.x,
                   entity.y - self.y)
         vector_distance = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
         if vector_distance < self.genes.vision_radius.value:
             self.check_entities.append(entity)
-            bearing = math.degrees(math.atan2(-1 * vector[1], vector[0]))
 
-            # angular_distance = self.map_angle(bearing - self.direction)
-
-            # print(vector, vector_distance, bearing, angular_distance, self.genes.vision_angle.value)
+            # Map the bearing to the range [0, 360] and flip the angle
+            bearing = self.map_angle(-1 * math.degrees(math.atan2(-1 * vector[1], vector[0])))
 
             left_boundary = self.map_angle(self.direction - self.genes.vision_angle.value//2)
             right_boundary = self.map_angle(self.direction + self.genes.vision_angle.value//2)
 
             # Checks for the minimum and maximum values, since sometimes the right boundary goes over 360 and
             # becomes a small value (e.g. 366 becomes 6 degrees)
-            print(left_boundary, right_boundary, self.map_angle(-bearing))
-            if left_boundary < right_boundary and left_boundary <= self.map_angle(-bearing) <= right_boundary:
+            print(left_boundary, right_boundary, bearing)
+
+            if left_boundary < right_boundary and left_boundary <= bearing <= right_boundary:
                 return True
-            elif (left_boundary > right_boundary) and \
-                    (left_boundary <= self.map_angle(-bearing) <= 360 or 0 <= self.map_angle(-bearing) <= right_boundary):
+            elif (left_boundary > right_boundary) and (left_boundary <= bearing <= 360 or 0 <= bearing <= right_boundary):
                 return True
             else:
                 ...
@@ -207,7 +205,7 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = -round(math.degrees(math.atan2(-1 * vector[1], vector[0])))
+        bearing = -self.map_angle(math.degrees(math.atan2(-1 * vector[1], vector[0])))
 
         if bearing > self.direction:
             self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction * deltatime)
