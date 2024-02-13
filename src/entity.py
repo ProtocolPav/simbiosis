@@ -169,7 +169,10 @@ class Creature(BaseEntity):
 
             # Checks for the minimum and maximum values, since sometimes the right boundary goes over 360 and
             # becomes a small value (e.g. 366 becomes 6 degrees)
-            if min(left_boundary, right_boundary) <= -bearing <= max(right_boundary, left_boundary):
+            print(left_boundary, right_boundary, self.map_angle(-bearing))
+            if left_boundary < right_boundary and left_boundary <= self.map_angle(-bearing) <= right_boundary:
+                return True
+            elif left_boundary <= self.map_angle(-bearing) <= 360 or 0 <= self.map_angle(-bearing) <= right_boundary:
                 return True
             else:
                 ...
@@ -203,7 +206,7 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = round(math.degrees(math.atan2(-1 * vector[1], vector[0]))) + 60
+        bearing = -round(math.degrees(math.atan2(-1 * vector[1], vector[0]))) + 60
 
         print(f'BEARING {bearing}, {self.map_angle(bearing)}. VECTOR {vector}')
 
