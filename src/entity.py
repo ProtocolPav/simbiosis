@@ -205,7 +205,7 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = -self.map_angle(math.degrees(math.atan2(-1 * vector[1], vector[0])))
+        bearing = self.map_angle(-1 * math.degrees(math.atan2(-1 * vector[1], vector[0])))
 
         if bearing > self.direction:
             self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction * deltatime)
