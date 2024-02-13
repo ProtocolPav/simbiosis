@@ -172,7 +172,8 @@ class Creature(BaseEntity):
             print(left_boundary, right_boundary, self.map_angle(-bearing))
             if left_boundary < right_boundary and left_boundary <= self.map_angle(-bearing) <= right_boundary:
                 return True
-            elif left_boundary <= self.map_angle(-bearing) <= 360 or 0 <= self.map_angle(-bearing) <= right_boundary:
+            elif (left_boundary > right_boundary) and \
+                    (left_boundary <= self.map_angle(-bearing) <= 360 or 0 <= self.map_angle(-bearing) <= right_boundary):
                 return True
             else:
                 ...
@@ -206,13 +207,11 @@ class Creature(BaseEntity):
 
         vector = (entity.x - self.x,
                   entity.y - self.y)
-        bearing = -round(math.degrees(math.atan2(-1 * vector[1], vector[0]))) + 60
+        bearing = -round(math.degrees(math.atan2(-1 * vector[1], vector[0])))
 
-        print(f'BEARING {bearing}, {self.map_angle(bearing)}. VECTOR {vector}')
-
-        if bearing > 0:
+        if bearing > self.direction:
             self.direction = self.map_angle(self.direction + self.genes.react_speed.value * reaction * deltatime)
-        elif bearing < 0:
+        elif bearing < self.direction:
             self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction * deltatime)
 
         self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value * deltatime
