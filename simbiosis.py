@@ -292,20 +292,31 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
+        preset = 'none'
+
         self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 400)
         if self.preset_1.button.check_for_press():
+            preset = 'loneisland'
             self.current_menu = 'sim_screen'
 
         self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 400)
         if self.preset_2.button.check_for_press():
+            preset = 'redgreenblue'
             self.current_menu = 'sim_screen'
 
         self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 400)
         if self.preset_3.button.check_for_press():
+            preset = 'evolveplus'
             self.current_menu = 'sim_screen'
 
         self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 400)
         if self.preset_4.button.check_for_press():
+            preset = 'forever'
+            self.current_menu = 'sim_screen'
+
+        if os.path.exists(f'presets/{preset}.json'):
+            save_dict = json.load(open(f'presets/{preset}.json', 'r'))
+            self.world = World.load(save_dict, self.creature_image, self.food_image)
             self.current_menu = 'sim_screen'
 
     def simulation_screen(self, deltatime):
@@ -383,6 +394,9 @@ class Simulation:
 
                 case 'select_preset':
                     self.choose_preset_menu()
+
+                case 'help':
+                    ...
 
                 case 'sim_screen':
                     self.simulation_screen(deltatime)

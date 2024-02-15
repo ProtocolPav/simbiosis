@@ -116,13 +116,14 @@ class Creature(BaseEntity):
         return self.direction / (180 / math.pi)
 
     @staticmethod
-    def map_angle(angle: float, range: int = 360) -> float:
+    def map_angle(angle: float, max_range: int = 360) -> float:
         """
         Maps the angle given to fall within [0, 360]
+        :param max_range:
         :param angle:
         :return:
         """
-        return angle % range
+        return angle % max_range
 
     def move(self, deltatime: float):
         if not self.within_border():
@@ -162,8 +163,8 @@ class Creature(BaseEntity):
             # Map the bearing to the range [0, 360] and flip the angle
             bearing = self.map_angle(-1 * math.degrees(math.atan2(-1 * vector[1], vector[0])))
 
-            left_boundary = self.map_angle(self.direction - self.genes.vision_angle.value//2)
-            right_boundary = self.map_angle(self.direction + self.genes.vision_angle.value//2)
+            left_boundary = self.map_angle(self.direction - self.genes.vision_angle.value // 2)
+            right_boundary = self.map_angle(self.direction + self.genes.vision_angle.value // 2)
 
             # Checks for the minimum and maximum values, since sometimes the right boundary goes over 360 and
             # becomes a small value (e.g. 366 becomes 6 degrees)
