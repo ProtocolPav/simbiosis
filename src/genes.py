@@ -4,7 +4,7 @@ from logs import log
 
 class Gene:
     def __init__(self, name: str, acronym: str, value: float, can_mutate: bool = True,
-                 min_value: float = 0, max_value: float = 99999, integer: bool = False):
+                 min_value: float = 0, max_value: float = 9999999999999999, integer: bool = False):
         self.name = name
         self.acronym = acronym.upper()
         self.value = value
@@ -116,20 +116,20 @@ class CreatureGenes:
         genes_object.turning_energy = Gene(name="Energy Consumed for Turning", acronym="ENT", value=random.uniform(5, 100),
                                            min_value=1)
         genes_object.birth_energy = Gene(name="Energy Consumed for Birthing", acronym="ENI",
-                                         value=random.uniform(genes_object.base_energy.value * 60,
-                                                              genes_object.base_energy.value * 6000),
+                                         value=random.uniform(genes_object.movement_energy.value * 600,
+                                                              genes_object.movement_energy.value * 6000),
                                          min_value=1)
         genes_object.plant_energy = Gene(name="% of Energy Gained From Eating", acronym="ENP", value=random.random(),
-                                         min_value=0)
+                                         min_value=0, max_value=1)
 
         # Genes affecting Creature Behaviour
         genes_object.vision_radius = Gene(name="Vision Radius", acronym="VIR",
                                           value=random.uniform(genes_object.radius.value, genes_object.radius.value + 10))
         genes_object.vision_angle = Gene(name="Vision Angle", acronym="VIA", value=random.randint(1, 180),
-                                         min_value=1)
+                                         min_value=1, max_value=300)
         genes_object.react_towards = Gene(name="Reaction Towards Entity", acronym="RTO", value=random.random(),
-                                          min_value=0)
-        genes_object.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.uniform(10, 360),
+                                          min_value=0, max_value=1)
+        genes_object.react_speed = Gene(name="Reaction Speed", acronym="RSP", value=random.uniform(30, 360),
                                         min_value=0)
 
         # Genes which offset the RTO based on what the creature is seeing

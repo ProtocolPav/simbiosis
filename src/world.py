@@ -140,7 +140,7 @@ class World:
 
             if self.food_second >= self.food_second_split:
                 self.spawn_food()
-                self.food_second = 0
+                self.food_second -= self.food_second_split
 
     def spawn_food(self):
         food = random.choice(self.food) if len(self.food) != 0 else None

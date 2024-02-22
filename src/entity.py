@@ -127,10 +127,8 @@ class Creature(BaseEntity):
 
     def move(self, deltatime: float):
         if not self.within_border():
-            # The values need tweaking as sometimes they bug out and leave the border
-            angle = 180 + random.randint(-10, 10)
-            self.direction = self.map_angle(self.direction + angle)
-            self.energy -= self.genes.turning_energy.value * angle
+            self.direction = self.map_angle(self.direction - 90)
+            self.energy -= self.genes.turning_energy.value * 1
 
         x_dist = math.cos(self.direction_radians()) * self.genes.speed.value * deltatime
         y_dist = math.sin(self.direction_radians()) * self.genes.speed.value * deltatime
@@ -168,7 +166,6 @@ class Creature(BaseEntity):
 
             # Checks for the minimum and maximum values, since sometimes the right boundary goes over 360 and
             # becomes a small value (e.g. 366 becomes 6 degrees)
-            print(left_boundary, right_boundary, bearing)
 
             if left_boundary < right_boundary and left_boundary <= bearing <= right_boundary:
                 return True
@@ -231,8 +228,14 @@ class Creature(BaseEntity):
                     gene_object.value = (gene_object.value + parent_genes[gene].value) // 2
                     gene_object.mutate()
 
-            self.child = Creature.create_child(self.x + self.radius * 2, self.y - self.radius * 2, self.image,
+            new_coords = [self.x + random.uniform(self.radius * 4, self.radius * 8) * random.choice([1, -1]),
+                          self.y + random.uniform(self.radius * 4, self.radius * 8) * random.choice([1, -1])]
+
+            self.child = Creature.create_child(new_coords[0], new_coords[1], self.image,
                                                self.world_bottom_right, child_genes, self.genes.birth_energy.value)
+
+            if not self.child.within_border():
+                self.child.dead = True
 
     def tick(self, deltatime: float, range_search_box: list[BaseEntity]):
         """

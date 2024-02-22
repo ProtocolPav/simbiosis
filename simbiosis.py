@@ -42,6 +42,7 @@ class Simulation:
         self.load_button = Button('load')
         self.help_button = Button('help')
         self.back_button = Button('back')
+        self.no_save_slot_button = Button('No Slot', 40)
 
         self.save_display_1 = SaveSlotDisplay('Slot 1',
                                               'Empty')
@@ -63,9 +64,8 @@ class Simulation:
         self.preset_3 = PresetDisplay('Evolve+',
                                       'an environment\ndesigned to foster\nevolution. everything\n'
                                       'is precisely adjusted.\nwatch as the species\ngrow and change.')
-        self.preset_4 = PresetDisplay('Forever',
-                                      'A preset designed\njust to watch the\ncreatures move.\n'
-                                      'these species never die\nand only grow in size.')
+        self.preset_4 = PresetDisplay('Random',
+                                      'A completely random\nset of species.\nWill you get\nlucky?')
 
         self.sim_screen_pause_button = Button('Pause')
         self.sim_screen_tickspeed_button = Button('x1')
@@ -81,8 +81,8 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World.create(size=1000, start_species=10, start_creatures=100, start_food=250,
-                                         food_spawn_rate=20, creature_image=self.creature_image,
+        self.world: World = World.create(size=1000, start_species=10, start_creatures=100, start_food=5000,
+                                         food_spawn_rate=40, creature_image=self.creature_image,
                                          food_image=self.food_image)
 
         # Menu Booleans
@@ -95,6 +95,7 @@ class Simulation:
 
         # Variable that holds the save slot
         self.save_slot = 0
+        self.preset = None
 
     def generate_save_slot_displays(self):
         attributes = ['save_display_1', 'save_display_2', 'save_display_3', 'save_display_4']
@@ -115,7 +116,7 @@ class Simulation:
         save_dict = {
             "save_data": {
                 "time": str(datetime.today()),
-                "preset": None
+                "preset": self.preset
             },
             "world": {
                 "size": self.world.size,
@@ -226,6 +227,7 @@ class Simulation:
         if os.path.exists(f'saves/sim{self.save_slot}.json'):
             save_dict = json.load(open(f'saves/sim{self.save_slot}.json', 'r'))
             self.world = World.load(save_dict, self.creature_image, self.food_image)
+            self.preset = save_dict['save_data']['preset']
             self.current_menu = 'sim_screen'
 
     def choose_new_save_menu(self):
@@ -270,6 +272,12 @@ class Simulation:
             self.save_slot = 4
             self.current_menu = 'select_preset'
 
+        self.no_save_slot_button.draw(self.screen, (self.screen.get_width() - self.no_save_slot_button.rect.w) // 2,
+                                      self.screen.get_height() - 200)
+        if self.no_save_slot_button.check_for_press(0.1):
+            self.save_slot = 5
+            self.current_menu = 'select_preset'
+
     def choose_preset_menu(self):
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
         self.screen.blit(copy_image, (0, 0))
@@ -292,30 +300,28 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        preset = 'none'
-
         self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 400)
         if self.preset_1.button.check_for_press():
-            preset = 'loneisland'
+            self.preset = 'loneisland'
             self.current_menu = 'sim_screen'
 
         self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 400)
         if self.preset_2.button.check_for_press():
-            preset = 'redgreenblue'
+            self.preset = 'redgreenblue'
             self.current_menu = 'sim_screen'
 
         self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 400)
         if self.preset_3.button.check_for_press():
-            preset = 'evolveplus'
+            self.preset = 'evolveplus'
             self.current_menu = 'sim_screen'
 
         self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 400)
         if self.preset_4.button.check_for_press():
-            preset = 'forever'
+            self.preset = 'random'
             self.current_menu = 'sim_screen'
 
-        if os.path.exists(f'presets/{preset}.json'):
-            save_dict = json.load(open(f'presets/{preset}.json', 'r'))
+        if os.path.exists(f'presets/{self.preset}.json'):
+            save_dict = json.load(open(f'presets/{self.preset}.json', 'r'))
             self.world = World.load(save_dict, self.creature_image, self.food_image)
             self.current_menu = 'sim_screen'
 
@@ -369,7 +375,7 @@ class Simulation:
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.program_running = False
+                        self.current_menu = 'start'
 
                     if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
                         self.world.paused = not self.world.paused
