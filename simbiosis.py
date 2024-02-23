@@ -1,5 +1,7 @@
 # Alpha v0.4
 import os
+import random
+import time
 
 if not os.path.exists('logs/'):
     os.mkdir('logs/')
@@ -42,7 +44,7 @@ class Simulation:
         self.load_button = Button('load')
         self.help_button = Button('help')
         self.back_button = Button('back')
-        self.no_save_slot_button = Button('No Slot', 40)
+        self.no_save_slot_button = Button('Play without\n     saving', 23)
 
         self.save_display_1 = SaveSlotDisplay('Slot 1',
                                               'Empty')
@@ -81,7 +83,7 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World.create(size=1000, start_species=10, start_creatures=100, start_food=5000,
+        self.world: World = World.create(size=1500, start_species=10, start_creatures=100, start_food=5000,
                                          food_spawn_rate=40, creature_image=self.creature_image,
                                          food_image=self.food_image)
 
@@ -361,7 +363,7 @@ class Simulation:
                                           self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_graph_button.check_for_press():
             self.current_menu = 'graph'
-    
+
     def main(self):
         while self.program_running:
             deltatime = clock.tick(120) / 1000

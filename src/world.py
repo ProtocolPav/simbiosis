@@ -5,6 +5,7 @@ import pygame
 from src.entity import Creature, Food
 from src.genes import CreatureGenes
 from src.tree import KDTree
+from src.characteristics import generate_characteristics
 
 import random
 
@@ -154,7 +155,7 @@ class World:
         else:
             spawned = False
             while not spawned:
-                temporary_coordinates = (food.x + random.randint(-5, 5), food.y + random.randint(-5, 5))
+                temporary_coordinates = (food.x + random.randint(-20, 20), food.y + random.randint(-20, 20))
 
                 new_food = Food.create(temporary_coordinates[0],
                                        temporary_coordinates[1],
@@ -257,7 +258,9 @@ class Camera:
                 creature_rect = rotated_image.get_rect(center=drawing_rect.center)
                 self.screen.blit(rotated_image, creature_rect)
 
+                # Display creature Characteristics if the user is hovering over the creature
                 if self.check_for_mouse_hover(creature_rect):
+                    generate_characteristics(creature, world.creatures)
                     self.screen.blit(copy_image, creature_rect)
 
                 if debug:
