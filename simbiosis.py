@@ -320,6 +320,9 @@ class Simulation:
         self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 400)
         if self.preset_4.button.check_for_press():
             self.preset = 'random'
+            self.world: World = World.create(size=1500, start_species=10, start_creatures=100, start_food=5000,
+                                             food_spawn_rate=40, creature_image=self.creature_image,
+                                             food_image=self.food_image)
             self.current_menu = 'sim_screen'
 
         if os.path.exists(f'presets/{self.preset}.json'):
@@ -378,6 +381,8 @@ class Simulation:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.current_menu = 'start'
+                        self.save_slot = 0
+                        self.preset = None
 
                     if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
                         self.world.paused = not self.world.paused
