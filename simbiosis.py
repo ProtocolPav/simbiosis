@@ -1,5 +1,7 @@
 # Alpha v0.4
 import os
+import random
+import time
 
 if not os.path.exists('logs/'):
     os.mkdir('logs/')
@@ -293,11 +295,9 @@ class Simulation:
         self.screen.blit(copy_image, (0, 0))
 
         # To keep each line in the title centered, I have split them up into their own texts.
-        titles = [TextDisplay('Choose from curated',
+        titles = [TextDisplay('Choose from specially curated',
                               (217, 255, 200), 50),
-                  TextDisplay('presets or configure',
-                              (217, 255, 200), 50),
-                  TextDisplay('your own simulation',
+                  TextDisplay('presets',
                               (217, 255, 200), 50)
                   ]
 
