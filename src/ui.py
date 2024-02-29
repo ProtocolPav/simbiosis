@@ -27,7 +27,7 @@ class Button:
         self.pressed = self.image.copy()
         pygame.PixelArray(self.pressed).replace((0, 0, 0), (46, 139, 87))
 
-        self.last_pressed = datetime.now()
+        self.mouse_down = False
 
         self.is_hovered = False
 
@@ -61,11 +61,10 @@ class Button:
 
     def check_for_press(self, delay: float = 0):
         self.check_for_hover()
-        # The time check is to make sure that you can't just hold down the button
-        # Optional delay between a button press and action. Mainly for the menu screens
-        if pygame.mouse.get_pressed()[0] and self.is_hovered and datetime.now() - self.last_pressed > timedelta(seconds=0.2):
-            self.last_pressed = datetime.now()
-            time.sleep(delay)
+        if pygame.mouse.get_pressed()[0] and self.is_hovered:
+            self.mouse_down = True
+        elif not pygame.mouse.get_pressed()[0] and self.mouse_down:
+            self.mouse_down = False
             return True
 
 
