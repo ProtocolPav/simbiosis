@@ -1,7 +1,5 @@
 # Alpha v0.4
 import os
-import random
-import time
 
 if not os.path.exists('logs/'):
     os.mkdir('logs/')
@@ -16,6 +14,8 @@ from src.ui import Button, TextDisplay, SmallContentDisplay, PresetDisplay, Save
 
 from datetime import datetime, timedelta
 
+from matplotlib import pyplot
+
 creature_image = pygame.image.load('resources/textures/creature3.png')
 food_image = pygame.image.load('resources/textures/food1.png')
 
@@ -29,7 +29,7 @@ class Simulation:
     def __init__(self):
         pygame.init()
 
-        self.screen = pygame.display.set_mode((1800, 950), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode((1800, 950), pygame.FULLSCREEN)
 
         # pygame.mouse.set_visible(False)
         # self.cursor_image = pygame.image.load('resources/textures/cursor.png')
@@ -44,6 +44,9 @@ class Simulation:
         self.load_button = Button('load')
         self.help_button = Button('help')
         self.back_button = Button('back')
+        self.quit_button = Button('quit')
+        self.next_graph_button = Button('>', 100)
+        self.previous_graph_button = Button('<', 100)
         self.no_save_slot_button = Button('Play without\n     saving', 23)
 
         self.save_display_1 = SaveSlotDisplay('Slot 1',
@@ -83,8 +86,8 @@ class Simulation:
         self.clock = pygame.time.Clock()
 
         self.camera = Camera(self.screen)
-        self.world: World = World.create(size=1500, start_species=10, start_creatures=100, start_food=5000,
-                                         food_spawn_rate=40, creature_image=self.creature_image,
+        self.world: World = World.create(size=0, start_species=0, start_creatures=0, start_food=0,
+                                         food_spawn_rate=1, creature_image=self.creature_image,
                                          food_image=self.food_image)
 
         # Menu Booleans
@@ -187,6 +190,11 @@ class Simulation:
                               self.screen.get_height() // 2 + 130)
         if self.help_button.check_for_press():
             self.current_menu = 'help'
+
+        self.quit_button.draw(self.screen, (self.screen.get_width() - self.quit_button.rect.w) // 2,
+                              self.screen.get_height() // 2 + 245)
+        if self.quit_button.check_for_press():
+            self.current_menu = 'quit'
 
     def load_save_menu(self):
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
@@ -302,22 +310,22 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'start'
 
-        self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 400)
+        self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 300)
         if self.preset_1.button.check_for_press():
             self.preset = 'loneisland'
             self.current_menu = 'sim_screen'
 
-        self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 400)
+        self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 300)
         if self.preset_2.button.check_for_press():
             self.preset = 'redgreenblue'
             self.current_menu = 'sim_screen'
 
-        self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 400)
+        self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 300)
         if self.preset_3.button.check_for_press():
             self.preset = 'evolveplus'
             self.current_menu = 'sim_screen'
 
-        self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 400)
+        self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
         if self.preset_4.button.check_for_press():
             self.preset = 'random'
             self.world: World = World.create(size=1500, start_species=10, start_creatures=100, start_food=5000,
@@ -329,6 +337,33 @@ class Simulation:
             save_dict = json.load(open(f'presets/{self.preset}.json', 'r'))
             self.world = World.load(save_dict, self.creature_image, self.food_image)
             self.current_menu = 'sim_screen'
+
+    def graph_screen(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('View graphs about the',
+                              (217, 255, 200), 50),
+                  TextDisplay('current simulation',
+                              (217, 255, 200), 50),
+                  TextDisplay('(You can use arrow keys to change graphs)',
+                              (217, 255, 200), 20)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        if self.back_button.check_for_press():
+            self.current_menu = 'sim_screen'
+
+        mapped_time_data_in_minutes = map(lambda x: x / 60, self.world.time_data)
+
+        pyplot.plot(list(mapped_time_data_in_minutes), self.world.__getattribute__("creature_count"))
+        pyplot.savefig('resources/graphs/creature_count.png')
 
     def simulation_screen(self, deltatime):
         if not self.world.paused:
@@ -415,7 +450,10 @@ class Simulation:
                     self.simulation_screen(deltatime)
 
                 case 'graph':
-                    self.simulation_screen(deltatime)
+                    self.graph_screen()
+
+                case 'quit':
+                    self.program_running = False
 
             # self.cursor_rect.topleft = pygame.mouse.get_pos()
             # self.screen.blit(self.cursor_image, self.cursor_rect)

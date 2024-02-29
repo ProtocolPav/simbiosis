@@ -7,6 +7,8 @@ from src.genes import CreatureGenes
 from src.tree import KDTree
 from src.characteristics import generate_characteristics
 
+from datetime import timedelta
+
 import random
 
 
@@ -36,6 +38,12 @@ class World:
         self.seconds = seconds
         self.delta_second = delta_seconds
         self.food_second = food_seconds
+
+        self.time_data: list[float] = [0]
+        self.creature_count = [len(self.creatures)]
+        self.food_count = [len(self.food)]
+        self.birth_count = [0]
+        self.death_count = [0]
 
         self.paused = paused
 
@@ -113,6 +121,9 @@ class World:
             self.delta_second += deltatime
             self.food_second += deltatime
 
+            births = 0
+            deaths = 0
+
             self.tree = KDTree(self.creatures + self.food)
 
             for creature in self.creatures:
@@ -127,17 +138,28 @@ class World:
                     self.food.remove(food)
 
                 if creature.dead:
+                    deaths += 1
                     self.creatures.remove(creature)
 
                 if self.delta_second >= 1:
                     creature.visible_entity = None
 
                 if creature.child is not None:
+                    births += 1
                     self.creatures.append(creature.child)
                     creature.child = None
 
             if self.delta_second >= 1:
                 self.delta_second = 0
+
+                self.time_data.append(self.seconds)
+                self.creature_count.append(len(self.creatures))
+                self.food_count.append(len(self.food))
+                self.birth_count.append(births)
+                self.death_count.append(deaths)
+
+                print(self.time_data)
+                print(self.creature_count)
 
             if self.food_second >= self.food_second_split:
                 self.spawn_food()

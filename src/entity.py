@@ -211,7 +211,8 @@ class Creature(BaseEntity):
             self.direction = self.map_angle(self.direction - self.genes.react_speed.value * reaction * deltatime)
 
         self.energy -= self.genes.turning_energy.value * self.genes.react_speed.value * deltatime
-        print(f"{self.id} is Reacting {'Towards' if reaction == 1 else 'Away'}")
+
+        log(f"[REACTION] Creature {self.id} is reacting {'Towards' if reaction == 1 else 'Away'} {type(entity).__name__} {entity.id}")
 
     def birth(self, parent=None):
         if self.energy > self.genes.birth_energy.value:
@@ -256,7 +257,7 @@ class Creature(BaseEntity):
             for entity in range_search_box:
                 self.all_check_entities.append(entity)
                 if self.vision(entity):
-                    print(f"{self.id} is seeing {entity.id}")
+                    log(f"[VISION] Creature {self.id} is seeing {type(entity).__name__} {entity.id}")
                     self.vision_entities.append(entity)
 
             chosen_entity = random.choice(self.vision_entities) if len(self.vision_entities) != 0 else None
@@ -271,7 +272,7 @@ class Creature(BaseEntity):
 
             for entity in range_search_box:
                 if self.collision(entity) and isinstance(entity, Food) and not entity.eaten:
-                    print(f"{self.id} is eating Food {entity.id}")
+                    log(f"[CONSUME] Creature {self.id} is eating {type(entity).__name__} {entity.id}")
                     entity.eaten = True
                     self.energy += entity.energy * self.genes.plant_energy.value
                     self.food_list.append(entity)
@@ -279,7 +280,7 @@ class Creature(BaseEntity):
                         self.birth()
 
                 elif self.collision(entity) and isinstance(entity, Creature):
-                    print(f"{self.id} is colliding with Creature {entity.id}")
+                    log(f"[COLLIDE] Creature {self.id} is colliding with {type(entity).__name__} {entity.id}")
                     self.birth(entity)
                     angle = random.randint(90, 180)
                     self.direction += angle
