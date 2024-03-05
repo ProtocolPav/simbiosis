@@ -16,7 +16,7 @@ from src.ui import Button, TextDisplay, SmallContentDisplay, PresetDisplay, Save
 
 from datetime import datetime, timedelta
 
-from matplotlib import pyplot
+from matplotlib import pyplot, font_manager
 
 creature_image = pygame.image.load('resources/textures/creature3.png')
 food_image = pygame.image.load('resources/textures/food1.png')
@@ -31,7 +31,7 @@ class Simulation:
     def __init__(self):
         pygame.init()
 
-        self.screen = pygame.display.set_mode((1800, 950), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
 
         # pygame.mouse.set_visible(False)
         # self.cursor_image = pygame.image.load('resources/textures/cursor.png')
@@ -104,6 +104,13 @@ class Simulation:
         self.save_slot = 0
         self.preset = None
 
+        # Variables for graphs
+        self.graph_types = [{'type': 'creature_count', 'colour': '#6495ED', 'label': 'Number of Creatures'},
+                            {'type': 'food_count', 'colour': '#00A36C', 'label': 'Number of Food Pellets'},
+                            {'type': 'birth_count', 'colour': '#FFBF00', 'label': 'Population Increase'}]
+
+        self.current_graph = self.graph_types[0]
+
     def generate_save_slot_displays(self):
         attributes = ['save_display_1', 'save_display_2', 'save_display_3', 'save_display_4']
 
@@ -137,7 +144,11 @@ class Simulation:
             },
             "creatures": [],
             "food": [],
-            "data": {}
+            "data": {'creature_count': self.world.creature_count,
+                     'food_count': self.world.food_count,
+                     'birth_count': self.world.birth_count,
+                     'death_count': self.world.birth_count,
+                     'time': self.world.time_data}
         }
 
         for creature in self.world.creatures:
@@ -346,9 +357,7 @@ class Simulation:
         titles = [TextDisplay('View graphs about the',
                               (217, 255, 200), 50),
                   TextDisplay('current simulation',
-                              (217, 255, 200), 50),
-                  TextDisplay('(You can use arrow keys to change graphs)',
-                              (217, 255, 200), 20)
+                              (217, 255, 200), 50)
                   ]
 
         for title in titles:
@@ -356,21 +365,83 @@ class Simulation:
             title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
                        30 + 10 * index + title.rect.height * index)
 
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Tip: You can use the arrow keys to navigate too!',
+                              (217, 255, 200), 25)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       self.screen.get_height() - (60 + 10 * index + title.rect.height * index))
+
         self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
         if self.back_button.check_for_press():
             self.current_menu = 'sim_screen'
 
-    def draw_graphs(self):
-        if len(self.world.time_data) > 60:
-            mapped_time_data_in_minutes = map(lambda x: x / 60, self.world.time_data[0::60])
-            creature_data = self.world.__getattribute__("creature_count")[0::60]
-        else:
-            mapped_time_data_in_minutes = map(lambda x: x / 60, self.world.time_data[0::1])
-            creature_data = self.world.__getattribute__("creature_count")[0::1]
+        self.previous_graph_button.draw(self.screen, 50, (self.screen.get_height() - self.back_button.rect.h) // 2)
+        if self.previous_graph_button.check_for_press():
+            self.paginate_graph(-1)
 
-        pyplot.cla()
-        pyplot.plot(list(mapped_time_data_in_minutes), creature_data)
-        pyplot.savefig('resources/graphs/creature_count.png', dpi=300)
+        self.next_graph_button.draw(self.screen, self.screen.get_width() - self.back_button.rect.w - 50,
+                                    (self.screen.get_height() - self.back_button.rect.h) // 2)
+        if self.next_graph_button.check_for_press():
+            self.paginate_graph(1)
+
+        display_graph = pygame.image.load(f'resources/graphs/{self.current_graph["type"]}.png')
+        position = ((self.screen.get_width() - display_graph.get_width()) // 2,
+                    (self.screen.get_height() - display_graph.get_height()) // 2)
+        self.screen.blit(display_graph, position)
+
+    def draw_graph(self):
+        graph_type = self.current_graph
+
+        fig = pyplot.figure(figsize=(12, 7))
+        ax: pyplot.Axes = pyplot.subplot()
+        prop = font_manager.FontProperties(fname='resources/pixel_digivolve.otf')
+
+        if len(self.world.time_data) > 60:
+            mapped_time_data_in_minutes = list(map(lambda x: x / 60, self.world.time_data[0::1]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::1]
+
+            ax.set_xlabel("Time (minutes)", fontproperties=prop, size=12, color='#caf7b7')
+        else:
+            mapped_time_data_in_minutes = list(map(lambda x: x // 1, self.world.time_data[0::1]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::1]
+
+            ax.set_xlabel("Time (seconds)", fontproperties=prop, size=12, color='#caf7b7')
+
+        print(len(mapped_data), len(mapped_time_data_in_minutes))
+
+        ax.set_ylabel(graph_type['label'], fontproperties=prop, size=12, color='#caf7b7')
+        ax.set_title(f'{graph_type["label"]} over Time', fontproperties=prop, size=30, color='#caf7b7')
+        ax.grid(visible=True, axis='both', color='#272d35', linestyle='dashed')
+        ax.grid(visible=True, axis='x', which='minor', color='#272d35', linestyle='dotted')
+        ax.set_facecolor('#000712')
+        ax.tick_params(axis='both', colors='#caf7b7')
+        ax.margins(0.01)
+        ax.plot(mapped_time_data_in_minutes, mapped_data, graph_type['colour'])
+
+        if min(mapped_data) >= 0:
+            ax.fill_between(mapped_time_data_in_minutes, mapped_data, min(mapped_data),
+                            facecolor=graph_type['colour'], alpha=0.1)
+        else:
+            ax.fill_between(mapped_time_data_in_minutes, mapped_data, 0, facecolor='#FFBF00', alpha=0.1)
+            ax.plot(mapped_time_data_in_minutes, [0 for i in mapped_data], '#D22B2B')
+
+        fig.savefig(f'resources/graphs/{graph_type["type"]}.png', bbox_inches='tight', facecolor="#000712")
+
+        fig.clear()
+
+    def paginate_graph(self, direction: int):
+        if direction == 1:
+            default = 0
+        else:
+            default = -1
+
+        index = self.graph_types.index(self.current_graph) + direction
+        self.current_graph = self.graph_types[index if index < len(self.graph_types) else default]
+        self.draw_graph()
 
     def simulation_screen(self, deltatime):
         if not self.world.paused:
@@ -408,7 +479,7 @@ class Simulation:
                                           self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_graph_button.check_for_press():
             self.current_menu = 'graph'
-            self.draw_graphs()
+            self.draw_graph()
 
     def main(self):
         while self.program_running:
@@ -422,7 +493,9 @@ class Simulation:
                     self.camera.zoom(event.y)
 
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
+                    if event.key == pygame.K_ESCAPE and self.current_menu == 'graph':
+                        self.current_menu = 'sim_screen'
+                    elif event.key == pygame.K_ESCAPE:
                         self.current_menu = 'start'
                         self.save_slot = 0
                         self.preset = None
@@ -437,6 +510,10 @@ class Simulation:
                         self.world.change_tick_speed(-1)
                     elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
                         self.save_game()
+                    elif event.key == pygame.K_RIGHT and self.current_menu == 'graph':
+                        self.paginate_graph(1)
+                    elif event.key == pygame.K_LEFT and self.current_menu == 'graph':
+                        self.paginate_graph(-1)
 
             match self.current_menu:
                 case 'start':

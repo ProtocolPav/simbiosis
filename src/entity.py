@@ -46,11 +46,11 @@ class BaseEntity:
         if 0 <= self.x <= self.world_bottom_right[0] and 0 <= self.y <= self.world_bottom_right[1]:
             return True
         # This needs work and testing. Essentially this whole if statememnt is never True
-        elif (not 0 <= self.x + self.radius <= self.world_bottom_right[0] or
-              not 0 <= self.x - self.radius <= self.world_bottom_right[0] or
-              not 0 <= self.y + self.radius <= self.world_bottom_right[1] or
-              not 0 <= self.y - self.radius <= self.world_bottom_right[1]):
-            return False
+        # elif (not 0 <= self.x + self.radius <= self.world_bottom_right[0] or
+        #       not 0 <= self.x - self.radius <= self.world_bottom_right[0] or
+        #       not 0 <= self.y + self.radius <= self.world_bottom_right[1] or
+        #       not 0 <= self.y - self.radius <= self.world_bottom_right[1]):
+        #     return False
 
         return False
 
@@ -126,10 +126,6 @@ class Creature(BaseEntity):
         return angle % max_range
 
     def move(self, deltatime: float):
-        if not self.within_border():
-            self.direction = self.map_angle(self.direction - 90)
-            self.energy -= self.genes.turning_energy.value * 1
-
         x_dist = math.cos(self.direction_radians()) * self.genes.speed.value * deltatime
         y_dist = math.sin(self.direction_radians()) * self.genes.speed.value * deltatime
 
@@ -137,6 +133,10 @@ class Creature(BaseEntity):
 
         self.x += x_dist
         self.y += y_dist
+
+        if not self.within_border():
+            self.direction = self.map_angle(self.direction - 90)
+            self.energy -= self.genes.turning_energy.value * 1
 
     def collision(self, entity: BaseEntity) -> bool:
         """

@@ -15,7 +15,8 @@ import random
 class World:
     def __init__(self, creature_image: pygame.Surface, food_image: pygame.Surface, world_size: int,
                  creatures: list[Creature], foods: list[Food], largest_radius: float, tick_speed: int,
-                 food_spawn_rate: int, seconds: float, delta_seconds: float, food_seconds: float, paused: bool):
+                 food_spawn_rate: int, seconds: float, delta_seconds: float, food_seconds: float, paused: bool,
+                 creature_count: list, food_count: list, birth_count: list, time_data: list):
         self.creature_image = creature_image
         self.food_image = food_image
 
@@ -39,11 +40,12 @@ class World:
         self.delta_second = delta_seconds
         self.food_second = food_seconds
 
-        self.time_data: list[float] = [0]
-        self.creature_count = [len(self.creatures)]
-        self.food_count = [len(self.food)]
-        self.birth_count = [0]
-        self.death_count = [0]
+        self.time_data: list[float] = time_data
+        self.creature_count = creature_count
+        self.food_count = food_count
+        self.birth_count = birth_count
+
+        self.births = 0
 
         self.paused = paused
 
@@ -69,10 +71,17 @@ class World:
                                        food['energy'], food['eaten']))
 
         world_data = save_dict['world']
+        graph_data: dict = save_dict['data']
+        graph_data['creature_count'] = graph_data.get('creature_count', [len(creatures_list)])
+        graph_data['food_count'] = graph_data.get('food_count', [len(food_list)])
+        graph_data['birth_count'] = graph_data.get('birth_count', [0])
+        graph_data['time_data'] = graph_data.get('time', [world_data['seconds']])
+
         return cls(creature_image, food_image, world_data['size'], creatures_list, food_list,
                    world_data['largest_radius'], world_data['tick_speed'], world_data['food_spawn_rate'],
                    world_data['seconds'], world_data['delta_seconds'], world_data['food_seconds'],
-                   world_data['paused'])
+                   world_data['paused'], graph_data['creature_count'], graph_data['food_count'],
+                   graph_data['birth_count'], graph_data['time_data'])
 
     @classmethod
     def create(cls, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
@@ -113,16 +122,14 @@ class World:
 
         return cls(creature_image, food_image, world_size=size, creatures=creatures_list, foods=food_list,
                    largest_radius=largest_radius, tick_speed=1, food_spawn_rate=food_spawn_rate, delta_seconds=0,
-                   seconds=0, food_seconds=0, paused=False)
+                   seconds=0, food_seconds=0, paused=False, creature_count=[len(creatures_list)], food_count=[len(food_list)],
+                   birth_count=[0], time_data=[0])
 
     def tick_world(self, deltatime: float):
         for i in range(self.tick_speed):
             self.seconds += deltatime
             self.delta_second += deltatime
             self.food_second += deltatime
-
-            births = 0
-            deaths = 0
 
             self.tree = KDTree(self.creatures + self.food)
 
@@ -138,14 +145,14 @@ class World:
                     self.food.remove(food)
 
                 if creature.dead:
-                    deaths += 1
+                    self.births -= 1
                     self.creatures.remove(creature)
 
                 if self.delta_second >= 1:
                     creature.visible_entity = None
 
                 if creature.child is not None:
-                    births += 1
+                    self.births += 1
                     self.creatures.append(creature.child)
                     creature.child = None
 
@@ -155,8 +162,9 @@ class World:
                 self.time_data.append(self.seconds)
                 self.creature_count.append(len(self.creatures))
                 self.food_count.append(len(self.food))
-                self.birth_count.append(births)
-                self.death_count.append(deaths)
+                self.birth_count.append(self.births)
+
+                self.births = 0
 
             if self.food_second >= self.food_second_split:
                 self.spawn_food()
