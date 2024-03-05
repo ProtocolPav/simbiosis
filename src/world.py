@@ -158,9 +158,6 @@ class World:
                 self.birth_count.append(births)
                 self.death_count.append(deaths)
 
-                print(self.time_data)
-                print(self.creature_count)
-
             if self.food_second >= self.food_second_split:
                 self.spawn_food()
                 self.food_second -= self.food_second_split
