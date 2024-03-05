@@ -107,7 +107,8 @@ class Simulation:
         # Variables for graphs
         self.graph_types = [{'type': 'creature_count', 'colour': '#6495ED', 'label': 'Number of Creatures'},
                             {'type': 'food_count', 'colour': '#00A36C', 'label': 'Number of Food Pellets'},
-                            {'type': 'birth_count', 'colour': '#FFBF00', 'label': 'Population Increase'}]
+                            {'type': 'cumulative_increase_count', 'colour': '#FFBF00', 'label': 'Cumulative Population Increase'},
+                            {'type': 'increase_count', 'colour': '#F3E5AB', 'label': 'Population Increase'}]
 
         self.current_graph = self.graph_types[0]
 
@@ -146,8 +147,9 @@ class Simulation:
             "food": [],
             "data": {'creature_count': self.world.creature_count,
                      'food_count': self.world.food_count,
-                     'birth_count': self.world.birth_count,
-                     'death_count': self.world.birth_count,
+                     'cumulative_increase_count': self.world.cumulative_increase_count,
+                     'increase_count': self.world.increase_count,
+                     'death_count': self.world.cumulative_increase_count,
                      'time': self.world.time_data}
         }
 
