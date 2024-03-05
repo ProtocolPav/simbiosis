@@ -360,21 +360,17 @@ class Simulation:
         if self.back_button.check_for_press():
             self.current_menu = 'sim_screen'
 
-        fig, axs = pyplot.subplots(2)
-
+    def draw_graphs(self):
         if len(self.world.time_data) > 60:
             mapped_time_data_in_minutes = map(lambda x: x / 60, self.world.time_data[0::60])
             creature_data = self.world.__getattribute__("creature_count")[0::60]
-            axs[0].plot(list(mapped_time_data_in_minutes), creature_data)
         else:
             mapped_time_data_in_minutes = map(lambda x: x / 60, self.world.time_data[0::1])
             creature_data = self.world.__getattribute__("creature_count")[0::1]
-            axs[1].plot(list(mapped_time_data_in_minutes), creature_data)
 
-        # pyplot.plot(list(mapped_time_data_in_minutes), creature_data)
-        # pyplot.savefig('resources/graphs/creature_count.png')
-
-        fig.savefig('resources/graphs/creature_count.png', dpi=500)
+        pyplot.cla()
+        pyplot.plot(list(mapped_time_data_in_minutes), creature_data)
+        pyplot.savefig('resources/graphs/creature_count.png', dpi=300)
 
     def simulation_screen(self, deltatime):
         if not self.world.paused:
@@ -412,6 +408,7 @@ class Simulation:
                                           self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_graph_button.check_for_press():
             self.current_menu = 'graph'
+            self.draw_graphs()
 
     def main(self):
         while self.program_running:
