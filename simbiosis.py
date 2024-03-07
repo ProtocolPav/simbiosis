@@ -497,6 +497,7 @@ class Simulation:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE and self.current_menu == 'graph':
                         self.current_menu = 'sim_screen'
+
                     elif event.key == pygame.K_ESCAPE:
                         self.current_menu = 'start'
                         self.save_slot = 0
@@ -504,16 +505,26 @@ class Simulation:
 
                     if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
                         self.world.paused = not self.world.paused
+
                     elif event.key == pygame.K_q and self.current_menu == 'sim_screen':
                         self.debug_screen = not self.debug_screen
+
+                    elif event.key == pygame.K_g and self.current_menu == 'sim_screen':
+                        self.current_menu = 'graph'
+                        self.draw_graph()
+
                     elif event.key == pygame.K_EQUALS and self.current_menu == 'sim_screen':
                         self.world.change_tick_speed(1)
+
                     elif event.key == pygame.K_MINUS and self.current_menu == 'sim_screen':
                         self.world.change_tick_speed(-1)
+
                     elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
                         self.save_game()
+
                     elif event.key == pygame.K_RIGHT and self.current_menu == 'graph':
                         self.paginate_graph(1)
+
                     elif event.key == pygame.K_LEFT and self.current_menu == 'graph':
                         self.paginate_graph(-1)
 
