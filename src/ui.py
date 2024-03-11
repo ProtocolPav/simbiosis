@@ -1,7 +1,7 @@
 import time
 
 import pygame
-from datetime import datetime, timedelta
+from src.entity import Creature
 
 
 class TextDisplay:
@@ -102,8 +102,13 @@ class SmallContentDisplay:
 
 
 class LargeContentDisplay:
-    def __init__(self, title_text: str, content: str):
-        self.image = pygame.image.load('resources/screens/components/largecontentdisplay.png')
+    def __init__(self, title_text: str, content: str, long: bool = False):
+        if long:
+            image = 'longcontentdisplay2'
+        else:
+            image = 'largecontentdisplay'
+
+        self.image = pygame.image.load(f'resources/screens/components/{image}.png')
         self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
 
         self.title = TextDisplay(title_text, (73, 82, 69), 35)
@@ -145,4 +150,29 @@ class SaveSlotDisplay(LargeContentDisplay):
 
 
 class CreatureCharacteristicsDisplay(LargeContentDisplay):
-    ...
+    def __init__(self, creature: Creature):
+        display_content = (f"ID: {creature.id}\n"
+                           f"Species ID: {creature.genes.species.get_value()}\n"
+                           f"Energy: {round(creature.energy)} e\n"
+                           f"Position: [{round(creature.get_coordinates()[0])}, {round(creature.get_coordinates()[1])}]\n\n"
+                           f"---------- GENES ---------\n"
+                           f"Colour: [{creature.genes.colour_red.value}, {creature.genes.colour_green.value}, "
+                           f"{creature.genes.colour_blue.value}]\n"
+                           f"Size: {creature.genes.radius.get_value()*2} px\n"
+                           f"Speed: {creature.genes.speed.get_value()} px/s\n"
+                           f"Vision Radius: {creature.genes.vision_radius.get_value()} px\n"
+                           f"Vision Angle: {creature.genes.vision_angle.get_value()} °\n"
+                           f"Reaction Speed: {creature.genes.react_speed.get_value()} °/s\n\n\n"
+                           f"--- ENERGY CONSUMPTION ---\n"
+                           f"Base: {creature.genes.base_energy.get_value()} e/s\n"
+                           f"Movement: {creature.genes.movement_energy.get_value()} e/px\n"
+                           f"Turning: {creature.genes.turning_energy.get_value()} e/°\n"
+                           f"Birthing: {creature.genes.birth_energy.get_value()} e\n"
+                           f"Food: {creature.genes.plant_energy.get_value()*100}% of Plant food\n\n\n"
+                           f"-- REACTION PROBABILITIES --\n"
+                           f"Towards Something: {creature.genes.react_towards.get_value()}\n"
+                           f"Towards Food: {creature.genes.react_towards.get_value() + creature.genes.food_offset.get_value()}\n"
+                           f"Towards Stranger: {creature.genes.react_towards.get_value() +creature.genes.stranger_offset.get_value()}\n"
+                           f"Towards Same Species: {creature.genes.react_towards.get_value() + creature.genes.known_offset.get_value()}")
+
+        super().__init__("Creature Stats", display_content, long=True)

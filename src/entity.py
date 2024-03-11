@@ -26,6 +26,7 @@ class BaseEntity:
         self.radius = radius
         self.image = image
         self.world_bottom_right = world_bottomright
+        self.mouse_down = False
 
         BaseEntity.id += 1
         log(f"[ENTITY] Created Entity {type(self).__name__} with ID {self.id}")

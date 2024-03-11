@@ -6,6 +6,7 @@ from src.entity import Creature, Food
 from src.genes import CreatureGenes
 from src.tree import KDTree
 from src.characteristics import generate_characteristics
+from src.ui import CreatureCharacteristicsDisplay
 
 from datetime import timedelta
 
@@ -217,6 +218,8 @@ class Camera:
         self.x_offset = 0
         self.y_offset = 0
         self.font = pygame.Font('freesansbold.ttf', 25)
+        self.creature_id_to_display = 0
+        self.mouse_down = False
 
     def draw_world(self, world: World, debug: bool = False):
         # Draw Background Colour
@@ -253,6 +256,7 @@ class Camera:
 
                 # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
 
+        display = None
         # Draw Creatures
         for creature in world.creatures:
             colour_to_draw = (int(creature.genes.colour_red.value),
@@ -276,6 +280,16 @@ class Camera:
 
             bound = -(creature.genes.radius.value / scale * 2)
 
+            # Display creature Characteristics if the user is hovering over the creature
+            if self.check_for_mouse_hover(drawing_rect):
+                display = CreatureCharacteristicsDisplay(creature)
+
+            if self.check_for_press(drawing_rect):
+                self.creature_id_to_display = creature.id
+
+            if self.creature_id_to_display == creature.id:
+                display = CreatureCharacteristicsDisplay(creature)
+
             # Don't draw if the creature is off the screen. Saves program from processing useless things
             if bound < drawing_rect.x < self.screen.get_width() and bound < drawing_rect.y < self.screen.get_height():
                 copy_image = creature.image.copy()
@@ -290,11 +304,6 @@ class Camera:
                 # Sets the center of the image to be aligned with the center position
                 creature_rect = rotated_image.get_rect(center=drawing_rect.center)
                 self.screen.blit(rotated_image, creature_rect)
-
-                # Display creature Characteristics if the user is hovering over the creature
-                if self.check_for_mouse_hover(creature_rect):
-                    generate_characteristics(creature, world.creatures)
-                    self.screen.blit(copy_image, creature_rect)
 
                 if debug:
                     # Draw all the vision lines to see what entities the creature is checking against
@@ -413,6 +422,9 @@ class Camera:
                     text_rect.center = (drawing_rect.center[0], drawing_rect.y + 14 * self.zoom_level)
                     self.screen.blit(text, text_rect)
 
+        if display:
+            display.draw(self.screen, (self.screen.get_width() - display.rect.w - 15), 15)
+
     def move(self, deltatime):
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
@@ -449,3 +461,12 @@ class Camera:
         if x_inside and y_inside:
             return True
         return False
+
+    def check_for_press(self, rect: pygame.Rect):
+        if pygame.mouse.get_pressed()[0] and self.check_for_mouse_hover(rect):
+            self.mouse_down = True
+        elif not pygame.mouse.get_pressed()[0] and self.mouse_down:
+            self.mouse_down = False
+            return True
+        elif pygame.mouse.get_pressed()[0] and not self.check_for_mouse_hover(rect):
+            return False

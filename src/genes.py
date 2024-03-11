@@ -43,6 +43,9 @@ class Gene:
                 'max': self.max,
                 'is_integer': self.is_type_integer}
 
+    def get_value(self):
+        return float(str(self.value)[0:3])
+
 
 class CreatureGenes:
     # Genes affecting Creature Appearance (Phenotype)
