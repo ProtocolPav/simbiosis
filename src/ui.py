@@ -167,7 +167,7 @@ class CreatureCharacteristicsDisplay(LargeContentDisplay):
                            f"Base: {creature.genes.base_energy.get_value()} e/s\n"
                            f"Movement: {creature.genes.movement_energy.get_value()} e/px\n"
                            f"Turning: {creature.genes.turning_energy.get_value()} e/°\n"
-                           f"Birthing: {creature.genes.birth_energy.get_value()} e\n"
+                           f"Birthing: {round(creature.genes.birth_energy.value)} e\n"
                            f"Food: {creature.genes.plant_energy.get_value()*100}% of Plant food\n\n\n"
                            f"-- REACTION PROBABILITIES --\n"
                            f"Towards Something: {creature.genes.react_towards.get_value()}\n"
