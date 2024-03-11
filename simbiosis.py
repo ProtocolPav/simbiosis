@@ -402,18 +402,35 @@ class Simulation:
         ax: pyplot.Axes = pyplot.subplot()
         prop = font_manager.FontProperties(fname='resources/pixel_digivolve.otf')
 
-        if len(self.world.time_data) > 60:
-            mapped_time_data_in_minutes = list(map(lambda x: x / 60, self.world.time_data[0::1]))
-            mapped_data = self.world.__getattribute__(graph_type['type'])[0::1]
+        # Set the precision of points
+        if len(self.world.time_data) > 3600*7:
+            # If interval is 7 hours, one point = 15 minutes
+            precision = 600
+        elif len(self.world.time_data) > 3600*3:
+            # If interval is 3 hours, one point = 1 minute
+            precision = 60
+        elif len(self.world.time_data) > 60*5:
+            # If interval is 5 minutes, one point = 30 seconds
+            precision = 30
+        else:
+            precision = 1
+
+        # Decide on the x-axis labels in seconds, hours or minutes
+        if len(self.world.time_data) > 3600:
+            mapped_time_data_in_minutes = list(map(lambda x: x / 3600, self.world.time_data[0::precision]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::precision]
+
+            ax.set_xlabel("Time (hours)", fontproperties=prop, size=12, color='#caf7b7')
+        elif len(self.world.time_data) > 60:
+            mapped_time_data_in_minutes = list(map(lambda x: x / 60, self.world.time_data[0::precision]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::precision]
 
             ax.set_xlabel("Time (minutes)", fontproperties=prop, size=12, color='#caf7b7')
         else:
-            mapped_time_data_in_minutes = list(map(lambda x: x // 1, self.world.time_data[0::1]))
-            mapped_data = self.world.__getattribute__(graph_type['type'])[0::1]
+            mapped_time_data_in_minutes = list(map(lambda x: x // 1, self.world.time_data[0::precision]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::precision]
 
             ax.set_xlabel("Time (seconds)", fontproperties=prop, size=12, color='#caf7b7')
-
-        print(len(mapped_data), len(mapped_time_data_in_minutes))
 
         ax.set_ylabel(graph_type['label'], fontproperties=prop, size=12, color='#caf7b7')
         ax.set_title(f'{graph_type["label"]} over Time', fontproperties=prop, size=30, color='#caf7b7')
