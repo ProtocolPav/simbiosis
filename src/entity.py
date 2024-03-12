@@ -103,6 +103,7 @@ class Creature(BaseEntity):
     def create_child(cls, x_position: float, y_position: float, image: pygame.Surface,
                      world_bottomright: tuple[int, int],
                      genes: CreatureGenes, energy: float):
+        genes.generation.value += 1
         return cls(x_position, y_position, image, world_bottomright, genes=genes, energy=energy,
                    dead=False, direction=random.randint(0, 360), food_list=[], memory_reaction=0, seeing=False)
 
@@ -220,7 +221,6 @@ class Creature(BaseEntity):
             self.energy -= self.genes.birth_energy.value
 
             child_genes = copy.deepcopy(self.genes)
-            child_genes.generation.value += 1
             if parent is None:
                 for gene, gene_object in vars(child_genes).items():
                     gene_object.mutate()

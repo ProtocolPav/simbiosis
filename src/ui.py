@@ -152,7 +152,8 @@ class SaveSlotDisplay(LargeContentDisplay):
 class CreatureCharacteristicsDisplay(LargeContentDisplay):
     def __init__(self, creature: Creature):
         display_content = (f"ID: {creature.id}\n"
-                           f"Species ID: {creature.genes.species.get_value()}\n"
+                           f"Species ID: {creature.genes.species.value}\n"
+                           f"Generation: {creature.genes.generation.value}\n"
                            f"Energy: {round(creature.energy)} e\n"
                            f"Position: [{round(creature.get_coordinates()[0])}, {round(creature.get_coordinates()[1])}]\n\n"
                            f"---------- GENES ---------\n"
@@ -172,7 +173,7 @@ class CreatureCharacteristicsDisplay(LargeContentDisplay):
                            f"-- REACTION PROBABILITIES --\n"
                            f"Towards Something: {creature.genes.react_towards.get_value()}\n"
                            f"Towards Food: {creature.genes.react_towards.get_value() + creature.genes.food_offset.get_value()}\n"
-                           f"Towards Stranger: {creature.genes.react_towards.get_value() +creature.genes.stranger_offset.get_value()}\n"
+                           f"Towards Stranger: {creature.genes.react_towards.get_value() + creature.genes.stranger_offset.get_value()}\n"
                            f"Towards Same Species: {creature.genes.react_towards.get_value() + creature.genes.known_offset.get_value()}")
 
         super().__init__("Creature Stats", display_content, long=True)
