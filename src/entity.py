@@ -93,8 +93,9 @@ class Creature(BaseEntity):
                    entity_id=entity_id)
 
     @classmethod
-    def create(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int]):
-        creature_genes = CreatureGenes.create(species=1, generation=1)
+    def create(cls, x_position: float, y_position: float, image: pygame.Surface, world_bottomright: tuple[int, int],
+               species: int):
+        creature_genes = CreatureGenes.create(species=species, generation=1)
         start_energy = creature_genes.base_energy.value * 6000
         return cls(x_position, y_position, image, world_bottomright, genes=creature_genes, energy=start_energy,
                    dead=False, direction=random.randint(0, 360), food_list=[], memory_reaction=0, seeing=False)

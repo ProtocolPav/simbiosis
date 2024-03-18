@@ -141,8 +141,10 @@ class Simulation:
                 "seconds": self.world.seconds,
                 "delta_seconds": self.world.delta_second,
                 "food_seconds": self.world.food_second,
-                "paused": self.world.paused
+                "paused": self.world.paused,
+                "species_id": self.world.species_id
             },
+            "specimens": {},
             "creatures": [],
             "food": [],
             "data": {'creature_count': self.world.creature_count,
@@ -178,6 +180,14 @@ class Simulation:
                 "energy": food.energy,
                 "position": [food.x, food.y]
             })
+
+        for specimen_id, specimen in self.world.specimens.items():
+            save_genes = []
+
+            for gene_name, value in specimen.__dict__.items():
+                save_genes.append(value.save_gene(gene_name))
+
+            save_dict['specimen'][specimen_id] = save_genes
 
         save_file = open(f'saves/sim{self.save_slot}.json', 'w')
 
@@ -474,7 +484,7 @@ class Simulation:
         world_time = timedelta(seconds=round(self.world.seconds))
         self.sim_screen_time_display.draw(self.screen, world_time, 10, 15)
         self.sim_screen_creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
-        self.sim_screen_species_display.draw(self.screen, 1, 10, BUTTON_SIZE * 2 + 45)
+        self.sim_screen_species_display.draw(self.screen, len(self.world.specimens), 10, BUTTON_SIZE * 2 + 45)
         self.sim_screen_food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
 
         self.sim_screen_pause_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE - 15)

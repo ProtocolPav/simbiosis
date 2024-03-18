@@ -17,13 +17,16 @@ class World:
     def __init__(self, creature_image: pygame.Surface, food_image: pygame.Surface, world_size: int,
                  creatures: list[Creature], foods: list[Food], largest_radius: float, tick_speed: int,
                  food_spawn_rate: int, seconds: float, delta_seconds: float, food_seconds: float, paused: bool,
-                 creature_count: list, food_count: list, cum_increase_count: list, increase_count: list, time_data: list):
+                 creature_count: list, food_count: list, cum_increase_count: list, increase_count: list, time_data: list,
+                 specimens: dict[int, CreatureGenes], species_id: int):
         self.creature_image = creature_image
         self.food_image = food_image
 
         self.size = world_size
 
         self.creatures = creatures
+        self.specimens = specimens
+        self.species_id = species_id
         self.food = foods
         self.tree: KDTree = KDTree([])
         self.largest_radius = largest_radius
@@ -85,7 +88,8 @@ class World:
                    world_data['largest_radius'], world_data['tick_speed'], world_data['food_spawn_rate'],
                    world_data['seconds'], world_data['delta_seconds'], world_data['food_seconds'],
                    world_data['paused'], graph_data['creature_count'], graph_data['food_count'],
-                   graph_data['cumulative_increase_count'], graph_data['increase_count'], graph_data['time_data'])
+                   graph_data['cumulative_increase_count'], graph_data['increase_count'], graph_data['time_data'],
+                   {})
 
     @classmethod
     def create(cls, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
@@ -97,6 +101,8 @@ class World:
         """
 
         creatures_list: list[Creature] = []
+        specimens_dict: dict[int, CreatureGenes] = {}
+        species_id = 1
         food_list: list[Food] = []
         largest_radius = 0
 
@@ -112,7 +118,10 @@ class World:
             specimen = Creature.create(random.randint(0, size - 1),
                                        random.randint(0, size - 1),
                                        creature_image,
-                                       (size, size))
+                                       (size, size),
+                                       species_id)
+            species_id += 1
+            specimens_dict[specimen.genes.species.value] = specimen.genes
 
             if specimen.radius >= largest_radius:
                 largest_radius = specimen.radius
@@ -127,7 +136,7 @@ class World:
         return cls(creature_image, food_image, world_size=size, creatures=creatures_list, foods=food_list,
                    largest_radius=largest_radius, tick_speed=1, food_spawn_rate=food_spawn_rate, delta_seconds=0,
                    seconds=0, food_seconds=0, paused=False, creature_count=[len(creatures_list)], food_count=[len(food_list)],
-                   cum_increase_count=[0], increase_count=[0], time_data=[0])
+                   cum_increase_count=[0], increase_count=[0], time_data=[0], specimens=specimens_dict, species_id=species_id)
 
     def tick_world(self, deltatime: float):
         for i in range(self.tick_speed):
