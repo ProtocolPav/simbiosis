@@ -35,7 +35,7 @@ class World:
         self.min_food_energy = 1000
         self.max_food_energy = 100000
         self.mutation_chance = 0.2
-        self.mutation_factor = 2
+        self.mutation_factor = 3
 
         self.seconds = seconds
         self.delta_second = delta_seconds

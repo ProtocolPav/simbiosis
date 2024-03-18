@@ -19,9 +19,9 @@ class Gene:
 
             if random.choices(population=["mutate", "no mutate"], weights=[probability, 1 - probability])[0] == "mutate":
                 if self.is_type_integer:
-                    self.value += round(random.uniform(-2 * factor, 2 * factor))
+                    self.value += round(random.uniform(-0.5 * factor, 0.5 * factor))
                 else:
-                    self.value += random.uniform(-0.2 * factor, 0.2 * factor)
+                    self.value += random.uniform(-0.05 * factor, 0.05 * factor)
 
                 if self.value < self.min:
                     self.value = self.min
@@ -29,7 +29,7 @@ class Gene:
                     self.value = self.max
 
             if old_value == self.value:
-                log(f"[MUTATION] {self.name} No Change")
+                log(f"[MUTATION] {self.name} No Change ({self.value})")
             else:
                 log(f"[MUTATION] {self.name} ({old_value} -> {self.value})")
 
@@ -122,7 +122,7 @@ class CreatureGenes:
                                          value=random.uniform(genes_object.movement_energy.value * 600,
                                                               genes_object.movement_energy.value * 6000),
                                          min_value=1)
-        genes_object.plant_energy = Gene(name="% of Energy Gained From Eating", acronym="ENP", value=random.random(),
+        genes_object.plant_energy = Gene(name="% of Energy Gained From Eating", acronym="ENP", value=random.uniform(0.5, 1),
                                          min_value=0, max_value=1)
 
         # Genes affecting Creature Behaviour
