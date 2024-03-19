@@ -23,10 +23,10 @@ class Gene:
                 else:
                     self.value += random.uniform(-0.05 * factor, 0.05 * factor)
 
-                if self.value < self.min:
-                    self.value = self.min
-                if self.value > self.max:
-                    self.value = self.max
+            if self.value <= self.min:
+                self.value = self.min
+            if self.value >= self.max:
+                self.value = self.max
 
             if old_value == self.value:
                 log(f"[MUTATION] {self.name} No Change ({self.value})")

@@ -27,6 +27,7 @@ class World:
         self.creatures = creatures
         self.specimens = specimens
         self.species_id = species_id
+        self.species_count = {}
         self.food = foods
         self.tree: KDTree = KDTree([])
         self.largest_radius = largest_radius
@@ -89,7 +90,7 @@ class World:
                    world_data['seconds'], world_data['delta_seconds'], world_data['food_seconds'],
                    world_data['paused'], graph_data['creature_count'], graph_data['food_count'],
                    graph_data['cumulative_increase_count'], graph_data['increase_count'], graph_data['time_data'],
-                   {})
+                   {}, world_data.get('species_id', 1))
 
     @classmethod
     def create(cls, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
@@ -145,6 +146,7 @@ class World:
             self.food_second += deltatime
 
             self.tree = KDTree(self.creatures + self.food)
+            self.species_count = {}
 
             for creature in self.creatures:
                 coordinates = creature.get_coordinates()
@@ -153,6 +155,9 @@ class World:
                                                         (coordinates[0] - boxsize, coordinates[1] + boxsize),
                                                         (coordinates[0] + boxsize, coordinates[1] - boxsize))
                 creature.tick(deltatime, creature_check)
+
+                specimen_id = creature.genes.species.value
+                self.species_count[specimen_id] = self.species_count.get(specimen_id, 0) + 1
 
                 for food in creature.food_list:
                     self.food.remove(food)
@@ -168,6 +173,9 @@ class World:
                 if creature.child is not None:
                     self.cumulative_increase += 1
                     self.increase += 1
+                    if self.check_for_new_species(creature.child.genes):
+                        creature.child.genes.species.value = self.species_id
+                        self.species_id += 1
                     self.creatures.append(creature.child)
                     creature.child = None
 
@@ -215,6 +223,23 @@ class World:
     def change_tick_speed(self, direction: int):
         if 0 < self.tick_speed + direction <= 10:
             self.tick_speed += direction
+
+    def check_for_new_species(self, genes: CreatureGenes):
+        print(genes.species.value)
+        specimen = self.specimens[int(genes.species.value)]
+        different_count = 0
+
+        for gene_name, gene in vars(genes).items():
+            if gene_name not in ['species', 'generation']:
+                specimen_gene = specimen.__getattribute__(gene_name)
+                if abs(specimen_gene.value - gene.value) >= specimen_gene.value/2:
+                    print(gene_name, specimen_gene.value, gene.value, abs(specimen_gene.value - gene.value), specimen_gene.value/2)
+                    different_count += 1
+
+        if different_count >= 6:
+            genes.species.value = self.species_id
+            self.specimens[self.species_id] = genes
+            return True
 
 
 class Camera:

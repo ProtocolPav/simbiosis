@@ -484,7 +484,7 @@ class Simulation:
         world_time = timedelta(seconds=round(self.world.seconds))
         self.sim_screen_time_display.draw(self.screen, world_time, 10, 15)
         self.sim_screen_creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
-        self.sim_screen_species_display.draw(self.screen, len(self.world.specimens), 10, BUTTON_SIZE * 2 + 45)
+        self.sim_screen_species_display.draw(self.screen, len(self.world.species_count), 10, BUTTON_SIZE * 2 + 45)
         self.sim_screen_food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
 
         self.sim_screen_pause_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE - 15)
