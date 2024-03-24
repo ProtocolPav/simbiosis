@@ -1,640 +1,590 @@
-# Alpha v0.2
-import math
-import copy
+# Alpha v0.4
+import os
 import random
-import yaml
+import time
 
-from datetime import datetime
+if not os.path.exists('logs/'):
+    os.mkdir('logs/')
+if not os.path.exists('saves/'):
+    os.mkdir('saves/')
+
+import json
 
 import pygame
-from pygame import Rect
+from src.world import World, Camera
+from src.ui import Button, TextDisplay, SmallContentDisplay, PresetDisplay, SaveSlotDisplay
 
-time_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-logfile = open(f"./logs/log-{time_now}.txt", "w")
+from datetime import datetime, timedelta
 
-logfile.write(f"Start Simbiosis Simulation v0.2 Alpha\n"
-              f"Start Time: {time_now}\n\n\n"
-              f"Runtime Logs:\n"
-              f"{'-'*60}\n")
+from matplotlib import pyplot, font_manager
 
-pygame.init()
+creature_image = pygame.image.load('resources/textures/creature3.png')
+food_image = pygame.image.load('resources/textures/food1.png')
 
-pygame.display.set_caption("SIMbiosis")
+pygame.display.set_caption("Simbiosis - Evolution Simulator")
+pygame.display.set_icon(food_image)
 
 clock = pygame.time.Clock()
 
 
-def log(message: str):
-    print(f"[{datetime.now()}]", message)
-    logfile.write(f"[{datetime.now()}] {message}\n")
-
-
-class WorldQuadrant:
-    def __init__(self, pos_x: int, pos_y: int, quadrant_size: int):
-        self.internal_rect = pygame.Rect(pos_x, pos_y, quadrant_size, quadrant_size)
-
-        self.collisions_dict: dict[int, CreatureBody] = {}
-        self.food_collisions_dict: dict[int, Food] = {}
-
-
-class World:
-    def __init__(self, quadrant_size: int, quadrant_rows: int = 2, start_species: int = 4, start_creatures: int = 10,
-                 start_cluster: int = 10):
-        world_size = quadrant_size * quadrant_rows
-        self.internal_rect = pygame.Rect(0, 0, world_size, world_size)
-        self.borders = [pygame.Rect(0, -1, world_size, 1),
-                        pygame.Rect(-1, 0, 1, world_size),
-                        pygame.Rect(0, world_size, world_size, 1),
-                        pygame.Rect(world_size, 0, 1, world_size)]
-        self.creatures: list[Creature] = []
-        self.food_clusters: list[FoodCluster] = []
-        self.ticks = 0
-        self.game_paused = False
-
-        self.quadrants = []
-        for x in range(quadrant_rows):
-            for y in range(quadrant_rows):
-                log(f"Appending {x * quadrant_size, y * quadrant_size, quadrant_size}")
-                self.quadrants.append(WorldQuadrant(x * quadrant_size, y * quadrant_size, quadrant_size))
-
-        for i in range(start_species):
-            species_creature = Creature(random.randint(0, world_size - 1), random.randint(0, world_size - 1))
-            for j in range(start_creatures):
-                x = species_creature.x_pos() + random.randint(-5, 5)
-                y = species_creature.y_pos() + random.randint(-5, 5)
-                self.creatures.append(Creature(x, y, genes=copy.deepcopy(species_creature.genes)))
-
-        for i in range(start_cluster):
-            cluster = FoodCluster(random.randint(1, self.internal_rect.w - 1),
-                                  random.randint(1, self.internal_rect.h - 1))
-            self.food_clusters.append(cluster)
-
-    def tick_game(self):
-        if not self.game_paused:
-            if random.choices(population=["no", "spawn cluster"], weights=[499, 1])[0] == "spawn cluster":
-                self.food_clusters.append(FoodCluster(random.randint(1, self.internal_rect.w - 1),
-                                                      random.randint(1, self.internal_rect.h - 1)))
-
-            for cluster in self.food_clusters:
-                if len(cluster.food) == 0:
-                    self.food_clusters.remove(cluster)
-                else:
-                    cluster.spawn_food(self.internal_rect)
-                    cluster.tick_food()
-
-            for creature in self.creatures:
-                creature.move()
-
-            for creature in self.creatures:
-                creature.collide()
-
-    def get_creature(self, creature_id):
-        for creat in self.creatures:
-            if creat.id == creature_id:
-                return creat
-
-
-class Food(pygame.Rect):
-    id = 0
-
-    def __init__(self, pos_x: int, pos_y: int, time_to_live: int, parent_cluster):
-        super().__init__(pos_x, pos_y, 1, 1)
-        self.id = Food.id
-        self.total_ticks = time_to_live
-        self.ticks = 0
-        self.cluster = parent_cluster
-        self.energy = random.randint(5000, 10000)
-        self.eaten = False
-
-        Food.id += 1
-
-    def __repr__(self):
-        return f"Food({self.id}, {self.x}, {self.y})"
-
-    def check_quadrant(self) -> WorldQuadrant:
-        coordinates = (self.x, self.y)
-
-        for quad in world.quadrants:
-            y_check = quad.internal_rect.topleft[1] < coordinates[1] < quad.internal_rect.bottomright[1]
-            x_check = quad.internal_rect.topleft[0] < coordinates[0] < quad.internal_rect.bottomright[0]
-
-            if x_check and y_check:
-                return quad
-
-        return world.quadrants[0]
-
-
-class FoodCluster:
-    id = 0
-
-    def __init__(self, centre_x: int, centre_y: int):
-        self.food: list[Food] = [Food(centre_x, centre_y, 500, self)]
-
-    def spawn_food(self, world_rect: Rect):
-        chance_of_spawning = random.choices(population=["no spawn", "spawn"], weights=[90, 10])[0]
-        if chance_of_spawning == "spawn":
-            food = random.choice(self.food)
-            dy = random.randint(-2, 2)
-            dx = random.randint(-2, 2)
-
-            food_rect: Rect = pygame.Rect(food.x + dx, food.y + dy, 1, 1)
-            collision = food_rect.collidelist(self.food)
-
-            # Coordinates
-            world_top_left = (0, 0)
-            world_bottom_right = (world_rect.w, world_rect.h)
-            food_coordinate = (food.x + dx, food.y + dy)
-
-            y_check = world_top_left[1] < food_coordinate[1] < world_bottom_right[1]
-            x_check = world_top_left[0] < food_coordinate[0] < world_bottom_right[0]
-
-            if collision == -1 and y_check and x_check:
-                self.food.append(Food(food_rect.x, food_rect.y, random.randint(50, 500), self))
-
-    def remove_food(self, food: Food):
-        if not food.eaten:
-            food.eaten = True
-            self.food.remove(food)
-
-    def tick_food(self):
-        food_to_remove = []
-
-        for food in self.food:
-            food.ticks += 1
-
-            if food.ticks >= food.total_ticks:
-                food_to_remove.append(food)
-            else:
-                food.check_quadrant().food_collisions_dict[food.id] = food
-
-        for food in food_to_remove:
-            self.remove_food(food)
-
-
-class CreatureBody(pygame.Rect):
-    id = 1
-
-    def __init__(self, creature_id: int, pos_x: int, pos_y: int):
-        super().__init__(pos_x, pos_y, 1, 1)
-
-        # log(f"Created Body with ID{CreatureBody.id}")
-        self.id = CreatureBody.id
-        self.creature_id = creature_id
-        self.actual_x = self.x
-        self.actual_y = self.y
-
-        CreatureBody.id += 1
-
-    def __repr__(self):
-        return f"Body({self.id, self.x, self.y, self.width, self.height})"
-
-    def check_quadrant(self) -> WorldQuadrant:
-        coordinates = (self.x, self.y)
-
-        for quad in world.quadrants:
-            y_check = quad.internal_rect.topleft[1] < coordinates[1] < quad.internal_rect.bottomright[1]
-            x_check = quad.internal_rect.topleft[0] < coordinates[0] < quad.internal_rect.bottomright[0]
-
-            if y_check and x_check:
-                return quad
-
-        return world.quadrants[0]
-
-    def add_to_collisions(self):
-        quadrant = self.check_quadrant()
-
-        quadrant.collisions_dict[self.id] = self
-
-    def collision_check(self, collision_dict: dict):
-        collision = self.collidedict(collision_dict, True)
-
-        if collision:
-            return collision[1]
-        else:
-            return None
-
-
-class Gene:
-    def __init__(self, name: str, acronym: str, value: float, can_mutate: bool = True):
-        self.name = name
-        self.acronym = acronym.upper()
-        self.value = value
-        self.can_mutate = can_mutate
-
-    def mutate(self):
-        if self.can_mutate:
-            if random.choices(population=["mutate", "no mutate"], weights=[299, 1])[0] == "mutate":
-                self.value += random.uniform(-0.2, 0.2)
-
-                if self.acronym in ['CLR', 'CLB', 'CLG']:
-                    self.value += random.randint(2, 2)
-                    if self.value < 0:
-                        self.value = 10
-                    elif self.value > 255:
-                        self.value = 245
-
-                if self.acronym in ['CLH', 'RTL', 'RTR', 'RTB', 'RTF', 'RBO', 'RLF', 'RRF', 'RBF', 'RFF']:
-                    if self.value < 0:
-                        self.value = abs(self.value)
-                    elif self.value > 1:
-                        self.value -= 1
-
-
-class CreatureGenes:
-    def __init__(self, species: int, generation: int):
-        # Genes affecting Creature Appearance (Phenotype)
-        self.colour_red = Gene(name="Red Colour", acronym="CLR", value=random.randint(0, 255))
-        self.colour_green = Gene(name="Green Colour", acronym="CLG", value=random.randint(0, 255))
-        self.colour_blue = Gene(name="Blue Colour", acronym="CLB", value=random.randint(0, 255))
-        self.head = Gene(name="Head Colour Multiplier", acronym="CLH", value=random.random())
-        self.maximum_length = Gene(name="Maximum Length", acronym="LMX", value=random.randint(3, 10))
-
-        # Genes affecting Creature movement
-        self.idle_speed = Gene(name="Idle Speed", acronym="SID", value=random.uniform(0, 2))
-        self.maximum_speed = Gene(name="Maximum Speed", acronym="SMX", value=random.uniform(self.idle_speed.value, 10))
-        self.boost_length = Gene(name="Boost Length in Ticks", acronym="BOL", value=random.uniform(0, 20))
-
-        # Genes affecting the Creature's Energy Consumption
-        self.energy_per_square = Gene(name="Energy Consumed Per Square Moved", acronym="EPS", value=random.uniform(5, 100))
-        self.energy_during_boost = Gene(name="Energy Consumed During Boost", acronym="EBS",
-                                        value=random.uniform(self.energy_per_square.value, 200))
-        self.energy_to_birth = Gene(name="Energy Consumed To Birth", acronym="EBI", value=random.uniform(5, 100))
-        self.energy_to_extend = Gene(name="Energy Consumed To Extend", acronym="EEX", value=random.uniform(5, 100))
-        self.critical_hunger = Gene(name="Critical Hunger Level", acronym="HUC",
-                                    value=random.uniform(self.energy_per_square.value, 200))
-
-        # Genes affecting Creature Behaviour
-        self.vision = Gene(name="Vision", acronym="VIS", value=random.uniform(1, 10))
-        self.collision = Gene(name="Collision Behaviour", acronym="COL", value=random.uniform(0, 1))
-        self.react_left = Gene(name="Brain Reaction Left", acronym="RTL", value=random.random())
-        self.react_right = Gene(name="Brain Reaction Right", acronym="RTR", value=random.random())
-        self.react_back = Gene(name="Brain Reaction Back", acronym="RTB", value=random.random())
-        self.react_forward = Gene(name="Brain Reaction Forward", acronym="RTF", value=random.random())
-        self.react_boost = Gene(name="Brain Reaction Boost", acronym="RBO", value=random.random())
-        self.react_left_food = Gene(name="Brain Reaction Left When Seeing Food", acronym="RLF", value=random.random())
-        self.react_right_food = Gene(name="Brain Reaction Right When Seeing Food", acronym="RRF", value=random.random())
-        self.react_back_food = Gene(name="Brain Reaction Back When Seeing Food", acronym="RBF", value=random.random())
-        self.react_forward_food = Gene(name="Brain Reaction Forward When Seeing Food", acronym="RFF", value=random.random())
-
-        # Data Genes (No mutation, affects Data)
-        self.gender = Gene(name="Gender", acronym="GND", value=random.choice([0, 1]), can_mutate=False)
-        self.species = Gene(name="Species", acronym="SPE", value=species, can_mutate=False)
-        self.generation = Gene(name="Generation", acronym="GEN", value=generation, can_mutate=False)
-
-
-class Creature:
-    id = 1
-
-    def __init__(self, position_x: int, position_y: int, genes: CreatureGenes = None):
-        log(f"Created Creature with ID{Creature.id}")
-        self.id = Creature.id
-
-        self.body: list[CreatureBody] = [CreatureBody(self.id, position_x, position_y),
-                                         CreatureBody(self.id, position_x - 1, position_y)]
-
-        self.genes = CreatureGenes(generation=1, species=1) if genes is None else genes
-        self.energy = self.genes.energy_per_square.value * self.genes.maximum_length.value * 5000
-
-        self.facing = random.choice(['right', 'left', 'up', 'down'])
-        self.vision_rect = None
-        self.dead = False
-        self.colliding = False
-        self.seeing = False
-
-        Creature.id += 1
-
-    def __repr__(self):
-        return f"Creature(ID{self.id}, Body({self.body}))"
-
-    def __move_x(self, direction: int):
-        last_body_part = self.body.pop()
-
-        if world.internal_rect.width - 1 <= self.body[0].x:
-            # On the rightmost border, so the creature must not face right
-            self.facing = random.choice(['down', 'up', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x - 1
-            last_body_part.actual_y = self.body[0].actual_y
-        elif self.body[0].x <= 0:
-            # On the leftmost border, so creature must not face left
-            self.facing = random.choice(['down', 'up', 'right'])
-            last_body_part.actual_x = self.body[0].actual_x + 1
-            last_body_part.actual_y = self.body[0].actual_y
-        else:
-            last_body_part.actual_x = self.body[0].actual_x - direction
-            last_body_part.actual_y = self.body[0].actual_y
-
-        last_body_part.x = round(last_body_part.actual_x)
-        last_body_part.y = round(last_body_part.actual_y)
-
-        self.body.insert(0, last_body_part)
-
-    def __move_y(self, direction: int):
-        last_body_part = self.body.pop()
-
-        if world.internal_rect.height - 1 <= self.body[0].y:
-            # On Bottom border, so creature must not face down
-            self.facing = random.choice(['up', 'right', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - 1
-        elif self.body[0].y <= 0:
-            # On top border, so creature must not face up
-            self.facing = random.choice(['down', 'right', 'left'])
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y + 1
-        else:
-            last_body_part.actual_x = self.body[0].actual_x
-            last_body_part.actual_y = self.body[0].actual_y - direction
-
-        last_body_part.x = round(last_body_part.actual_x)
-        last_body_part.y = round(last_body_part.actual_y)
-
-        self.body.insert(0, last_body_part)
-
-    def __vision(self):
-        choice_list = ['left', 'right', 'down', 'up']
-        vision_distance = self.genes.vision.value
-        quadrant_check = self.body[0].check_quadrant()
-        difference = pygame.Vector2(self.body[0].x - self.body[1].x, self.body[0].y - self.body[1].y)
-
-        # Facing Upwards
-        if difference == pygame.Vector2(0, -1):
-            self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y - vision_distance, 1, 1 + vision_distance)
-            choice_list = ['right', 'left', 'up', 'down']
-
-        # Facing Downwards
-        elif difference == pygame.Vector2(0, 1):
-            self.vision_rect = pygame.Rect(self.body[0].x, self.body[0].y + 1, 1, vision_distance)
-            choice_list = ['left', 'right', 'down', 'up']
-
-        # Facing Left
-        elif difference == pygame.Vector2(-1, 0):
-            self.vision_rect = pygame.Rect(self.body[0].x - vision_distance, self.body[0].y, 1 + vision_distance, 1)
-            choice_list = ['up', 'down', 'left', 'right']
-
-        # Facing Right
-        elif difference == pygame.Vector2(1, 0):
-            self.vision_rect = pygame.Rect(self.body[0].x + 1, self.body[0].y, vision_distance, 1)
-            choice_list = ['down', 'up', 'right', 'left']
-
-        collision = self.vision_rect.collidedict(quadrant_check.collisions_dict, True)
-        food_collision = self.vision_rect.collidedict(quadrant_check.food_collisions_dict, True)
-        border_collision = self.vision_rect.collidelist(world.borders)
-
-        if collision and not self.seeing and self.id != collision[1].creature_id:
-            # log(f"Creature {self.id} is seeing something and reacting")
-            self.seeing = True
-            self.facing = random.choices(choice_list,
-                                         [self.genes.react_right.value,
-                                          self.genes.react_left.value,
-                                          self.genes.react_forward.value,
-                                          self.genes.react_back.value])[0]
-
-        elif food_collision and not self.seeing:
-            self.seeing = True
-            self.facing = random.choices(choice_list,
-                                         [self.genes.react_right_food.value,
-                                          self.genes.react_left_food.value,
-                                          self.genes.react_forward_food.value,
-                                          self.genes.react_back_food.value])[0]
-
-        elif border_collision != -1:
-            self.facing = random.choices(choice_list,
-                                         [self.genes.react_right.value,
-                                          self.genes.react_left.value,
-                                          self.genes.react_forward.value,
-                                          self.genes.react_back.value])[0]
-
-        elif collision is None and food_collision is None and self.seeing:
-            self.seeing = False
-
-    def __collide(self):
-        choice_list = ['left', 'right', 'down', 'up']
-        quadrant_check = self.body[0].check_quadrant()
-        collision = self.body[0].collision_check(quadrant_check.collisions_dict)
-        difference = pygame.Vector2(self.body[0].x - self.body[1].x, self.body[0].y - self.body[1].y)
-
-        # Facing Upwards
-        if difference == pygame.Vector2(0, -1):
-            choice_list = ['right', 'left', 'up', 'down']
-
-        # Facing Downwards
-        elif difference == pygame.Vector2(0, 1):
-            choice_list = ['left', 'right', 'down', 'up']
-
-        # Facing Left
-        elif difference == pygame.Vector2(-1, 0):
-            choice_list = ['up', 'down', 'left', 'right']
-
-        # Facing Right
-        elif difference == pygame.Vector2(1, 0):
-            choice_list = ['down', 'up', 'right', 'left']
-
-        if collision and not self.colliding:
-            if self.id != collision.creature_id:
-                self.colliding = True
-
-                creature = world.get_creature(collision.creature_id)
-
-                # Get other creature and check the creature's collision value.
-                # Collision affects the creature that collided with the other creature, depending on the other's genes
-                if creature:
-                    if 0 < creature.genes.collision.value < 1:
-                        self.__birth()
-                    if 0.75 < creature.genes.collision.value:
-                        self.__die()
-
-        elif not collision and self.colliding:
-            self.colliding = False
-
-        food_collision = self.body[0].collision_check(quadrant_check.food_collisions_dict)
-        if food_collision:
-            self.energy += food_collision.energy
-            food_collision.cluster.remove_food(food_collision)
-            self.__extend()
-            self.facing = choice_list[0]
-
-    def __extend(self):
-        if self.energy - self.genes.energy_to_extend.value > self.genes.critical_hunger.value \
-                and len(self.body) + 1 < self.genes.maximum_length.value:
-            self.energy -= self.genes.energy_to_extend.value
-            self.body.append(CreatureBody(self.id, self.body[-1].x, self.body[-1].y))
-
-    def __birth(self):
-        if len(self.body) >= 4:
-            self.energy -= self.genes.energy_to_birth.value
-            body_part = self.body.pop()
-            body_part = self.body.pop()
-
-            baby = Creature(body_part.x, body_part.y, copy.deepcopy(self.genes))
-
-            for gene, gene_object in vars(baby.genes).items():
-                gene_object.mutate()
-
-            world.creatures.append(baby)
-
-    def __die(self):
-        if not self.dead:
-            log(f"Killing Creature {self.id}")
-            world.creatures.remove(self)
-            self.dead = True
-
-    def x_pos(self):
-        return self.body[0].x
-
-    def y_pos(self):
-        return self.body[0].y
-
-    def move(self):
-        self.energy -= self.genes.energy_per_square.value
-
-        for i in range(0, math.ceil(self.genes.idle_speed.value)):
-            if not self.dead:
-                self.__vision()
-
-                self.energy -= self.genes.energy_per_square.value * len(self.body)
-
-                if self.facing == "up":
-                    self.__move_y(-1)
-                elif self.facing == "down":
-                    self.__move_y(1)
-                elif self.facing == "left":
-                    self.__move_x(-1)
-                elif self.facing == "right":
-                    self.__move_x(1)
-
-                # self.__collide()
-
-                for body in self.body:
-                    body.add_to_collisions()
-
-        if self.energy <= 0:
-            self.__die()
-
-    def collide(self):
-        self.__collide()
-
-
-class Camera:
+class Simulation:
     def __init__(self):
-        self.screen = pygame.display.set_mode([1000, 700], pygame.RESIZABLE)
-        self.zoom_level = 2
-        self.camera_speed = 40
-        self.centre_x = self.screen.get_width() // 2
-        self.centre_y = self.screen.get_height() // 2
+        pygame.init()
 
-    def draw(self, world: World):
-        # Draw Background Colour
-        pygame.draw.rect(surface=self.screen,
-                         color=[0, 10, 27],
-                         rect=[[0, 0], [self.screen.get_width(), self.screen.get_height()]])
+        self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
 
-        # Draw Border
-        world_rect = pygame.Rect(0, 0, world.internal_rect.width, world.internal_rect.height)
-        world_rect.height *= self.zoom_level
-        world_rect.width *= self.zoom_level
-        world_rect.centerx = self.centre_x
-        world_rect.centery = self.centre_y
+        # pygame.mouse.set_visible(False)
+        # self.cursor_image = pygame.image.load('resources/textures/cursor.png')
+        # self.cursor_rect = self.cursor_image.get_rect()
 
-        pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world_rect)
+        self.creature_image = pygame.image.load('resources/textures/creature3.png')
+        self.food_image = pygame.image.load('resources/textures/food1.png')
+        self.menu_background = pygame.image.load('resources/screens/menu_background.png')
+        self.logo = pygame.image.load('resources/screens/logo.png')
 
-        scale = 1 / self.zoom_level
+        self.play_button = Button('play')
+        self.load_button = Button('load')
+        self.help_button = Button('help')
+        self.back_button = Button('back')
+        self.quit_button = Button('quit')
+        self.next_graph_button = Button('>', 100)
+        self.previous_graph_button = Button('<', 100)
+        self.no_save_slot_button = Button('Play without\n     saving', 23)
 
-        # Draw Food
-        for food_cluster in world.food_clusters:
-            for food in food_cluster.food:
-                # Move the Body Part Rect to the correct position
-                drawing_rect = pygame.Rect(food.x, food.y, 1, 1)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
-                drawing_rect.width *= self.zoom_level
-                drawing_rect.height *= self.zoom_level
+        self.save_display_1 = SaveSlotDisplay('Slot 1',
+                                              'Empty')
+        self.save_display_2 = SaveSlotDisplay('Slot 2',
+                                              'Empty')
+        self.save_display_3 = SaveSlotDisplay('Slot 3',
+                                              'Empty')
+        self.save_display_4 = SaveSlotDisplay('Slot 4',
+                                              'Empty')
 
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
+        self.generate_save_slot_displays()
 
-        # Draw Creatures
-        for creature in world.creatures:
-            for body_part in creature.body:
-                colour_to_draw = [int(creature.genes.colour_red.value),
-                                  int(creature.genes.colour_green.value),
-                                  int(creature.genes.colour_blue.value)]
+        self.preset_1 = PresetDisplay('Lone Island',
+                                      'two species compete\nfor one island of food\nlocated in the centre.\n'
+                                      'they are complete\nopposites.\nwho will win?')
+        self.preset_2 = PresetDisplay('RedGreenBlue',
+                                      'the reds, the greens\nand the blues exist in\n'
+                                      'one world. their\ncolour defines the\nspecies. how many new\ncolours will be made?')
+        self.preset_3 = PresetDisplay('Evolve+',
+                                      'an environment\ndesigned to foster\nevolution. everything\n'
+                                      'is precisely adjusted.\nwatch as the species\ngrow and change.')
+        self.preset_4 = PresetDisplay('Random',
+                                      'A completely random\nset of species.\nWill you get\nlucky?')
 
-                if creature.body.index(body_part) == 0:
-                    colour_to_draw = [int(colour * creature.genes.head.value) for colour in colour_to_draw]
+        self.sim_screen_pause_button = Button('Pause')
+        self.sim_screen_tickspeed_button = Button('x1')
+        self.sim_screen_graph_button = Button('Graphs', 45)
 
-                # Move the Body Part Rect to the correct position
-                drawing_rect = pygame.Rect(body_part.x, body_part.y, 1, 1)
-                drawing_rect.x = world_rect.x + round(drawing_rect.x / scale)
-                drawing_rect.y = world_rect.y + round(drawing_rect.y / scale)
-                drawing_rect.width *= self.zoom_level
-                drawing_rect.height *= self.zoom_level
+        self.sim_screen_time_display = SmallContentDisplay('time', 5, 5)
+        self.sim_screen_creature_display = SmallContentDisplay('creatures', 5, 5)
+        self.sim_screen_species_display = SmallContentDisplay('species', 5, 5)
+        self.sim_screen_food_display = SmallContentDisplay('food', 5, 5)
 
-                pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=colour_to_draw)
+        pygame.display.set_caption("Simbiosis - Evolution Simulator")
 
-    def debug_draw(self, world: World):
-        pygame.draw.rect(surface=self.screen, color=[0, 10 * 0.7, 27 * 0.7], rect=world.internal_rect)
-        colour_change = 210 / len(world.quadrants)
-        colour = 30
-        for world_quadrant in world.quadrants:
-            pygame.draw.rect(surface=self.screen, color=[0, colour, colour], rect=world_quadrant.internal_rect)
-            colour += colour_change
+        self.clock = pygame.time.Clock()
 
-        for food_cluster in world.food_clusters:
-            for food in food_cluster.food:
-                pygame.draw.rect(surface=self.screen, rect=food, color=[0, 255, 0])
+        self.camera = Camera(self.screen)
+        self.world: World = World.create(size=0, start_species=0, start_creatures=0, start_food=0,
+                                         food_spawn_rate=1, creature_image=self.creature_image,
+                                         food_image=self.food_image)
 
-        for creature in world.creatures:
-            for body_part in creature.body:
-                pygame.draw.rect(surface=self.screen, rect=body_part, color=[245, 245, 245])
+        # Menu Booleans
+        self.program_running = True
+        self.debug_screen = False
 
-            if creature.vision_rect is not None:
-                pygame.draw.rect(camera.screen, [255, 0, 0], creature.vision_rect)
+        # Variable that stores the current menu. Choose from:
+        # start, help, load, select_save, select_preset, configure, sim_screen, graph
+        self.current_menu = 'start'
 
-    def move(self):
-        key = pygame.key.get_pressed()
-        if key[pygame.K_a]:
-            self.centre_x += self.camera_speed
-        elif key[pygame.K_d]:
-            self.centre_x -= self.camera_speed
-        elif key[pygame.K_w]:
-            self.centre_y += self.camera_speed
-        elif key[pygame.K_s]:
-            self.centre_y -= self.camera_speed
+        # Variable that holds the save slot
+        self.save_slot = 0
+        self.preset = None
 
-    def zoom(self, change: int):
-        if 2 <= self.zoom_level + 2 * change <= 20:
-            self.zoom_level += 2 * change
-            self.camera_speed -= 2 * change
+        # Variables for graphs
+        self.graph_types = [{'type': 'creature_count', 'colour': '#6495ED', 'label': 'Number of Creatures'},
+                            {'type': 'food_count', 'colour': '#00A36C', 'label': 'Number of Food Pellets'},
+                            {'type': 'cumulative_increase_count', 'colour': '#FFBF00', 'label': 'Cumulative Population Increase'},
+                            {'type': 'increase_count', 'colour': '#F3E5AB', 'label': 'Population Increase'}]
+
+        self.current_graph = self.graph_types[0]
+
+    def generate_save_slot_displays(self):
+        attributes = ['save_display_1', 'save_display_2', 'save_display_3', 'save_display_4']
+
+        for attr in attributes:
+            slot_num = attr[-1]
+            if os.path.exists(f'saves/sim{slot_num}.json'):
+                save_dict = json.load(open(f'saves/sim{slot_num}.json', 'r'))
+
+                date = datetime.strptime(save_dict['save_data']['time'], "%Y-%m-%d %H:%M:%S.%f")
+                formatted_date = date.strftime('%B %d %Y\n%I:%M%p')
+
+                preset = f"Preset: {save_dict['save_data']['preset']}" if save_dict['save_data']['preset'] else "No Preset"
+                self.__setattr__(attr, SaveSlotDisplay(f'Slot {slot_num}',
+                                                       f'{formatted_date}\n\n{preset}'))
+
+    def save_game(self):
+        save_dict = {
+            "save_data": {
+                "time": str(datetime.today()),
+                "preset": self.preset
+            },
+            "world": {
+                "size": self.world.size,
+                "largest_radius": self.world.largest_radius,
+                "food_spawn_rate": self.world.food_spawnrate,
+                "tick_speed": self.world.tick_speed,
+                "seconds": self.world.seconds,
+                "delta_seconds": self.world.delta_second,
+                "food_seconds": self.world.food_second,
+                "paused": self.world.paused,
+                "species_id": self.world.species_id
+            },
+            "specimens": {},
+            "creatures": [],
+            "food": [],
+            "data": {'creature_count': self.world.creature_count,
+                     'food_count': self.world.food_count,
+                     'cumulative_increase_count': self.world.cumulative_increase_count,
+                     'increase_count': self.world.increase_count,
+                     'death_count': self.world.cumulative_increase_count,
+                     'time': self.world.time_data}
+        }
+
+        for creature in self.world.creatures:
+            genes = creature.genes
+            save_genes = []
+
+            for gene_name, value in genes.__dict__.items():
+                save_genes.append(value.save_gene(gene_name))
+
+            save_dict['creatures'].append({
+                "id": creature.id,
+                "energy": creature.energy,
+                "direction": creature.direction,
+                "dead": creature.dead,
+                "seeing": creature.seeing,
+                "memory_reaction": creature.memory_reaction,
+                "position": [creature.x, creature.y],
+                "genes": save_genes
+            })
+
+        for food in self.world.food:
+            save_dict['food'].append({
+                "id": food.id,
+                "eaten": food.eaten,
+                "energy": food.energy,
+                "position": [food.x, food.y]
+            })
+
+        for specimen_id, specimen in self.world.specimens.items():
+            save_genes = []
+
+            for gene_name, value in specimen.__dict__.items():
+                save_genes.append(value.save_gene(gene_name))
+
+            save_dict['specimens'][specimen_id] = save_genes
+
+        save_file = open(f'saves/sim{self.save_slot}.json', 'w')
+
+        json.dump(save_dict, save_file, indent=4)
+        save_file.close()
+
+    def start_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        copy_image = pygame.transform.scale_by(self.logo, 0.4)
+        self.screen.blit(copy_image, ((self.screen.get_width() - copy_image.get_width()) // 2, 0))
+
+        self.play_button.draw(self.screen, (self.screen.get_width() - self.play_button.rect.w) // 2,
+                              self.screen.get_height() // 2 - 100)
+        if self.play_button.check_for_press():
+            self.current_menu = 'select_save'
+
+        self.load_button.draw(self.screen, (self.screen.get_width() - self.load_button.rect.w) // 2,
+                              self.screen.get_height() // 2 + 15)
+        if self.load_button.check_for_press():
+            self.current_menu = 'load'
+
+        self.help_button.draw(self.screen, (self.screen.get_width() - self.help_button.rect.w) // 2,
+                              self.screen.get_height() // 2 + 130)
+        if self.help_button.check_for_press():
+            self.current_menu = 'help'
+
+        self.quit_button.draw(self.screen, (self.screen.get_width() - self.quit_button.rect.w) // 2,
+                              self.screen.get_height() // 2 + 245)
+        if self.quit_button.check_for_press():
+            self.current_menu = 'quit'
+
+    def load_save_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Select a save slot',
+                              (217, 255, 200), 50),
+                  TextDisplay('to load from.',
+                              (217, 255, 200), 50),
+                  TextDisplay('Simbiosis auto-saves every 10 minutes.',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        if self.back_button.check_for_press():
+            self.current_menu = 'start'
+
+        self.save_display_1.draw(self.screen, self.screen.get_width() // 4 - self.save_display_1.rect.w, 300)
+        if self.save_display_1.button.check_for_press():
+            self.save_slot = 1
+
+        self.save_display_2.draw(self.screen, self.screen.get_width() // 4 + self.save_display_2.rect.w // 4 + 25, 300)
+        if self.save_display_2.button.check_for_press():
+            self.save_slot = 2
+
+        self.save_display_3.draw(self.screen, self.screen.get_width() // 2 + self.save_display_3.rect.w // 4 - 25, 300)
+        if self.save_display_3.button.check_for_press():
+            self.save_slot = 3
+
+        self.save_display_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.save_display_4.button.check_for_press():
+            self.save_slot = 4
+
+        if os.path.exists(f'saves/sim{self.save_slot}.json'):
+            save_dict = json.load(open(f'saves/sim{self.save_slot}.json', 'r'))
+            self.world = World.load(save_dict, self.creature_image, self.food_image)
+            self.preset = save_dict['save_data']['preset']
+            self.current_menu = 'sim_screen'
+
+    def choose_new_save_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Select a save slot',
+                              (217, 255, 200), 50),
+                  TextDisplay('to save your simulation into.',
+                              (217, 255, 200), 50),
+                  TextDisplay('Simbiosis auto-saves every 10 minutes.',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        if self.back_button.check_for_press():
+            self.current_menu = 'start'
+
+        self.save_display_1.draw(self.screen, self.screen.get_width() // 4 - self.save_display_1.rect.w, 300)
+        if self.save_display_1.button.check_for_press(0.1):
+            self.save_slot = 1
+            self.current_menu = 'select_preset'
+
+        self.save_display_2.draw(self.screen, self.screen.get_width() // 4 + self.save_display_2.rect.w // 4 + 25, 300)
+        if self.save_display_2.button.check_for_press(0.1):
+            self.save_slot = 2
+            self.current_menu = 'select_preset'
+
+        self.save_display_3.draw(self.screen, self.screen.get_width() // 2 + self.save_display_3.rect.w // 4 - 25, 300)
+        if self.save_display_3.button.check_for_press(0.1):
+            self.save_slot = 3
+            self.current_menu = 'select_preset'
+
+        self.save_display_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.save_display_4.button.check_for_press(0.1):
+            self.save_slot = 4
+            self.current_menu = 'select_preset'
+
+        self.no_save_slot_button.draw(self.screen, (self.screen.get_width() - self.no_save_slot_button.rect.w) // 2,
+                                      self.screen.get_height() - 200)
+        if self.no_save_slot_button.check_for_press(0.1):
+            self.save_slot = 5
+            self.current_menu = 'select_preset'
+
+    def choose_preset_menu(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Choose from specially curated',
+                              (217, 255, 200), 50),
+                  TextDisplay('presets',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        if self.back_button.check_for_press():
+            self.current_menu = 'start'
+
+        self.preset_1.draw(self.screen, self.screen.get_width() // 4 - self.preset_1.rect.w, 300)
+        if self.preset_1.button.check_for_press():
+            self.preset = 'loneisland'
+            self.current_menu = 'sim_screen'
+
+        self.preset_2.draw(self.screen, self.screen.get_width() // 4 + self.preset_2.rect.w // 4 + 25, 300)
+        if self.preset_2.button.check_for_press():
+            self.preset = 'redgreenblue'
+            self.current_menu = 'sim_screen'
+
+        self.preset_3.draw(self.screen, self.screen.get_width() // 2 + self.preset_3.rect.w // 4 - 25, 300)
+        if self.preset_3.button.check_for_press():
+            self.preset = 'evolveplus'
+            self.current_menu = 'sim_screen'
+
+        self.preset_4.draw(self.screen, self.screen.get_width() - self.screen.get_width() // 4, 300)
+        if self.preset_4.button.check_for_press():
+            self.preset = 'random'
+            self.world: World = World.create(size=1500, start_species=10, start_creatures=100, start_food=5000,
+                                             food_spawn_rate=40, creature_image=self.creature_image,
+                                             food_image=self.food_image)
+            self.current_menu = 'sim_screen'
+
+        if os.path.exists(f'presets/{self.preset}.json'):
+            save_dict = json.load(open(f'presets/{self.preset}.json', 'r'))
+            self.world = World.load(save_dict, self.creature_image, self.food_image)
+            self.current_menu = 'sim_screen'
+
+    def graph_screen(self):
+        copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
+        self.screen.blit(copy_image, (0, 0))
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('View graphs about the',
+                              (217, 255, 200), 50),
+                  TextDisplay('current simulation',
+                              (217, 255, 200), 50)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       30 + 10 * index + title.rect.height * index)
+
+        # To keep each line in the title centered, I have split them up into their own texts.
+        titles = [TextDisplay('Tip: You can use the arrow keys to navigate too!',
+                              (217, 255, 200), 25)
+                  ]
+
+        for title in titles:
+            index = titles.index(title)
+            title.draw(self.screen, (self.screen.get_width() - title.rect.w) // 2,
+                       self.screen.get_height() - (60 + 10 * index + title.rect.height * index))
+
+        self.back_button.draw(self.screen, 15, self.screen.get_height() - self.back_button.rect.h - 15)
+        if self.back_button.check_for_press():
+            self.current_menu = 'sim_screen'
+
+        self.previous_graph_button.draw(self.screen, 50, (self.screen.get_height() - self.back_button.rect.h) // 2)
+        if self.previous_graph_button.check_for_press():
+            self.paginate_graph(-1)
+
+        self.next_graph_button.draw(self.screen, self.screen.get_width() - self.back_button.rect.w - 50,
+                                    (self.screen.get_height() - self.back_button.rect.h) // 2)
+        if self.next_graph_button.check_for_press():
+            self.paginate_graph(1)
+
+        display_graph = pygame.image.load(f'resources/graphs/{self.current_graph["type"]}.png')
+        position = ((self.screen.get_width() - display_graph.get_width()) // 2,
+                    (self.screen.get_height() - display_graph.get_height()) // 2)
+        self.screen.blit(display_graph, position)
+
+    def draw_graph(self):
+        graph_type = self.current_graph
+
+        fig = pyplot.figure(figsize=(12, 7))
+        ax: pyplot.Axes = pyplot.subplot()
+        prop = font_manager.FontProperties(fname='resources/pixel_digivolve.otf')
+
+        # Set the precision of points
+        if len(self.world.time_data) > 3600*7:
+            # If interval is 7 hours, one point = 15 minutes
+            precision = 600
+        elif len(self.world.time_data) > 3600*3:
+            # If interval is 3 hours, one point = 1 minute
+            precision = 60
+        elif len(self.world.time_data) > 60*5:
+            # If interval is 5 minutes, one point = 30 seconds
+            precision = 30
+        else:
+            precision = 1
+
+        # Decide on the x-axis labels in seconds, hours or minutes
+        if len(self.world.time_data) > 3600:
+            mapped_time_data_in_minutes = list(map(lambda x: x / 3600, self.world.time_data[0::precision]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::precision]
+
+            ax.set_xlabel("Time (hours)", fontproperties=prop, size=12, color='#caf7b7')
+        elif len(self.world.time_data) > 60:
+            mapped_time_data_in_minutes = list(map(lambda x: x / 60, self.world.time_data[0::precision]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::precision]
+
+            ax.set_xlabel("Time (minutes)", fontproperties=prop, size=12, color='#caf7b7')
+        else:
+            mapped_time_data_in_minutes = list(map(lambda x: x // 1, self.world.time_data[0::precision]))
+            mapped_data = self.world.__getattribute__(graph_type['type'])[0::precision]
+
+            ax.set_xlabel("Time (seconds)", fontproperties=prop, size=12, color='#caf7b7')
+
+        ax.set_ylabel(graph_type['label'], fontproperties=prop, size=12, color='#caf7b7')
+        ax.set_title(f'{graph_type["label"]} over Time', fontproperties=prop, size=30, color='#caf7b7')
+        ax.grid(visible=True, axis='both', color='#272d35', linestyle='dashed')
+        ax.grid(visible=True, axis='x', which='minor', color='#272d35', linestyle='dotted')
+        ax.set_facecolor('#000712')
+        ax.tick_params(axis='both', colors='#caf7b7')
+        ax.margins(0.01)
+        ax.plot(mapped_time_data_in_minutes, mapped_data, graph_type['colour'])
+
+        if min(mapped_data) >= 0:
+            ax.fill_between(mapped_time_data_in_minutes, mapped_data, min(mapped_data),
+                            facecolor=graph_type['colour'], alpha=0.1)
+        else:
+            ax.fill_between(mapped_time_data_in_minutes, mapped_data, 0, facecolor='#FFBF00', alpha=0.1)
+            ax.plot(mapped_time_data_in_minutes, [0 for i in mapped_data], '#D22B2B')
+
+        fig.savefig(f'resources/graphs/{graph_type["type"]}.png', bbox_inches='tight', facecolor="#000712")
+
+        fig.clear()
+
+    def paginate_graph(self, direction: int):
+        if direction == 1:
+            default = 0
+        else:
+            default = -1
+
+        index = self.graph_types.index(self.current_graph) + direction
+        self.current_graph = self.graph_types[index if index < len(self.graph_types) else default]
+        self.draw_graph()
+
+    def simulation_screen(self, deltatime):
+        if not self.world.paused:
+            self.world.tick_world(deltatime)
+
+        self.camera.move(deltatime)
+        self.camera.draw_world(self.world, self.debug_screen)
+
+        BUTTON_SIZE = 100
+
+        world_time = timedelta(seconds=round(self.world.seconds))
+        self.sim_screen_time_display.draw(self.screen, world_time, 10, 15)
+        self.sim_screen_creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
+        self.sim_screen_species_display.draw(self.screen, len(self.world.species_count), 10, BUTTON_SIZE * 2 + 45)
+        self.sim_screen_food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
+
+        self.sim_screen_pause_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE - 15)
+        if self.sim_screen_pause_button.check_for_press():
+            self.world.paused = not self.world.paused
+
+        if self.world.paused:
+            self.sim_screen_pause_button.change_text('play')
+        else:
+            self.sim_screen_pause_button.change_text('pause')
+
+        self.sim_screen_tickspeed_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE * 2 - 30)
+        if self.sim_screen_tickspeed_button.check_for_press():
+            if self.world.tick_speed < 10:
+                self.world.change_tick_speed(1)
+            else:
+                self.world.tick_speed = 1
+        self.sim_screen_tickspeed_button.change_text(f'x{self.world.tick_speed}')
+
+        self.sim_screen_graph_button.draw(self.screen, self.screen.get_width() - BUTTON_SIZE * 2 - 20,
+                                          self.screen.get_height() - BUTTON_SIZE - 15)
+        if self.sim_screen_graph_button.check_for_press():
+            self.current_menu = 'graph'
+            self.draw_graph()
+
+    def main(self):
+        while self.program_running:
+            deltatime = clock.tick(120) / 1000
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.program_running = False
+
+                elif event.type == pygame.MOUSEWHEEL:
+                    self.camera.zoom(event.y)
+
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE and self.current_menu == 'graph':
+                        self.current_menu = 'sim_screen'
+
+                    elif event.key == pygame.K_ESCAPE:
+                        self.current_menu = 'start'
+                        self.save_slot = 0
+                        self.preset = None
+
+                    if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
+                        self.world.paused = not self.world.paused
+
+                    elif event.key == pygame.K_q and self.current_menu == 'sim_screen':
+                        self.debug_screen = not self.debug_screen
+
+                    elif event.key == pygame.K_g and self.current_menu == 'sim_screen':
+                        self.current_menu = 'graph'
+                        self.draw_graph()
+
+                    elif event.key == pygame.K_EQUALS and self.current_menu == 'sim_screen':
+                        self.world.change_tick_speed(1)
+
+                    elif event.key == pygame.K_MINUS and self.current_menu == 'sim_screen':
+                        self.world.change_tick_speed(-1)
+
+                    elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
+                        self.save_game()
+
+                    elif event.key == pygame.K_RIGHT and self.current_menu == 'graph':
+                        self.paginate_graph(1)
+
+                    elif event.key == pygame.K_LEFT and self.current_menu == 'graph':
+                        self.paginate_graph(-1)
+
+            match self.current_menu:
+                case 'start':
+                    self.start_menu()
+
+                case 'load':
+                    self.load_save_menu()
+
+                case 'select_save':
+                    self.choose_new_save_menu()
+
+                case 'select_preset':
+                    self.choose_preset_menu()
+
+                case 'help':
+                    ...
+
+                case 'sim_screen':
+                    self.simulation_screen(deltatime)
+
+                case 'graph':
+                    self.graph_screen()
+
+                case 'quit':
+                    self.program_running = False
+
+            # self.cursor_rect.topleft = pygame.mouse.get_pos()
+            # self.screen.blit(self.cursor_image, self.cursor_rect)
+
+            pygame.display.flip()
 
 
-run = True
-debug = False
-camera = Camera()
-world = World(quadrant_size=100, quadrant_rows=4, start_species=5, start_creatures=10, start_cluster=100)
-
-while run:
-    deltatime = clock.tick(25)
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        elif event.type == pygame.MOUSEWHEEL:
-            camera.zoom(event.y)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                world.game_paused = not world.game_paused
-            elif event.key == pygame.K_q:
-                debug = not debug
-
-    world.tick_game()
-
-    camera.move()
-    camera.draw(world)
-    camera.debug_draw(world) if debug else ...
-
-    if not world.game_paused:
-        for quadrant in world.quadrants:
-            index = world.quadrants.index(quadrant)
-            quadrant.collisions_dict = {}
-            quadrant.food_collisions_dict = {}
-
-    pygame.display.flip()
+simulation = Simulation()
+simulation.main()
