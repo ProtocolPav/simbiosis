@@ -187,7 +187,7 @@ class Simulation:
             for gene_name, value in specimen.__dict__.items():
                 save_genes.append(value.save_gene(gene_name))
 
-            save_dict['specimen'][specimen_id] = save_genes
+            save_dict['specimens'][specimen_id] = save_genes
 
         save_file = open(f'saves/sim{self.save_slot}.json', 'w')
 

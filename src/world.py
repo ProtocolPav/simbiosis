@@ -225,18 +225,23 @@ class World:
             self.tick_speed += direction
 
     def check_for_new_species(self, genes: CreatureGenes):
-        print(genes.species.value)
-        specimen = self.specimens[int(genes.species.value)]
-        different_count = 0
+        assigned_species = None
+        for specimen_id, specimen in self.specimens.items():
+            # specimen = self.specimens[int(genes.species.value)]
+            different_count = 0
 
-        for gene_name, gene in vars(genes).items():
-            if gene_name not in ['species', 'generation']:
-                specimen_gene = specimen.__getattribute__(gene_name)
-                if abs(specimen_gene.value - gene.value) >= specimen_gene.value/2:
-                    print(gene_name, specimen_gene.value, gene.value, abs(specimen_gene.value - gene.value), specimen_gene.value/2)
-                    different_count += 1
+            for gene_name, gene in vars(genes).items():
+                if gene_name not in ['species', 'generation']:
+                    specimen_gene = specimen.__getattribute__(gene_name)
+                    if abs(specimen_gene.value - gene.value) >= specimen_gene.value/2:
+                        print(gene_name, specimen_gene.value, gene.value, abs(specimen_gene.value - gene.value), specimen_gene.value/2)
+                        different_count += 1
 
-        if different_count >= 6:
+            if different_count <= 6:
+                assigned_species = specimen_id
+                break
+
+        if assigned_species is None:
             genes.species.value = self.species_id
             self.specimens[self.species_id] = genes
             return True
