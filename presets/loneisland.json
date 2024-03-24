@@ -12702,5 +12702,389 @@
             ]
         }
     ],
+    "specimens": {"1":  [
+            {
+                "attr": "colour_red",
+                "name": "Red Colour",
+                "acronym": "CLR",
+                "value": 87,
+                "can_mutate": true,
+                "min": 0,
+                "max": 255,
+                "is_integer": true
+            },
+            {
+                "attr": "colour_green",
+                "name": "Green Colour",
+                "acronym": "CLG",
+                "value": 23,
+                "can_mutate": true,
+                "min": 0,
+                "max": 255,
+                "is_integer": true
+            },
+            {
+                "attr": "colour_blue",
+                "name": "Blue Colour",
+                "acronym": "CLB",
+                "value": 246,
+                "can_mutate": true,
+                "min": 0,
+                "max": 255,
+                "is_integer": true
+            },
+            {
+                "attr": "radius",
+                "name": "Creature Radius Size",
+                "acronym": "SIZ",
+                "value": 7,
+                "can_mutate": true,
+                "min": 0.5,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "speed",
+                "name": "Speed",
+                "acronym": "SPD",
+                "value": 40,
+                "can_mutate": true,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "base_energy",
+                "name": "Energy Consumed per Second",
+                "acronym": "ENB",
+                "value": 31.5,
+                "can_mutate": true,
+                "min": 1,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "movement_energy",
+                "name": "Energy Consumed for Movement",
+                "acronym": "ENM",
+                "value": 12.2,
+                "can_mutate": true,
+                "min": 1,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "turning_energy",
+                "name": "Energy Consumed for Turning",
+                "acronym": "ENT",
+                "value": 19,
+                "can_mutate": true,
+                "min": 1,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "birth_energy",
+                "name": "Energy Consumed for Birthing",
+                "acronym": "ENI",
+                "value": 140000,
+                "can_mutate": true,
+                "min": 1,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "plant_energy",
+                "name": "% of Energy Gained From Eating",
+                "acronym": "ENP",
+                "value": 0.2601539706133791,
+                "can_mutate": true,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "vision_radius",
+                "name": "Vision Radius",
+                "acronym": "VIR",
+                "value": 13,
+                "can_mutate": true,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "vision_angle",
+                "name": "Vision Angle",
+                "acronym": "VIA",
+                "value": 120,
+                "can_mutate": true,
+                "min": 1,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "react_towards",
+                "name": "Reaction Towards Entity",
+                "acronym": "RTO",
+                "value": 0.9,
+                "can_mutate": true,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "react_speed",
+                "name": "Reaction Speed",
+                "acronym": "RSP",
+                "value": 20,
+                "can_mutate": true,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "food_offset",
+                "name": "Reaction Food Offset",
+                "acronym": "RFO",
+                "value": 0,
+                "can_mutate": true,
+                "min": -0.5,
+                "max": 0.5,
+                "is_integer": false
+            },
+            {
+                "attr": "stranger_offset",
+                "name": "Reaction Stranger Offset",
+                "acronym": "RSO",
+                "value": 0,
+                "can_mutate": true,
+                "min": -0.5,
+                "max": 0.5,
+                "is_integer": false
+            },
+            {
+                "attr": "known_offset",
+                "name": "Reaction Known Offset",
+                "acronym": "RKO",
+                "value": 0,
+                "can_mutate": true,
+                "min": -0.5,
+                "max": 0.5,
+                "is_integer": false
+            },
+            {
+                "attr": "species",
+                "name": "Species",
+                "acronym": "SPE",
+                "value": 1,
+                "can_mutate": false,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            },
+            {
+                "attr": "generation",
+                "name": "Generation",
+                "acronym": "GEN",
+                "value": 1,
+                "can_mutate": false,
+                "min": 0,
+                "max": 999999999999,
+                "is_integer": false
+            }
+        ],
+                  "2": [
+                {
+                    "attr": "colour_red",
+                    "name": "Red Colour",
+                    "acronym": "CLR",
+                    "value": 10,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 255,
+                    "is_integer": true
+                },
+                {
+                    "attr": "colour_green",
+                    "name": "Green Colour",
+                    "acronym": "CLG",
+                    "value": 78,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 255,
+                    "is_integer": true
+                },
+                {
+                    "attr": "colour_blue",
+                    "name": "Blue Colour",
+                    "acronym": "CLB",
+                    "value": 98,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 255,
+                    "is_integer": true
+                },
+                {
+                    "attr": "radius",
+                    "name": "Creature Radius Size",
+                    "acronym": "SIZ",
+                    "value": 3,
+                    "can_mutate": true,
+                    "min": 0.5,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "speed",
+                    "name": "Speed",
+                    "acronym": "SPD",
+                    "value": 18,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "base_energy",
+                    "name": "Energy Consumed per Second",
+                    "acronym": "ENB",
+                    "value": 10.4,
+                    "can_mutate": true,
+                    "min": 1,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "movement_energy",
+                    "name": "Energy Consumed for Movement",
+                    "acronym": "ENM",
+                    "value": 42.1,
+                    "can_mutate": true,
+                    "min": 1,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "turning_energy",
+                    "name": "Energy Consumed for Turning",
+                    "acronym": "ENT",
+                    "value": 10,
+                    "can_mutate": true,
+                    "min": 1,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "birth_energy",
+                    "name": "Energy Consumed for Birthing",
+                "acronym": "ENI",
+                "value": 400000,
+                    "can_mutate": true,
+                    "min": 1,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "plant_energy",
+                    "name": "% of Energy Gained From Eating",
+                    "acronym": "ENP",
+                    "value": 0.2601539706133791,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "vision_radius",
+                    "name": "Vision Radius",
+                    "acronym": "VIR",
+                    "value": 24.4,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "vision_angle",
+                    "name": "Vision Angle",
+                    "acronym": "VIA",
+                    "value": 50,
+                    "can_mutate": true,
+                    "min": 1,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "react_towards",
+                    "name": "Reaction Towards Entity",
+                    "acronym": "RTO",
+                    "value": 1,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "react_speed",
+                    "name": "Reaction Speed",
+                    "acronym": "RSP",
+                    "value": 34,
+                    "can_mutate": true,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "food_offset",
+                    "name": "Reaction Food Offset",
+                    "acronym": "RFO",
+                    "value": 0,
+                    "can_mutate": true,
+                    "min": -0.5,
+                    "max": 0.5,
+                    "is_integer": false
+                },
+                {
+                    "attr": "stranger_offset",
+                    "name": "Reaction Stranger Offset",
+                    "acronym": "RSO",
+                    "value": 0,
+                    "can_mutate": true,
+                    "min": -0.5,
+                    "max": 0.5,
+                    "is_integer": false
+                },
+                {
+                    "attr": "known_offset",
+                    "name": "Reaction Known Offset",
+                    "acronym": "RKO",
+                    "value": 0,
+                    "can_mutate": true,
+                    "min": -0.5,
+                    "max": 0.5,
+                    "is_integer": false
+                },
+                {
+                    "attr": "species",
+                    "name": "Species",
+                    "acronym": "SPE",
+                    "value": 2,
+                    "can_mutate": false,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                },
+                {
+                    "attr": "generation",
+                    "name": "Generation",
+                    "acronym": "GEN",
+                    "value": 1,
+                    "can_mutate": false,
+                    "min": 0,
+                    "max": 999999999999,
+                    "is_integer": false
+                }
+            ]},
     "data": {}
 }

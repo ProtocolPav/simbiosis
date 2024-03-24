@@ -77,6 +77,10 @@ class World:
                                        (save_dict['world']['size'], save_dict['world']['size']),
                                        food['energy'], food['eaten']))
 
+        species_dict = {}
+        for id, specimen in save_dict['specimens'].items():
+            species_dict[id] = CreatureGenes.load(specimen)
+
         world_data = save_dict['world']
         graph_data: dict = save_dict['data']
         graph_data['creature_count'] = graph_data.get('creature_count', [len(creatures_list)])
@@ -90,7 +94,7 @@ class World:
                    world_data['seconds'], world_data['delta_seconds'], world_data['food_seconds'],
                    world_data['paused'], graph_data['creature_count'], graph_data['food_count'],
                    graph_data['cumulative_increase_count'], graph_data['increase_count'], graph_data['time_data'],
-                   {}, world_data.get('species_id', 1))
+                   species_dict, world_data.get('species_id', 1))
 
     @classmethod
     def create(cls, size: int, creature_image: pygame.Surface, food_image: pygame.Surface,
