@@ -1,8 +1,7 @@
-# Alpha v0.4
 import os
-import random
-import time
 
+# Create folders if they do not exist.
+# These folders are required for the program to run
 if not os.path.exists('logs/'):
     os.mkdir('logs/')
 if not os.path.exists('saves/'):
@@ -18,30 +17,24 @@ from datetime import datetime, timedelta
 
 from matplotlib import pyplot, font_manager
 
-creature_image = pygame.image.load('resources/textures/creature3.png')
-food_image = pygame.image.load('resources/textures/food1.png')
-
-pygame.display.set_caption("Simbiosis - Evolution Simulator")
-pygame.display.set_icon(food_image)
-
-clock = pygame.time.Clock()
-
 
 class Simulation:
     def __init__(self):
-        pygame.init()
-
+        # Initialize the main window
         self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
 
-        # pygame.mouse.set_visible(False)
-        # self.cursor_image = pygame.image.load('resources/textures/cursor.png')
-        # self.cursor_rect = self.cursor_image.get_rect()
-
+        # Load resources
         self.creature_image = pygame.image.load('resources/textures/creature3.png')
         self.food_image = pygame.image.load('resources/textures/food1.png')
         self.menu_background = pygame.image.load('resources/screens/menu_background.png')
         self.logo = pygame.image.load('resources/screens/logo.png')
 
+        # Initialize the pygame module
+        pygame.init()
+        pygame.display.set_caption("Simbiosis - Evolution Simulator")
+        pygame.display.set_icon(self.food_image)
+
+        # Initialize buttons
         self.play_button = Button('play')
         self.load_button = Button('load')
         self.help_button = Button('help')
@@ -51,6 +44,7 @@ class Simulation:
         self.previous_graph_button = Button('<', 100)
         self.no_save_slot_button = Button('Play without\n     saving', 23)
 
+        # Initialize the Save displays
         self.save_display_1 = SaveSlotDisplay('Slot 1',
                                               'Empty')
         self.save_display_2 = SaveSlotDisplay('Slot 2',
@@ -60,8 +54,10 @@ class Simulation:
         self.save_display_4 = SaveSlotDisplay('Slot 4',
                                               'Empty')
 
+        # Populate the save displays with the correct data
         self.generate_save_slot_displays()
 
+        # Initialize the Preset Displays
         self.preset_1 = PresetDisplay('Lone Island',
                                       'two species compete\nfor one island of food\nlocated in the centre.\n'
                                       'they are complete\nopposites.\nwho will win?')
@@ -74,60 +70,79 @@ class Simulation:
         self.preset_4 = PresetDisplay('Random',
                                       'A completely random\nset of species.\nWill you get\nlucky?')
 
+        # Initialize buttons for the main simulation screen
         self.sim_screen_pause_button = Button('Pause')
         self.sim_screen_tickspeed_button = Button('x1')
         self.sim_screen_graph_button = Button('Graphs', 45)
 
+        # Initialize content displays for the main simulation screen
         self.sim_screen_time_display = SmallContentDisplay('time', 5, 5)
         self.sim_screen_creature_display = SmallContentDisplay('creatures', 5, 5)
         self.sim_screen_species_display = SmallContentDisplay('species', 5, 5)
         self.sim_screen_food_display = SmallContentDisplay('food', 5, 5)
 
-        pygame.display.set_caption("Simbiosis - Evolution Simulator")
-
+        # Initialize the clock which dictates how often to tick the game
         self.clock = pygame.time.Clock()
 
+        # Initialize the camera and the world
         self.camera = Camera(self.screen)
         self.world: World = World.create(size=0, start_species=0, start_creatures=0, start_food=0,
                                          food_spawn_rate=1, creature_image=self.creature_image,
                                          food_image=self.food_image)
 
-        # Menu Booleans
+        # Booleans
         self.program_running = True
         self.debug_screen = False
 
-        # Variable that stores the current menu. Choose from:
-        # start, help, load, select_save, select_preset, configure, sim_screen, graph
+        # Stores the current menu
+        # Acceptable values: start, help, load, select_save, select_preset, configure, sim_screen, graph
         self.current_menu = 'start'
 
-        # Variable that holds the save slot
+        # Stores the save slot and preset that were selected
         self.save_slot = 0
         self.preset = None
 
-        # Variables for graphs
+        # Stores all the graph types and data about them
         self.graph_types = [{'type': 'creature_count', 'colour': '#6495ED', 'label': 'Number of Creatures'},
                             {'type': 'food_count', 'colour': '#00A36C', 'label': 'Number of Food Pellets'},
                             {'type': 'cumulative_increase_count', 'colour': '#FFBF00', 'label': 'Cumulative Population Increase'},
                             {'type': 'increase_count', 'colour': '#F3E5AB', 'label': 'Population Increase'}]
 
+        # Initialize the current graph to display
         self.current_graph = self.graph_types[0]
 
     def generate_save_slot_displays(self):
+        """
+        Updates save slot displays to show the correct data about each save.
+        Data: The date that this save was made, the preset that was used
+        :return:
+        """
         attributes = ['save_display_1', 'save_display_2', 'save_display_3', 'save_display_4']
 
         for attr in attributes:
+            # Get the slot number ('save_display_1' becomes '1')
             slot_num = attr[-1]
             if os.path.exists(f'saves/sim{slot_num}.json'):
+                # Load the save
                 save_dict = json.load(open(f'saves/sim{slot_num}.json', 'r'))
 
+                # Retrieve and format the date
                 date = datetime.strptime(save_dict['save_data']['time'], "%Y-%m-%d %H:%M:%S.%f")
                 formatted_date = date.strftime('%B %d %Y\n%I:%M%p')
 
+                # Show the preset name if it exists
                 preset = f"Preset: {save_dict['save_data']['preset']}" if save_dict['save_data']['preset'] else "No Preset"
+
+                # Save the save slot display to the correct attribute
                 self.__setattr__(attr, SaveSlotDisplay(f'Slot {slot_num}',
                                                        f'{formatted_date}\n\n{preset}'))
 
     def save_game(self):
+        """
+        Saves all the data about the simulation into the save slot
+        that was selected
+        :return:
+        """
         save_dict = {
             "save_data": {
                 "time": str(datetime.today()),
@@ -195,6 +210,11 @@ class Simulation:
         save_file.close()
 
     def start_menu(self):
+        """
+        The starting menu that is displayed to the user
+        Can select: Play game, load game, help and quit
+        :return:
+        """
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
         self.screen.blit(copy_image, (0, 0))
 
@@ -222,6 +242,11 @@ class Simulation:
             self.current_menu = 'quit'
 
     def load_save_menu(self):
+        """
+        The menu shown when the user is asked to load
+        from save slots
+        :return:
+        """
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
         self.screen.blit(copy_image, (0, 0))
 
@@ -266,6 +291,11 @@ class Simulation:
             self.current_menu = 'sim_screen'
 
     def choose_new_save_menu(self):
+        """
+        The menu that is shown when the user is asked
+        to select a save slot to save their game into
+        :return:
+        """
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
         self.screen.blit(copy_image, (0, 0))
 
@@ -314,6 +344,11 @@ class Simulation:
             self.current_menu = 'select_preset'
 
     def choose_preset_menu(self):
+        """
+        The menu that is shown when the user is asked
+        to select a preset for the game
+        :return:
+        """
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
         self.screen.blit(copy_image, (0, 0))
 
@@ -362,6 +397,10 @@ class Simulation:
             self.current_menu = 'sim_screen'
 
     def graph_screen(self):
+        """
+        The graph menu that displays all the graphs
+        :return:
+        """
         copy_image = pygame.transform.scale(self.menu_background, self.screen.get_size())
         self.screen.blit(copy_image, (0, 0))
 
@@ -406,6 +445,11 @@ class Simulation:
         self.screen.blit(display_graph, position)
 
     def draw_graph(self):
+        """
+        Draws the graph specified in self.current_graph
+        This method should be called sparingly as it is demanding of the processor
+        :return:
+        """
         graph_type = self.current_graph
 
         fig = pyplot.figure(figsize=(12, 7))
@@ -442,6 +486,7 @@ class Simulation:
 
             ax.set_xlabel("Time (seconds)", fontproperties=prop, size=12, color='#caf7b7')
 
+        # Sets labels and colours for axes
         ax.set_ylabel(graph_type['label'], fontproperties=prop, size=12, color='#caf7b7')
         ax.set_title(f'{graph_type["label"]} over Time', fontproperties=prop, size=30, color='#caf7b7')
         ax.grid(visible=True, axis='both', color='#272d35', linestyle='dashed')
@@ -451,6 +496,7 @@ class Simulation:
         ax.margins(0.01)
         ax.plot(mapped_time_data_in_minutes, mapped_data, graph_type['colour'])
 
+        # Fills the space between the graph and the x-axis
         if min(mapped_data) >= 0:
             ax.fill_between(mapped_time_data_in_minutes, mapped_data, min(mapped_data),
                             facecolor=graph_type['colour'], alpha=0.1)
@@ -458,11 +504,17 @@ class Simulation:
             ax.fill_between(mapped_time_data_in_minutes, mapped_data, 0, facecolor='#FFBF00', alpha=0.1)
             ax.plot(mapped_time_data_in_minutes, [0 for i in mapped_data], '#D22B2B')
 
+        # Saves the figure as a png
         fig.savefig(f'resources/graphs/{graph_type["type"]}.png', bbox_inches='tight', facecolor="#000712")
 
         fig.clear()
 
     def paginate_graph(self, direction: int):
+        """
+        Updates the self.current_graph attribute to the next or previous graph
+        :param direction:
+        :return:
+        """
         if direction == 1:
             default = 0
         else:
@@ -473,37 +525,51 @@ class Simulation:
         self.draw_graph()
 
     def simulation_screen(self, deltatime):
+        """
+        Main simulation screen
+        :param deltatime:
+        :return:
+        """
+        # Tick the world if the game is not paused
         if not self.world.paused:
             self.world.tick_world(deltatime)
 
+        # Move the camera and draw
         self.camera.move(deltatime)
         self.camera.draw_world(self.world, self.debug_screen)
 
         BUTTON_SIZE = 100
 
+        # Draw content displays
         world_time = timedelta(seconds=round(self.world.seconds))
         self.sim_screen_time_display.draw(self.screen, world_time, 10, 15)
         self.sim_screen_creature_display.draw(self.screen, len(self.world.creatures), 10, BUTTON_SIZE + 30)
         self.sim_screen_species_display.draw(self.screen, len(self.world.species_count), 10, BUTTON_SIZE * 2 + 45)
         self.sim_screen_food_display.draw(self.screen, len(self.world.food), 10, BUTTON_SIZE * 3 + 60)
 
+        # Draw Pause button
         self.sim_screen_pause_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_pause_button.check_for_press():
             self.world.paused = not self.world.paused
 
+        # Change text for the pause button
         if self.world.paused:
             self.sim_screen_pause_button.change_text('play')
         else:
             self.sim_screen_pause_button.change_text('pause')
 
+        # Draw tick speed button
         self.sim_screen_tickspeed_button.draw(self.screen, 10, self.screen.get_height() - BUTTON_SIZE * 2 - 30)
         if self.sim_screen_tickspeed_button.check_for_press():
             if self.world.tick_speed < 10:
                 self.world.change_tick_speed(1)
             else:
                 self.world.tick_speed = 1
+
+        # Change text on the tick speed button to the current tick speed
         self.sim_screen_tickspeed_button.change_text(f'x{self.world.tick_speed}')
 
+        # Draw the graph button
         self.sim_screen_graph_button.draw(self.screen, self.screen.get_width() - BUTTON_SIZE * 2 - 20,
                                           self.screen.get_height() - BUTTON_SIZE - 15)
         if self.sim_screen_graph_button.check_for_press():
@@ -511,50 +577,73 @@ class Simulation:
             self.draw_graph()
 
     def main(self):
+        """
+        The main pygame loop that controls everything
+        :return:
+        """
         while self.program_running:
-            deltatime = clock.tick(120) / 1000
+            # Get the time passed since the last frame in milliseconds
+            deltatime = self.clock.tick(120) / 1000
 
+            # Process system events
             for event in pygame.event.get():
+                # If the program quits or crashes, stop the game loop
                 if event.type == pygame.QUIT:
                     self.program_running = False
 
+                # Zoom the camera if the mouse is scrolled
                 elif event.type == pygame.MOUSEWHEEL:
                     self.camera.zoom(event.y)
 
+                # Process key events
                 elif event.type == pygame.KEYDOWN:
+                    # Return the user to the main sim screen if they press
+                    # ESC and are in the graph screen
                     if event.key == pygame.K_ESCAPE and self.current_menu == 'graph':
                         self.current_menu = 'sim_screen'
 
+                    # Return the user to the start menu
+                    # When ESC is pressed
                     elif event.key == pygame.K_ESCAPE:
                         self.current_menu = 'start'
                         self.save_slot = 0
                         self.preset = None
 
+                    # These keys are only processed in the main simulation screen
+                    # Toggle pause/unpause when SPACE
                     if event.key == pygame.K_SPACE and self.current_menu == 'sim_screen':
                         self.world.paused = not self.world.paused
 
+                    # Toggle debug mode
                     elif event.key == pygame.K_q and self.current_menu == 'sim_screen':
                         self.debug_screen = not self.debug_screen
 
+                    # Enter graph menu if G is pressed
                     elif event.key == pygame.K_g and self.current_menu == 'sim_screen':
                         self.current_menu = 'graph'
                         self.draw_graph()
 
+                    # Increase tick speed when + is pressed
                     elif event.key == pygame.K_EQUALS and self.current_menu == 'sim_screen':
                         self.world.change_tick_speed(1)
 
+                    # Decrease tick speed when - is pressed
                     elif event.key == pygame.K_MINUS and self.current_menu == 'sim_screen':
                         self.world.change_tick_speed(-1)
 
+                    # Save game when 0 is pressed
                     elif event.key == pygame.K_0 and self.current_menu == 'sim_screen':
                         self.save_game()
 
+                    # These pertain to the Graph Menu
+                    # Paginate graph when arrow keys are pressed
                     elif event.key == pygame.K_RIGHT and self.current_menu == 'graph':
                         self.paginate_graph(1)
 
                     elif event.key == pygame.K_LEFT and self.current_menu == 'graph':
                         self.paginate_graph(-1)
 
+            # Display different menus
             match self.current_menu:
                 case 'start':
                     self.start_menu()
@@ -568,6 +657,7 @@ class Simulation:
                 case 'select_preset':
                     self.choose_preset_menu()
 
+                # Help menu is currently not implemented
                 case 'help':
                     ...
 
@@ -580,9 +670,7 @@ class Simulation:
                 case 'quit':
                     self.program_running = False
 
-            # self.cursor_rect.topleft = pygame.mouse.get_pos()
-            # self.screen.blit(self.cursor_image, self.cursor_rect)
-
+            # Update pygame display
             pygame.display.flip()
 
 
