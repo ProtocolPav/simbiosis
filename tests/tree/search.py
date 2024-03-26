@@ -94,7 +94,7 @@ def test_4(display: bool = False):
 
     print("Running Test 4")
     start = monotonic()
-    point = tree.search((43, 76))
+    point = tree.search_2((43, 76))
     end = monotonic()
 
     print(f"Time Elapsed: {end - start}")
@@ -113,7 +113,7 @@ def test_5(display: bool = False):
 
     print("Running Test 5")
     start = monotonic()
-    point = tree.search((63, 76))
+    point = tree.search_2((63, 76))
     end = monotonic()
 
     print(f"Time Elapsed: {end - start}")
