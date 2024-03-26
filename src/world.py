@@ -5,10 +5,7 @@ import pygame
 from src.entity import Creature, Food
 from src.genes import CreatureGenes
 from src.tree import KDTree
-from src.characteristics import generate_characteristics
 from src.ui import CreatureCharacteristicsDisplay
-
-from datetime import timedelta
 
 import random
 
@@ -32,6 +29,11 @@ class World:
         self.tree: KDTree = KDTree([])
         self.largest_radius = largest_radius
 
+        # How food spawnrate works:
+        # food_second_split is how much time in milliseconds
+        # the program should wait before spawning a new food.
+        # This ensures that food spawns equally across time
+        # And will not spawn all at once
         self.food_spawnrate = food_spawn_rate
         self.food_second_split = 1 / food_spawn_rate
         self.tick_speed = tick_speed
@@ -89,6 +91,7 @@ class World:
         graph_data['increase_count'] = graph_data.get('increase_count', [0])
         graph_data['time_data'] = graph_data.get('time', [world_data['seconds']])
 
+        # Running cls() is equivalent to running the __init__ method of the class
         return cls(creature_image, food_image, world_data['size'], creatures_list, food_list,
                    world_data['largest_radius'], world_data['tick_speed'], world_data['food_spawn_rate'],
                    world_data['seconds'], world_data['delta_seconds'], world_data['food_seconds'],
@@ -144,17 +147,29 @@ class World:
                    cum_increase_count=[0], increase_count=[0], time_data=[0], specimens=specimens_dict, species_id=species_id)
 
     def tick_world(self, deltatime: float):
+        """
+        Tick the world x amount of times, where x is the tick speed
+        :param deltatime:
+        :return:
+        """
         for i in range(self.tick_speed):
+            # Add deltatime to the seconds.
+            # Deltatime is the amount of time passed since the last frame in milliseconds
             self.seconds += deltatime
             self.delta_second += deltatime
             self.food_second += deltatime
 
+            # Create the KD tree from the global creatures and food list
+            # The + operator combines 2 lists into one
             self.tree = KDTree(self.creatures + self.food)
             self.species_count = {}
 
+            # Tick Creatures
             for creature in self.creatures:
                 coordinates = creature.get_coordinates()
                 boxsize = 2 * creature.genes.vision_radius.value + self.largest_radius
+
+                # Perform the range search for the KD tree
                 creature_check = self.tree.range_search(coordinates,
                                                         (coordinates[0] - boxsize, coordinates[1] + boxsize),
                                                         (coordinates[0] + boxsize, coordinates[1] - boxsize))
@@ -163,17 +178,25 @@ class World:
                 specimen_id = creature.genes.species.value
                 self.species_count[specimen_id] = self.species_count.get(specimen_id, 0) + 1
 
+                # If the creature has eaten any food, remove it from
+                # The global food list
                 for food in creature.food_list:
                     self.food.remove(food)
 
+                # If the creature has died, remove it from the
+                # Global creatures list
                 if creature.dead:
                     self.cumulative_increase -= 1
                     self.increase -= 1
                     self.creatures.remove(creature)
 
+                # For debug mode, hide the entity that was in the
+                # Creature's vision after 1 second
                 if self.delta_second >= 1:
                     creature.visible_entity = None
 
+                # If the creature has a child, add it to the global
+                # Creatures list
                 if creature.child is not None:
                     self.cumulative_increase += 1
                     self.increase += 1
@@ -183,9 +206,11 @@ class World:
                     self.creatures.append(creature.child)
                     creature.child = None
 
+            # If 1 second passed, reset the delta_second counter
             if self.delta_second >= 1:
                 self.delta_second = 0
 
+                # Append data for graphs
                 self.time_data.append(self.seconds)
                 self.creature_count.append(len(self.creatures))
                 self.food_count.append(len(self.food))
@@ -194,11 +219,22 @@ class World:
 
                 self.increase = 0
 
+            # Spawn food. Food spawns based on the food_ticks.
+            # To ensure that food spawns equally across time, I create
+            # the food_second_split which is compared to the current time elapsed
             if self.food_second >= self.food_second_split:
                 self.spawn_food()
                 self.food_second -= self.food_second_split
 
     def spawn_food(self):
+        """
+        Spawn food into the world.
+        Selects a random piece of food, and selects a random position around it
+        to spawn a new food at. If that position is taken, selects another one.
+
+        If there is no food at all, spawns 1 food in a random location on the world
+        :return:
+        """
         food = random.choice(self.food) if len(self.food) != 0 else None
 
         if food is None:
@@ -225,22 +261,34 @@ class World:
                     food = random.choice(self.food)
 
     def change_tick_speed(self, direction: int):
+        """
+        Changes tick speed either positively or negatively.
+        Tick speed cannot be greater than 10 or less than 0
+        :param direction:
+        :return:
+        """
         if 0 < self.tick_speed + direction <= 10:
             self.tick_speed += direction
 
     def check_for_new_species(self, genes: CreatureGenes):
+        """
+        Checks the creature's genes against all specimens
+        If a match is found, then that creature's species is set to that one
+        :param genes:
+        :return:
+        """
         assigned_species = None
         for specimen_id, specimen in self.specimens.items():
-            # specimen = self.specimens[int(genes.species.value)]
             different_count = 0
 
             for gene_name, gene in vars(genes).items():
                 if gene_name not in ['species', 'generation']:
                     specimen_gene = specimen.__getattribute__(gene_name)
                     if abs(specimen_gene.value - gene.value) >= specimen_gene.value/2:
-                        print(gene_name, specimen_gene.value, gene.value, abs(specimen_gene.value - gene.value), specimen_gene.value/2)
                         different_count += 1
 
+            # If there are less than 6 differences in the genes, then
+            # This species will be assigned to the creature
             if different_count <= 6:
                 assigned_species = specimen_id
                 break
@@ -296,8 +344,6 @@ class Camera:
                 rotated_image = pygame.transform.rotate(copy_image, random.randint(0, 360))
                 food_rect = rotated_image.get_rect(center=drawing_rect.center)
                 self.screen.blit(rotated_image, food_rect)
-
-                # pygame.draw.rect(surface=self.screen, rect=drawing_rect, color=[170, 255, 170])
 
         display = None
         # Draw Creatures
@@ -469,6 +515,9 @@ class Camera:
             display.draw(self.screen, (self.screen.get_width() - display.rect.w - 15), 15)
 
     def move(self, deltatime):
+        # Move the camera
+        # Always set the centre of the screen to the centre
+        # of the window
         self.centre_x = self.screen.get_width() // 2
         self.centre_y = self.screen.get_height() // 2
         key = pygame.key.get_pressed()
@@ -487,12 +536,20 @@ class Camera:
             self.zoom_level += 2 * change
             self.camera_speed += 10 * change
 
+            # Adjust the offset of X and Y
+            # This is so that when you zoom, you zoom into the centre of the
+            # Window rather than the centre of the world
             self.x_offset /= old_zoom / self.zoom_level
             self.y_offset /= old_zoom / self.zoom_level
             # After implementing the offset values, I managed to fix the zoom bug that I had since the beginning.
 
     @staticmethod
     def check_for_mouse_hover(rect: pygame.Rect):
+        """
+        Check if the mouse is hovering over the rect provided
+        :param rect:
+        :return:
+        """
         mos_x, mos_y = pygame.mouse.get_pos()
         x_inside = False
         y_inside = False
@@ -506,6 +563,11 @@ class Camera:
         return False
 
     def check_for_press(self, rect: pygame.Rect):
+        """
+        Check if the mouse is pressing the rect provided
+        :param rect:
+        :return:
+        """
         if pygame.mouse.get_pressed()[0] and self.check_for_mouse_hover(rect):
             self.mouse_down = True
         elif not pygame.mouse.get_pressed()[0] and self.mouse_down:
