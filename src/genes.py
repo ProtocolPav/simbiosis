@@ -14,15 +14,21 @@ class Gene:
         self.is_type_integer = integer
 
     def mutate(self, probability: float = 0.2, factor: float = 1):
+        # Only mutate if the gene can mutate
         if self.can_mutate:
             old_value = self.value
 
+            # Choose from a random probability
+            # If the gene should mutate or not
             if random.choices(population=["mutate", "no mutate"], weights=[probability, 1 - probability])[0] == "mutate":
+                # Different mutation values for floats and integers
                 if self.is_type_integer:
                     self.value += round(random.uniform(-0.5 * factor, 0.5 * factor))
                 else:
                     self.value += random.uniform(-0.05 * factor, 0.05 * factor)
 
+            # Clamp values to the max and min if they are
+            # outside the range
             if self.value <= self.min:
                 self.value = self.min
             if self.value >= self.max:
@@ -44,6 +50,10 @@ class Gene:
                 'is_integer': self.is_type_integer}
 
     def get_value(self):
+        """
+        Get a floating point value to 3 s.f
+        :return:
+        """
         return float(str(self.value)[0:3])
 
 
@@ -95,6 +105,13 @@ class CreatureGenes:
 
     @classmethod
     def create(cls, species: int, generation: int):
+        """
+        Create a new Genes with random values
+
+        :param species:
+        :param generation:
+        :return:
+        """
         genes_object = cls([])
 
         # Genes affecting Creature Appearance (Phenotype)
