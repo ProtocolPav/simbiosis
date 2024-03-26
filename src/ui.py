@@ -1,10 +1,12 @@
-import time
-
 import pygame
 from src.entity import Creature
 
 
 class TextDisplay:
+    """
+    Class for displaying text. Can customize the font size
+    and colour of the text as needed
+    """
     def __init__(self, text: str, colour: tuple[int, int, int], size: int):
         self.font = pygame.font.Font('resources/pixel_digivolve.otf', size)
         self.text = self.font.render(text, False, colour)
@@ -18,6 +20,10 @@ class TextDisplay:
 
 
 class Button:
+    """
+    Button class. Every button has a text inside of it
+    and can be pressed and hovered.
+    """
     def __init__(self, text: str, textsize: int = 50):
         self.image = pygame.image.load('resources/screens/components/button.png')
         self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
@@ -43,9 +49,20 @@ class Button:
         self.text.draw(screen, x_pos + (self.rect.w - self.text.rect.w) // 2, y_pos + (self.rect.h - self.text.rect.h) // 2)
 
     def change_text(self, text: str, textsize: int = 50):
+        """
+        Allow the changing of text in case the button has to update
+
+        :param text:
+        :param textsize:
+        :return:
+        """
         self.text = TextDisplay(text, (0, 0, 0), textsize)
 
     def check_for_hover(self):
+        """
+        Used mainly in check_for_press. Never use standalone
+        :return:
+        """
         mos_x, mos_y = pygame.mouse.get_pos()
         x_inside = False
         y_inside = False
@@ -60,6 +77,12 @@ class Button:
             self.is_hovered = False
 
     def check_for_press(self, delay: float = 0):
+        """
+        Check for hovering and presses
+
+        :param delay:
+        :return:
+        """
         self.check_for_hover()
         if pygame.mouse.get_pressed()[0] and self.is_hovered:
             self.mouse_down = True
@@ -69,6 +92,11 @@ class Button:
 
 
 class SmallContentDisplay:
+    """
+    Small content displays for the simulation
+    Has a name (e.g. Time, Creatures, Species)
+    and position.
+    """
     def __init__(self, content_name: str, x_pos: int, y_pos: int):
         self.image = pygame.image.load('resources/screens/components/contentdisplay.png')
         self.rect = pygame.Rect(x_pos, y_pos, self.image.get_width(), self.image.get_height())
@@ -80,6 +108,16 @@ class SmallContentDisplay:
         self.content_name = self.content_font.render(content_name, False, (108, 122, 103))
 
     def draw(self, screen: pygame.Surface, value, x_pos: int, y_pos: int):
+        """
+        Draw the content display and update the value of it
+        For example, if the Creature count changes from 50 to 55
+
+        :param screen:
+        :param value:
+        :param x_pos:
+        :param y_pos:
+        :return:
+        """
         self.rect.x = x_pos
         self.rect.y = y_pos
 
@@ -102,6 +140,11 @@ class SmallContentDisplay:
 
 
 class LargeContentDisplay:
+    """
+    Large display for content. Can either be Long or the default.
+    Has a name for the content, and then the content itself
+
+    """
     def __init__(self, title_text: str, content: str, long: bool = False):
         if long:
             image = 'longcontentdisplay2'
@@ -128,6 +171,11 @@ class LargeContentDisplay:
 
 
 class PresetDisplay(LargeContentDisplay):
+    """
+    Inherits from LargeContentDisplay. Used for selecting presets.
+    Includes a button as well
+
+    """
     def __init__(self, title_text: str, content: str):
         super().__init__(title_text, content)
 
@@ -139,6 +187,9 @@ class PresetDisplay(LargeContentDisplay):
 
 
 class SaveSlotDisplay(LargeContentDisplay):
+    """
+    Same as the Preset Display, includes a button
+    """
     def __init__(self, title_text: str, content: str):
         super().__init__(title_text, content)
 
@@ -150,6 +201,10 @@ class SaveSlotDisplay(LargeContentDisplay):
 
 
 class CreatureCharacteristicsDisplay(LargeContentDisplay):
+    """
+    The stats display for creatures. Inherits from LargeContentDisplay but
+    sets it to "Long".
+    """
     def __init__(self, creature: Creature):
         display_content = (f"ID: {creature.id}\n"
                            f"Species ID: {creature.genes.species.value}\n"
